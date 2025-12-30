@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "trip-planner"
+version = "0.2.0"
+description = "AI trip planner with A2A protocol and MCP integration"
+authors = ["x"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.10,<=3.13"
+crewai = {version = "^0.86.0", extras = ["tools"]}
+mcp = "^1.0.0"
+python-dotenv = "^1.0.0"
+requests = "^2.32.0"
+pydantic = "^2.9.0"
+pyyaml = "^6.0.0"
+setuptools = "^80.9.0"
+langchain = "^0.3.0"
+langchain-openai = "^0.2.0"
+streamlit = "^1.28.0"
+
+[tool.pyright]
+# https://github.com/microsoft/pyright/blob/main/docs/configuration.md
+useLibraryCodeForTypes = true
+exclude = [".cache"]
+
+[tool.ruff]
+# https://beta.ruff.rs/docs/configuration/
+select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
+ignore = ['W291', 'W292', 'W293']
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
