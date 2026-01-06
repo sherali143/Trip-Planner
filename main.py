@@ -9,15 +9,26 @@ This is the main orchestration file that brings together:
 
 import os
 import uuid
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from crewai import Crew, Process
 from textwrap import dedent
 from dotenv import load_dotenv
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Tuple
 
 from agents import TripPlannerAgents
 from tasks import TripPlannerTasks
 from a2a_protocol import A2AProtocol, A2AMessage, MessageType
 from agent_cards import AGENT_REGISTRY
+
+# Import utility modules for enhanced functionality
+from utils.itinerary_validator import (
+    validate_day_count, 
+    regenerate_if_incomplete,
+    extract_trip_duration_from_extraction,
+    add_completion_notice
+)
+from utils.cache_manager import get_cache
 
 # Load environment variables from .env file
 load_dotenv()
@@ -39,10 +50,12 @@ class TripPlannerCrew:
     4. Itinerary Coordinator synthesizes everything into final plan
     """
     
-    def __init__(self):
+    def __init__(self, parallel_mode: bool = False):
         self.agents_class = TripPlannerAgents()
         self.tasks_class = TripPlannerTasks()
         self.a2a_protocol = A2AProtocol()
+        self.parallel_mode = parallel_mode  # Enable parallel API searches
+        self._extraction_output = None  # Store for validation
         
         # Initialize agents
         self.conversational_agent = self.agents_class.conversational_agent()
@@ -54,6 +67,7 @@ class TripPlannerCrew:
         
         print("✅ All agents initialized")
         print(f"✅ A2A Protocol active with {len(AGENT_REGISTRY)} registered agent cards")
+        print(f"✅ Parallel mode: {'ENABLED' if parallel_mode else 'DISABLED'}")
     
     def _is_budget_too_low(self, extraction_output: str, conversation_transcript: str) -> bool:
         """
@@ -214,6 +228,141 @@ typically costs at least $800-$1500 per person for a week-long trip.
 """
         return message
     
+    def _run_search_crew_parallel(
+        self, 
+        extraction_task, 
+        conversation_id: str,
+        timeout: int = 180
+    ) -> Tuple[Any, Any, Any]:
+        """
+        Run flight, hotel, and attraction searches in parallel using ThreadPoolExecutor.
+        
+        This provides ~2-3x speedup compared to sequential execution when all APIs respond.
+        Individual failures don't block other searches.
+        
+        Args:
+            extraction_task: Completed extraction task with user preferences
+            conversation_id: A2A conversation ID
+            timeout: Maximum time to wait for each search (seconds)
+            
+        Returns:
+            Tuple of (flight_result, hotel_result, attraction_result)
+        """
+        print("\n🔄 Running searches in PARALLEL mode...")
+        start_time = time.time()
+        
+        # Create search tasks
+        flight_task = self.tasks_class.flight_search_task(
+            agent=self.flight_agent,
+            conversation_id=conversation_id,
+            extraction_task=extraction_task
+        )
+        
+        hotel_task = self.tasks_class.hotel_search_task(
+            agent=self.hotel_agent,
+            conversation_id=conversation_id,
+            extraction_task=extraction_task
+        )
+        
+        attraction_task = self.tasks_class.attraction_search_task(
+            agent=self.attraction_agent,
+            conversation_id=conversation_id,
+            extraction_task=extraction_task
+        )
+        
+        # Define executor functions for each search
+        def run_flight_search():
+            print("   ✈️  Starting flight search...")
+            crew = Crew(agents=[self.flight_agent], tasks=[flight_task], process=Process.sequential, verbose=True)
+            result = crew.kickoff()
+            print("   ✈️  Flight search completed")
+            return flight_task, result
+        
+        def run_hotel_search():
+            print("   🏨 Starting hotel search...")
+            crew = Crew(agents=[self.hotel_agent], tasks=[hotel_task], process=Process.sequential, verbose=True)
+            result = crew.kickoff()
+            print("   🏨 Hotel search completed")
+            return hotel_task, result
+        
+        def run_attraction_search():
+            print("   🎭 Starting attraction search...")
+            crew = Crew(agents=[self.attraction_agent], tasks=[attraction_task], process=Process.sequential, verbose=True)
+            result = crew.kickoff()
+            print("   🎭 Attraction search completed")
+            return attraction_task, result
+        
+        results = {}
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {
+                executor.submit(run_flight_search): "flight",
+                executor.submit(run_hotel_search): "hotel",
+                executor.submit(run_attraction_search): "attraction"
+            }
+            
+            for future in as_completed(futures, timeout=timeout):
+                task_type = futures[future]
+                try:
+                    task, result = future.result(timeout=timeout)
+                    results[task_type] = (task, result)
+                except Exception as e:
+                    print(f"   ⚠️ {task_type} search failed: {e}")
+                    # Store the task even if result failed
+                    if task_type == "flight":
+                        results[task_type] = (flight_task, None)
+                    elif task_type == "hotel":
+                        results[task_type] = (hotel_task, None)
+                    else:
+                        results[task_type] = (attraction_task, None)
+        
+        elapsed = time.time() - start_time
+        print(f"\n✅ Parallel searches completed in {elapsed:.1f}s")
+        
+        # Return tasks in consistent order
+        return (
+            results.get("flight", (flight_task, None))[0],
+            results.get("hotel", (hotel_task, None))[0],
+            results.get("attraction", (attraction_task, None))[0]
+        )
+    
+    def _validate_and_enhance_itinerary(
+        self, 
+        itinerary: str, 
+        extraction_output: str
+    ) -> str:
+        """
+        Validate the itinerary day count and add completion notice if incomplete.
+        
+        This replaces the prompt-based "CRITICAL: WRITE ALL DAYS" approach with
+        programmatic validation.
+        
+        Args:
+            itinerary: Generated itinerary text
+            extraction_output: Extraction task output (for trip duration)
+            
+        Returns:
+            Validated (and possibly enhanced) itinerary
+        """
+        # Extract expected trip duration
+        expected_days = extract_trip_duration_from_extraction(extraction_output)
+        
+        if expected_days is None:
+            print("   ⚠️ Could not determine trip duration for validation")
+            return itinerary
+        
+        # Validate day count
+        is_valid, actual_count, found_days = validate_day_count(itinerary, expected_days)
+        
+        if is_valid:
+            print(f"   ✅ Itinerary validation passed: {actual_count}/{expected_days} days found")
+            return itinerary
+        else:
+            print(f"   ⚠️ Itinerary validation: {actual_count}/{expected_days} days found")
+            print(f"      Missing days: {set(range(1, expected_days + 1)) - set(found_days)}")
+            
+            # Add completion notice for user
+            return add_completion_notice(itinerary, actual_count, expected_days)
+    
     def have_conversation(self, initial_input: str, conversation_id: str) -> str:
         """
         Have an interactive conversation with the conversational agent
@@ -357,6 +506,7 @@ typically costs at least $800-$1500 per person for a week-long trip.
         
         extraction_result = extraction_crew.kickoff()
         extraction_output = str(extraction_result)
+        self._extraction_output = extraction_output  # Store for validation
         
         # Check for budget issues
         if self._is_budget_too_low(extraction_output, conversation_transcript):
@@ -441,6 +591,11 @@ typically costs at least $800-$1500 per person for a week-long trip.
         # Execute the crew
         result = crew.kickoff()
         
+        # Validate itinerary day count
+        result_str = str(result)
+        if self._extraction_output:
+            result_str = self._validate_and_enhance_itinerary(result_str, self._extraction_output)
+        
         # End A2A conversation
         self.a2a_protocol.end_conversation(conversation_id)
         
@@ -455,7 +610,7 @@ typically costs at least $800-$1500 per person for a week-long trip.
         print(f"   - Conversation ID: {conversation_id}")
         print(f"{'='*80}\n")
         
-        return str(result)
+        return result_str
     
     def plan_trip_from_transcript(self, conversation_transcript: str, conversation_id: str) -> str:
         """
@@ -495,6 +650,7 @@ typically costs at least $800-$1500 per person for a week-long trip.
         
         extraction_result = extraction_crew.kickoff()
         extraction_output = str(extraction_result)
+        self._extraction_output = extraction_output  # Store for validation
         
         # Debug: Print extraction output to see what we're parsing
         print("\n[DEBUG - Second check] Extraction output (first 500 chars):")

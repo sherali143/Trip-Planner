@@ -1,0 +1,126 @@
+{
+  "runs": [
+    {
+      "id": "OPT_RUN_01",
+      "query": "5-day trip to Barcelona from London for 2 adults. Budget $3000. Beach, Gaudi architecture, tapas. Departure April 10, 2025.",
+      "latency": 232.54,
+      "tokens": {
+        "total": 53978,
+        "prompt": 42536,
+        "completion": 11442,
+        "requests": 15
+      },
+      "feasible": true,
+      "days_found": 4,
+      "expected_days": 5,
+      "success": true,
+      "output_preview": "**Executive Summary:**\nBarcelona, a vibrant city known for its unique blend of modernist architecture, beautiful beaches, and rich culinary scene, is a perfect destination for a 7-day getaway. With a moderate climate in April, visitors can enjoy outdoor activities comfortably. The city's culture is deeply influenced by Catalan traditions, offering a unique experience distinct from other parts of Spain.\n\n**Complete Flight Analysis:**\n\n**YOUR TOP 3 RECOMMENDED FLIGHTS:**\n\n\ud83e\udd47 **BEST OVERALL: Vueling..."
+    },
+    {
+      "id": "OPT_RUN_02",
+      "query": "3-day weekend getaway to Amsterdam for a couple. Budget $1500. Museums, canals, local food. May 2-5, 2025.",
+      "latency": 148.89,
+      "tokens": {
+        "total": 43144,
+        "prompt": 37293,
+        "completion": 5851,
+        "requests": 14
+      },
+      "feasible": true,
+      "days_found": 2,
+      "expected_days": 3,
+      "success": true,
+      "output_preview": "**Executive Summary:**\n\nWelcome to Amsterdam, a city renowned for its artistic heritage, elaborate canal system, and narrow houses with gabled facades, legacies of the city's 17th-century Golden Age. The weather in October is typically cool, with temperatures ranging from 8\u00b0C to 15\u00b0C, so be prepared for some rain and pack accordingly. The culture is rich with history and art, making it an ideal destination for those interested in museums and historical sites.\n\n**Complete Flight Analysis:**\n\nUnfo..."
+    },
+    {
+      "id": "OPT_RUN_03",
+      "query": "7-day family trip to Orlando (4 people, 2 kids). Budget $5000. Disney, Universal, beach day. June 20-27, 2025.",
+      "latency": 355.46,
+      "tokens": {
+        "total": 76867,
+        "prompt": 59241,
+        "completion": 17626,
+        "requests": 22
+      },
+      "feasible": true,
+      "days_found": 7,
+      "expected_days": 7,
+      "success": true,
+      "output_preview": "**Executive Summary:**\nOrlando, Florida, is a vibrant city known for its world-class theme parks, beautiful beaches, and diverse cultural experiences. The weather in June is typically warm and humid, with temperatures ranging from 75\u00b0F to 90\u00b0F. Orlando offers a mix of thrilling adventures and relaxing retreats, making it a perfect destination for families with varied interests.\n\n**Flight Options Analysis:**\n\n**Top 3 Recommended Flights:**\n\n\ud83e\udd47 **BEST OVERALL: Delta Airlines - $496**\n- **Why recomm..."
+    },
+    {
+      "id": "OPT_RUN_04",
+      "query": "4-day solo business trip to Singapore. Budget $4000. Conference, Marina Bay, hawker food. Sept 15-19, 2025.",
+      "latency": 350.78,
+      "tokens": {
+        "total": 68487,
+        "prompt": 49345,
+        "completion": 19142,
+        "requests": 15
+      },
+      "feasible": true,
+      "days_found": 4,
+      "expected_days": 4,
+      "success": true,
+      "output_preview": "---\n\n## Executive Summary\n\n**Destination Overview:** Singapore is a vibrant city-state known for its blend of modernity and tradition. It offers a unique mix of cultural attractions, stunning architecture, and diverse culinary experiences. The city is a hub for business and leisure, making it an ideal destination for travelers seeking both excitement and relaxation.\n\n**Weather:** In September, Singapore experiences a tropical climate with temperatures ranging from 25\u00b0C to 31\u00b0C. Expect occasional..."
+    },
+    {
+      "id": "OPT_RUN_05",
+      "query": "6-day honeymoon in Maldives for 2. Budget $8000. Overwater villa, snorkeling, romantic dinner. Nov 1-7, 2025.",
+      "latency": 253.69,
+      "tokens": {
+        "total": 67867,
+        "prompt": 57061,
+        "completion": 10806,
+        "requests": 18
+      },
+      "feasible": true,
+      "days_found": 5,
+      "expected_days": 6,
+      "success": true,
+      "output_preview": "**Executive Summary:**\nThe Maldives, known for its stunning white-sand beaches, crystal-clear waters, and vibrant marine life, is a perfect luxury destination. The weather in November is typically warm and sunny, making it ideal for outdoor activities like snorkeling and beach relaxation. The Maldivian culture is rich, with influences from South Asia, Africa, and the Middle East, reflected in its cuisine, music, and art.\n\n**Flight Options Analysis:**\n\n**Your Top 3 Recommended Flights:**\n\n\ud83e\udd47 **Bes..."
+    },
+    {
+      "id": "OPT_RUN_06",
+      "query": "5-day cultural trip to Istanbul for 2 adults. Budget $2500. Hagia Sophia, Blue Mosque, bazaars, Turkish food. Oct 5-10, 2025.",
+      "latency": 474.08,
+      "tokens": {
+        "total": 79543,
+        "prompt": 58729,
+        "completion": 20814,
+        "requests": 21
+      },
+      "feasible": true,
+      "days_found": 5,
+      "expected_days": 5,
+      "success": true,
+      "output_preview": "**Executive Summary:**\nIstanbul, a city that straddles Europe and Asia, is known for its rich history, vibrant culture, and stunning architecture. October in Istanbul is mild and pleasant, making it an ideal time for sightseeing. The city offers a blend of ancient history and modern attractions, with highlights including the Hagia Sophia, Blue Mosque, and bustling bazaars. Turkish cuisine is a delight, with dishes like kebabs, mezes, and baklava.\n\n**Flight Options Analysis:**\n\n**Your Top 3 Recom..."
+    },
+    {
+      "id": "OPT_RUN_07",
+      "query": "4-day ski trip to Swiss Alps (Zermatt) for 3 adults. Budget $6000. Skiing, spa, fondue. Jan 15-19, 2026.",
+      "latency": 267.08,
+      "tokens": {
+        "total": 80630,
+        "prompt": 71203,
+        "completion": 9427,
+        "requests": 22
+      },
+      "feasible": true,
+      "days_found": 10,
+      "expected_days": 4,
+      "success": true,
+      "output_preview": "**Executive Summary**\n\nWelcome to an unforgettable 10-day journey from Islamabad to the vibrant city of New York, USA. This itinerary is designed to provide a luxurious experience, exploring cultural landmarks, indulging in exquisite cuisine, and enjoying the city's vibrant atmosphere. The trip is scheduled from December 15, 2025, to December 25, 2025, with a total budget of 150,000 PKR. The itinerary caters to a high activity level and includes interests such as museums, food, adventure, and re..."
+    }
+  ],
+  "summary": {
+    "total_runs": 7,
+    "successful_runs": 7,
+    "feasible_runs": 7,
+    "avg_tokens": 67217.0,
+    "avg_latency": 297.5,
+    "feasibility_rate": "100.0%",
+    "total_tokens": 470516
+  },
+  "timestamp": "2026-01-03T02:33:31.856378"
+}

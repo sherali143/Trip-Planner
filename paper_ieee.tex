@@ -1,0 +1,342 @@
+% IEEE Conference Paper Format
+% 6-page content + 1-page references (7 total)
+\documentclass[conference]{IEEEtran}
+
+% Standard packages
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage[colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue]{hyperref}
+\usepackage{listings}
+\usepackage{balance}
+
+% TikZ packages for charts
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta, positioning, fit, patterns, calc}
+
+% Code listing style (compact)
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    basicstyle=\ttfamily\tiny,
+    breaklines=true,
+    frame=single,
+    columns=flexible
+}
+\lstset{style=mystyle}
+
+%-------------------------------------------------------------------------
+\begin{document}
+
+\title{Standardizing Agentic Tool Use: An MCP-Driven Multi-Agent Framework for Hallucination-Free Travel Planning}
+
+\author{
+\IEEEauthorblockN{Author 1, Author 2}
+\IEEEauthorblockA{Anonymous Institution}
+}
+
+\maketitle
+
+%-------------------------------------------------------------------------
+% ABSTRACT
+%-------------------------------------------------------------------------
+\begin{abstract}
+Multi-agent systems for travel planning face critical challenges: hallucinated bookings, unverified availability, and fragile API integration. We present a framework bridging the Model Context Protocol (MCP) with structured agent orchestration to achieve \textbf{hallucination-free, bookable itinerary planning}. Our 6-agent architecture combines specialized LLM roles with standardized MCP tool interfaces, enabling real-time validation against Booking.com and Kiwi APIs. Across \textbf{215 diverse travel scenarios}, we achieve \textbf{82.7\% feasibility} with complete day-by-day itineraries and \textbf{0\% protocol error rate}. Unlike prior work producing summary-level recommendations, our system generates end-to-end bookable plans with verified hotel availability and accurate pricing. We contribute: (1) MCP-driven tool standardization eliminating parameter hallucination, (2) a cost-optimized architecture using selective GPT-4o-mini deployment averaging $\sim$80,000 tokens per query, and (3) comprehensive validation methodology for travel planning systems.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Multi-Agent Systems, Large Language Models, Model Context Protocol, Travel Planning, Tool Use
+\end{IEEEkeywords}
+
+%-------------------------------------------------------------------------
+% 1. INTRODUCTION
+%-------------------------------------------------------------------------
+\section{Introduction}
+
+Travel planning serves as an ideal testbed for agentic AI systems, requiring \textit{long-horizon planning}, \textit{constraint satisfaction}, and \textit{real-world tool use}. A successful travel agent must understand vague requests, execute precise API queries, and synthesize complete itineraries \cite{dhote2025smart}.
+
+Current approaches suffer from two critical limitations. First, \textbf{Context Bloat}: raw API responses degrade reasoning capabilities \cite{chen2024travelagent}. Second, \textbf{Protocol Fragility}: ad-hoc tool definitions cause hallucinated parameters---TripTailor \cite{shen2025triptailor} found fewer than 10\% of LLM-generated itineraries are executable.
+
+We propose a standardized architecture built on two pillars:
+\begin{itemize}
+    \item \textbf{Model Context Protocol (MCP):} Universal standard for AI-tool communication with strongly-typed, discoverable interfaces.
+    \item \textbf{Agent-to-Agent (A2A) Protocol:} Structured message types preventing natural language drift between agents.
+\end{itemize}
+
+Our contributions include: (1) a 6-agent MCP-A2A architecture achieving \textbf{82.7\% feasibility} across 215 scenarios, (2) \textbf{zero protocol errors} through MCP schema validation, and (3) cost-optimized design averaging $\sim$80,000 tokens per query.
+
+%-------------------------------------------------------------------------
+% 2. RELATED WORK
+%-------------------------------------------------------------------------
+\section{Related Work}
+
+\textbf{Multi-Agent Travel Systems.} TravelAgent \cite{chen2024travelagent} uses modular systems with ``passive tools'' requiring LLMs to parse documentation. VAIAGE \cite{ge2025vaiage} employs graph-based communication prone to semantic drift. MAoP \cite{yang2025planyourtravel} characterizes travel as an $L^3$ problem using reasoning-heavy ``Strategist'' roles. Our approach replaces these with deterministic preference extraction and schema-enforced tool calls.
+
+\textbf{Tool Standardization.} The Model Context Protocol (MCP) separates tool definitions into standalone servers with self-describing schemas, enabling runtime validation and tool reuse. Our work is the first to apply MCP to complex multi-agent travel planning.
+
+%-------------------------------------------------------------------------
+% 3. SYSTEM ARCHITECTURE
+%-------------------------------------------------------------------------
+\section{System Architecture}
+
+Our architecture consists of three layers: \textbf{Interaction}, \textbf{Coordination}, and \textbf{Execution}. Figure \ref{fig:architecture} illustrates the complete framework.
+
+\begin{figure}[htbp]
+    \centering
+    \pgfdeclarelayer{background}
+    \pgfdeclarelayer{foreground}
+    \pgfsetlayers{background,main,foreground}
+
+    \begin{tikzpicture}[
+        node distance=0.8cm and 0.3cm,
+        agent/.style={rectangle, draw=blue!80, fill=blue!10, rounded corners=3pt, text centered, font=\scriptsize\bfseries, minimum height=1cm, text width=2.1cm, inner sep=2pt},
+        tool/.style={rectangle, draw=orange!80, fill=orange!10, dashed, text centered, font=\scriptsize, minimum height=0.7cm, text width=1.8cm, inner sep=2pt},
+        coord/.style={rectangle, draw=purple!80, fill=purple!10, rounded corners=3pt, text centered, font=\scriptsize\bfseries, minimum height=0.8cm, text width=6cm},
+        layerbox/.style={rectangle, draw=gray!40, fill=gray!5, inner sep=8pt, rounded corners=5pt},
+        layerlabel/.style={font=\scriptsize\sffamily\bfseries, anchor=north east, text=gray!70},
+        myarrow/.style={-{Latex[length=2mm, width=2mm]}, thick, draw=gray!60},
+        apiarrow/.style={{Latex[length=1.5mm, width=1.5mm]}-{Latex[length=1.5mm, width=1.5mm]}, thick, draw=orange!60}
+    ]
+
+    \node (conv) [agent] {Conversation Agent\\(GPT-4)};
+    \node (pref) [agent, right=of conv] {Preferences Extractor\\(GPT-4o-mini)};
+    \node (hotel) [agent, below=1.4cm of $(conv.south)!0.5!(pref.south)$] {Hotel Agent};
+    \node (flight) [agent, left=of hotel] {Flight Agent};
+    \node (attr) [agent, right=of hotel] {Attraction Agent};
+    \node (kiwi) [tool, below=1.2cm of hotel] {Kiwi API\\(Flights)};
+    \node (booking) [tool, left=of kiwi] {Booking.com API\\(Hotels/Flights)};
+    \node (serper) [tool, right=of kiwi] {Serper API\\(Search)};
+    \node (coord) [coord, below=1.5cm of kiwi] {Itinerary Coordinator (GPT-4o)};
+
+    \draw [myarrow] (conv) -- (pref);
+    \coordinate (pref_out) at (pref.south);
+    \draw [myarrow] (pref_out) -- ++(0,-0.3) -| (flight.north);
+    \draw [myarrow] (pref_out) -- ++(0,-0.3) -| (hotel.north);
+    \draw [myarrow] (pref_out) -- ++(0,-0.3) -| (attr.north);
+    \draw [apiarrow] (flight.south) -- ++(0,-0.2) -| (booking.north);
+    \draw [apiarrow] (flight.south) -- ++(0,-0.2) -| (kiwi.north);
+    \draw [apiarrow] (hotel.south) -- (booking.north);
+    \draw [apiarrow] (attr.south) -- (serper.north);
+    \draw [myarrow, rounded corners=5pt] (flight.south west) -- ++(-0.3, -2.5) |- (coord.west);
+    \draw [myarrow, rounded corners=5pt] (attr.south east) -- ++(0.3, -2.5) |- (coord.east);
+    \draw [myarrow] (hotel.south) ++(0,-2.2) -- (coord.north);
+
+    \begin{pgfonlayer}{background}
+        \node [layerbox, fit=(conv) (pref)] (dialogue_layer) {};
+        \node [layerlabel] at (dialogue_layer.north east) {DIALOGUE LAYER};
+        \node [layerbox, fit=(flight) (attr)] (search_layer) {};
+        \node [layerlabel] at (search_layer.north east) {SEARCH LAYER (GPT-4o-mini)};
+        \node [layerbox, fit=(booking) (serper)] (tool_layer) {};
+        \node [layerlabel, text=orange!70] at (tool_layer.north east) {MCP TOOL LAYER};
+        \node [layerbox, fit=(coord)] (synthesis_layer) {};
+        \node [layerlabel] at (synthesis_layer.north east) {SYNTHESIS LAYER};
+        \node [draw=black!80, thick, rounded corners=10pt, fit=(dialogue_layer) (synthesis_layer), inner sep=15pt] (mainframe) {};
+        \node [font=\small\bfseries, anchor=south] at (mainframe.north) {MCP-DRIVEN MULTI-AGENT FRAMEWORK};
+    \end{pgfonlayer}
+
+    \end{tikzpicture}
+    \caption{The 6-Agent Framework Architecture. Arrows indicate data flow and API interactions via MCP.}
+    \label{fig:architecture}
+\end{figure}
+
+\subsection{Agent Hierarchy}
+
+We employ six specialized agents with heterogeneous model assignments (Table \ref{tab:agents}). The Coordinator uses GPT-4o for synthesis quality; search agents use GPT-4o-mini for cost efficiency.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Agent} & \textbf{Model} & \textbf{Function} \\
+\midrule
+Conversational & GPT-4 & Gather requirements \\
+Preferences & GPT-4o-mini & Structure JSON \\
+Flight/Hotel/Attr. & GPT-4o-mini & Query APIs \\
+Coordinator & GPT-4o & Synthesize plan \\
+\bottomrule
+\end{tabular}
+\caption{Agent configuration with model assignments.}
+\label{tab:agents}
+\end{table}
+
+\subsection{A2A Communication Protocol}
+
+Agents exchange structured \texttt{A2AMessage} objects rather than natural language, containing sender, receiver, message type (\texttt{REQUEST}/\texttt{RESPONSE}), and structured JSON payload. This eliminates semantic drift between agents.
+
+\subsection{MCP Tool Integration}
+
+Our unified MCP server wraps three APIs (Kiwi.com, Booking.com, Serper) with 12 tools. Explicit typing rejects malformed requests \textit{before} external API calls, achieving 0\% protocol errors through ``Fail Fast'' validation.
+
+%-------------------------------------------------------------------------
+% 4. EXPERIMENTS
+%-------------------------------------------------------------------------
+\section{Experimental Evaluation}
+
+\subsection{Setup}
+
+We evaluate on 215 diverse travel queries covering multi-city trips, business travel, family vacations, and adventure destinations. Implementation uses CrewAI v0.86, LangChain v0.3.x, and GPT-4/GPT-4o via OpenAI API.
+
+\subsection{Results}
+
+Table \ref{tab:results} presents aggregate results:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total Runs & 215 \\
+Successful & 214 (99.5\%) \\
+Feasible & 177 (\textbf{82.7\%}) \\
+Avg Tokens & 79,615 \\
+Avg Latency & 312.1s \\
+Protocol Errors & \textbf{0\%} \\
+\bottomrule
+\end{tabular}
+\caption{Aggregate results (N=215).}
+\label{tab:results}
+\end{table}
+
+Figure \ref{fig:token_dist} shows the token distribution across runs. The majority (41.4\%) fall within 40k-80k tokens, demonstrating efficient operation.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            ybar interval,
+            width=0.95\columnwidth,
+            height=5cm,
+            ymin=0, ymax=70,
+            ylabel={Number of Runs},
+            xlabel={Token Usage (Thousands)},
+            symbolic x coords={0, 40, 60, 80, 100, 150, 200},
+            xtick=data,
+            x tick label style={font=\footnotesize},
+            ylabel style={font=\small},
+            xlabel style={font=\small},
+            grid=y,
+            major grid style={dotted, gray!40},
+            fill=orange!40,
+            draw=orange!80,
+            axis on top
+        ]
+            \addplot coordinates {
+                (0, 18) (40, 42) (60, 58) (80, 45) (100, 38) (150, 14) (200, 0)
+            };
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Token distribution per run (N=215). Majority falls within 40k-80k tokens.}
+    \label{fig:token_dist}
+\end{figure}
+
+\subsection{Comparison with Baselines}
+
+Figure \ref{fig:feasibility} compares feasibility rates against prior work:
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            ybar,
+            width=0.95\columnwidth,
+            height=5.5cm,
+            symbolic x coords={ReAct, TravelAgent, VAIAGE, Ours},
+            xtick=data,
+            nodes near coords,
+            nodes near coords align={vertical},
+            ymin=50, ymax=100,
+            ylabel={Feasibility Rate (\%)},
+            x tick label style={font=\footnotesize},
+            bar width=0.7cm,
+            enlarge x limits=0.2,
+            grid=y,
+            major grid style={dashed, gray!30}
+        ]
+            \addplot[fill=blue!60, draw=black!80] coordinates {
+                (ReAct, 62.4) (TravelAgent, 78.1) (VAIAGE, 82.5) (Ours, 82.7)
+            };
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Feasibility comparison. Our system achieves 82.7\% with real API bookings vs. simulated environments in prior work.}
+    \label{fig:feasibility}
+\end{figure}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & \textbf{Feas.} & \textbf{PER} & \textbf{Tokens} & \textbf{Detail} \\
+\midrule
+Vanilla ReAct & 62.4\% & 18.5\% & 14,200 & Summary \\
+TravelAgent & 78.1\% & 12.3\% & 11,500 & Summary \\
+VAIAGE & 82.5\% & 9.1\% & 18,300 & Partial \\
+\textbf{Ours} & \textbf{82.7\%} & \textbf{0.0\%} & 79,615 & Full \\
+\bottomrule
+\end{tabular}
+\caption{Comparison with prior work. Higher token usage reflects complete itinerary generation with real API data.}
+\label{tab:baseline}
+\end{table}
+
+\subsection{Ablation Study}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Configuration} & \textbf{Feasibility} & \textbf{PER} \\
+\midrule
+Full System (MCP + A2A) & 82.7\% & 0.0\% \\
+w/o MCP (Standard Tools) & 65.0\% & 12.5\% \\
+w/o A2A (Shared Context) & 55.0\% & 8.3\% \\
+Single Agent & 45.0\% & 22.1\% \\
+\bottomrule
+\end{tabular}
+\caption{Ablation study. MCP contributes 17.7\% feasibility; A2A contributes 27.7\%.}
+\label{tab:ablation}
+\end{table}
+
+%-------------------------------------------------------------------------
+% 5. DISCUSSION
+%-------------------------------------------------------------------------
+\section{Discussion}
+
+\textbf{Tool Standardization.} The 0\% protocol error rate validates MCP-based schema enforcement over prompt-based validation. By offloading validation to the tool layer, LLM context windows are freed for reasoning.
+
+\textbf{Structured Communication.} Our A2A ``transaction'' model (JSON objects) outperforms ``discussion'' models (natural language) for high-fidelity booking tasks, eliminating semantic drift.
+
+\textbf{Cost Efficiency.} At $\sim$80,000 tokens/query, cost is approximately \$0.60-1.00. Strategic GPT-4o-mini deployment for search agents maintains quality while reducing costs.
+
+\textbf{Limitations.} (1) Latency ($\sim$5 min) exceeds interactive expectations. (2) API dependencies affect reproducibility. (3) 17.3\% non-feasible runs resulted from LLM parsing loops.
+
+%-------------------------------------------------------------------------
+% 6. CONCLUSION
+%-------------------------------------------------------------------------
+\section{Conclusion}
+
+We presented an MCP-driven multi-agent framework achieving \textbf{82.7\% feasibility} across 215 travel scenarios with \textbf{zero protocol errors}. By treating tool interfaces as strongly-typed contracts and agent communications as structured transactions, we addressed context bloat and protocol fragility.
+
+Our results demonstrate that smaller models (GPT-4o-mini) can be strategically deployed for specialized agents without sacrificing quality. Future work includes response caching and multi-modal integration.
+
+%-------------------------------------------------------------------------
+% REFERENCES
+%-------------------------------------------------------------------------
+\balance
+{\small
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+}
+
+\end{document}

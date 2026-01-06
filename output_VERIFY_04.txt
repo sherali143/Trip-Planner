@@ -1,0 +1,139 @@
+Query: 4-day ski trip to Swiss Alps (Zermatt) for 3 adults. Budget $6000. Skiing, spa, fondue. Jan 15-19, 2026.
+Expected Days: 4
+============================================================
+
+**Executive Summary:**
+Zermatt, located in the Swiss Alps, is a picturesque destination known for its skiing, hiking, and stunning views of the Matterhorn. January offers a winter wonderland experience with snow-covered landscapes perfect for skiing enthusiasts. The culture is rich with Swiss traditions, and the local cuisine, including fondue, is a must-try.
+
+**Complete Flight Analysis:**
+
+**YOUR TOP 3 RECOMMENDED FLIGHTS:**
+
+🥇 **BEST OVERALL: Swiss - $742**
+- **Why recommended:** This flight offers a direct route with convenient morning departure and return times, minimizing travel fatigue and maximizing time in Zermatt.
+- **Outbound:** LX359, Departing LHR at 07:00, arriving GVA at 09:40, Duration: 1h 40m, Non-stop.
+- **Return:** LX359, Departing GVA at 07:25, arriving LHR at 08:15, Duration: 0h 50m, Non-stop.
+- **Total:** $742
+- **Budget impact:** Leaves $1358 for other expenses.
+- **Perfect if you:** Value time efficiency and direct flights.
+
+🥈 **BEST VALUE: British Airways - $741**
+- **Why recommended:** Offers a slightly lower price with a reputable airline, ensuring a comfortable journey.
+- **Outbound:** BA744, Departing LHR at 16:05, arriving GVA at 18:50, Duration: 1h 45m, Non-stop.
+- **Return:** BA744, Departing GVA at 07:10, arriving LHR at 08:05, Duration: 0h 55m, Non-stop.
+- **Total:** $741
+- **Budget impact:** Leaves $1359 for other expenses.
+- **Perfect if you:** Prefer a well-known airline with good service.
+
+🥉 **CHEAPEST: Swiss - $742**
+- **Why recommended:** Offers the same price as the best overall but with an afternoon departure, providing flexibility.
+- **Outbound:** LX355, Departing LHR at 14:25, arriving GVA at 17:05, Duration: 1h 40m, Non-stop.
+- **Return:** LX355, Departing GVA at 07:25, arriving LHR at 08:15, Duration: 0h 50m, Non-stop.
+- **Total:** $742
+- **Budget impact:** Leaves $1358 for other expenses.
+- **Perfect if you:** Need a later departure time.
+
+**OTHER OPTIONS:**
+| Option ID | Airline | Total Price | Departure Time | Arrival Time | Duration |
+|-----------|---------|-------------|----------------|--------------|----------|
+| FLIGHT-003| Swiss   | $742        | 17:25          | 20:05        | 1h 40m   |
+| FLIGHT-004| Swiss   | $742        | 19:30          | 22:10        | 1h 40m   |
+
+**Complete Hotel Analysis:**
+
+**YOUR TOP 3 RECOMMENDED HOTELS:**
+
+🥇 **BEST OVERALL: Le Petit CHARME-INN - $1231 total**
+- **Why recommended:** Offers a cozy atmosphere with excellent reviews for cleanliness and staff friendliness, ideal for families and couples.
+- **Location:** Zermatt, 300 meters from downtown.
+- **Rating:** 8.3/10 (2589 reviews)
+- **Price:** $307.75/night
+- **Nearby:** Matterhorn Museum, Gornergrat Railway.
+- **Perfect if you:** Want a charming and convenient stay.
+
+🥈 **BEST VALUE: Hotel Alpina - $1784 total**
+- **Why recommended:** Provides good value with comfortable rooms and a central location.
+- **Location:** Zermatt, 150 meters from downtown.
+- **Rating:** 8.1/10 (1071 reviews)
+- **Price:** $446/night
+- **Nearby:** Matterhorn Glacier Paradise.
+- **Perfect if you:** Seek comfort and convenience at a reasonable price.
+
+🥉 **BEST LOCATION: Carina - Design&Lifestyle hotel - $4177 total**
+- **Why recommended:** Offers a modern experience with excellent amenities and service.
+- **Location:** Zermatt, 0.6 km from downtown.
+- **Rating:** 8.7/10 (1263 reviews)
+- **Price:** $1044.25/night
+- **Nearby:** Ski-to-door access.
+- **Perfect if you:** Desire a luxurious and stylish stay.
+
+**OTHER OPTIONS:**
+| Hotel Name            | Rating | Price/Night | Total Price |
+|-----------------------|--------|-------------|-------------|
+| Alpen Resort & Spa    | 9.2/10 | $736.25     | $2945       |
+| Hotel Alpenroyal      | 8.5/10 | $654.50     | $2618       |
+
+**Expert Recommendations:**
+- **BEST FLIGHT:** Swiss LX359 - Perfect for its direct route and convenient timing, ensuring minimal travel fatigue and maximum time in Zermatt.
+- **BEST HOTEL:** Le Petit CHARME-INN - Offers a charming and comfortable stay with excellent reviews, ideal for enjoying Zermatt's attractions.
+- **TOTAL SO FAR:** $1973
+- **REMAINING BUDGET:** $4027 for activities/meals
+
+**ALTERNATIVE COMBINATIONS:**
+1. Swiss LX359 + Hotel Alpina = $2526 (Most balanced)
+2. British Airways BA744 + Le Petit CHARME-INN = $1972 (Budget-friendly)
+3. Swiss LX355 + Carina - Design&Lifestyle hotel = $4919 (Premium)
+
+**Detailed Daily Itinerary:**
+
+**DAY 1: January 15, 2026 - Arrival and Exploration**
+- **Flight:** Depart LHR at 07:00, arrive GVA at 09:40.
+- **Transport to Zermatt:** Train from Geneva to Zermatt, approx. 3 hours.
+- **Hotel Check-in:** Le Petit CHARME-INN
+- **Afternoon:** Explore Zermatt village, visit Matterhorn Museum.
+- **Dinner:** Swiss fondue at Restaurant Whymper-Stube.
+- **Cost:** $150
+
+**DAY 2: January 16, 2026 - Skiing Adventure**
+- **Morning:** Breakfast at hotel, then skiing at Zermatt-Matterhorn Ski Resort.
+- **Lunch:** Mountain restaurant, try Rösti.
+- **Afternoon:** Continue skiing, enjoy après-ski activities.
+- **Dinner:** Chez Vrony, famous for local cuisine.
+- **Cost:** $300
+
+**DAY 3: January 17, 2026 - Spa and Relaxation**
+- **Morning:** Breakfast, then visit a local spa for relaxation.
+- **Lunch:** Light meal at a café.
+- **Afternoon:** Explore Gornergrat Railway for panoramic views.
+- **Dinner:** Gourmet dinner at The Omnia.
+- **Cost:** $350
+
+**DAY 4: January 18, 2026 - Departure**
+- **Morning:** Breakfast, last-minute shopping.
+- **Hotel Checkout:** 11:00 AM
+- **Transport to Geneva:** Train back to Geneva.
+- **Flight:** Depart GVA at 07:25, arrive LHR at 08:15.
+- **Cost:** $150
+
+**Budget Breakdown:**
+- **Flights:** $742
+- **Accommodation:** $1231
+- **Daily Expenses:**
+  - Day 1: $150
+  - Day 2: $300
+  - Day 3: $350
+  - Day 4: $150
+- **Transportation:** $200
+- **Miscellaneous:** $100
+- **GRAND TOTAL:** $3223
+- **ORIGINAL BUDGET:** $6000
+- **STATUS:** Within budget by $2777
+
+**Travel Tips:**
+- **Packing List:** Warm clothing, ski gear, travel adapters.
+- **Local Knowledge:** Learn basic Swiss German phrases.
+- **Safety Tips:** Be cautious on ski slopes, follow local regulations.
+- **Money-Saving Strategies:** Use public transport, dine at local eateries.
+- **Alternative Activities:** Snowshoeing, ice skating.
+
+This itinerary ensures a memorable and well-planned trip to Zermatt, balancing activities, relaxation, and cultural experiences within the allocated budget.

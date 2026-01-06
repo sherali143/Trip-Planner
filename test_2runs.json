@@ -1,0 +1,34 @@
+{
+  "runs": [
+    {
+      "run_id": 1,
+      "success": true,
+      "feasible": true,
+      "tokens": 82248,
+      "latency": 365.6,
+      "output_length": 15953,
+      "days_found": 15
+    },
+    {
+      "run_id": 2,
+      "success": true,
+      "feasible": false,
+      "tokens": 55505,
+      "latency": 254.7,
+      "output_length": 278,
+      "days_found": 0
+    }
+  ],
+  "summary": {
+    "total_runs": 2,
+    "successful": 2,
+    "feasible": 1,
+    "success_rate": "100.0%",
+    "feasibility_rate": "50.0%",
+    "avg_tokens": 68876,
+    "avg_latency": 310.1,
+    "total_tokens": 137753
+  },
+  "timestamp": "2026-01-05T00:07:05.449428",
+  "total_runs": 2
+}

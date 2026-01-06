@@ -354,7 +354,8 @@ def _call_booking_flights_api(
         
         # Format flight results
         formatted_flights = []
-        for idx, offer in enumerate(flight_offers[:15], 1):
+        formatted_flights = []
+        for idx, offer in enumerate(flight_offers[:5], 1):
             # Price
             price_info = offer.get("priceBreakdown", {})
             total_price = float(price_info.get("total", {}).get("units", 0))
@@ -521,7 +522,8 @@ def _call_kiwi_api_direct(
         
         # Format flight results
         formatted_flights = []
-        for i, itin in enumerate(itineraries[:10], 1):
+        formatted_flights = []
+        for i, itin in enumerate(itineraries[:5], 1):
             price_info = itin.get("price", {})
             price_per_person = float(price_info.get("amount", 0))
             total_price = price_per_person * adults
@@ -839,7 +841,11 @@ def search_internet(query: str) -> str:
         
         if result["success"]:
             logger.info(f"Web search completed for: {query}")
-            return result["data"]
+            # Truncate to save tokens (limit to 3000 chars)
+            data = result["data"]
+            if len(data) > 3000:
+                data = data[:3000] + "... (truncated)"
+            return data
         else:
             logger.error(f"Web search failed: {result['error']}")
             return json.dumps({"error": result["error"], "success": False})

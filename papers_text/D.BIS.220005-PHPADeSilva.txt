@@ -1,0 +1,966 @@
+Appendix 03
+Application for Undergraduate final year research Project
+Faculty of Computing
+APPLICATION FOR UNDERGRADUATE FINAL YEAR RESEARCH
+PROJECT
+0
+1
+T
+a
+g
+2
+3
+v
+o
+.
+.
+.
+h
+o
+A
+a
+e
+R
+P
+i
+l
+S
+d
+t
+I
+A
+i
+t
+r
+-
+e
+u
+t
+h
+E
+t
+P
+o
+l
+r
+s
+i
+a
+e
+p
+t
+n
+t
+e
+j
+o
+i
+l
+n
+e
+e
+o
+g
+a
+e
+f
+w
+r
+c
+i
+s
+f
+i
+i
+r
+c
+s
+n
+v
+t
+e
+t
+c
+w
+i
+h
+r
+i
+e
+t
+T
+a
+h
+s
+o
+e
+e
+h
+e
+l
+o
+i
+d
+i
+r
+A
+p
+b
+t
+c
+I
+r
+i
+l
+n
+r
+e
+h
+n
+T
+(
+e
+r
+o
+s
+t
+g
+e
+e
+r
+c
+e
+j
+)
+a
+x
+e
+a
+o
+l
+,
+p
+c
+v
+l
+n
+i
+T
+t
+e
+e
+g
+v
+c
+s
+l
+o
+e
+e
+h
+t
+y
+u
+P
+e
+n
+o
+d
+r
+a
+c
+l
+u
+i
+a
+e
+f
+l
+s
+d
+n
+r
+d
+m
+i
+(
+o
+n
+s
+b
+A
+m
+t
+e
+e
+T
+a
+r
+I
+n
+t
+:
+)
+b
+e
+h
+t
+r
+c
+A
+,
+e
+i
+o
+h
+e
+S
+r
+p
+n
+f
+S
+o
+,
+r
+p
+o
+m
+o
+f
+r
+o
+l
+t
+e
+p
+o
+w
+t
+a
+f
+o
+e
+l
+g
+r
+e
+n
+a
+s
+t
+y
+e
+c
+t
+r
+S
+i
+d
+t
+e
+a
+o
+c
+l
+w
+o
+l
+a
+u
+o
+n
+p
+t
+r
+c
+i
+p
+k
+i
+o
+s
+l
+.
+i
+n
+e
+c
+S
+l
+T
+a
+y
+f
+P
+p
+t
+o
+r
+a
+i
+e
+e
+a
+o
+r
+T
+n
+r
+c
+v
+n
+s
+P
+d
+o
+i
+e
+o
+f
+o
+e
+u
+a
+l
+i
+n
+f
+r
+r
+c
+c
+I
+s
+a
+i
+t
+c
+t
+s
+h
+o
+A
+l
+i
+u
+i
+m
+n
+e
+n
+z
+r
+r
+e
+a
+a
+a
+p
+e
+,
+r
+l
+t
+t
+r
+a
+a
+i
+e
+i
+U
+o
+z
+o
+l
+r
+p
+y
+e
+y
+n
+s
+o
+d
+e
+t
+G
+s
+h
+i
+D
+r
+n
+e
+a
+e
+-
+e
+d
+e
+n
+C
+p
+T
+n
+c
+d
+w
+e
+r
+e
+i
+r
+o
+n
+s
+o
+a
+E
+r
+p
+i
+a
+t
+v
+r
+o
+f
+r
+o
+k
+t
+e
+f
+i
+n
+i
+s
+,
+c
+i
+l
+o
+e
+c
+o
+M
+n
+P
+d
+D
+i
+r
+e
+.
+l
+,
+a
+e
+a
+a
+n
+S
+I
+s
+k
+n
+t
+t
+g
+n
+i
+u
+n
+i
+T
+g
+r
+n
+t
+d
+i
+e
+e
+n
+r
+g
+n
+e
+a
+g
+a
+n
+g
+t
+,
+v
+r
+e
+t
+a
+D
+s
+e
+r
+,
+t
+l
+a
+E
+i
+a
+a
+o
+r
+I
+t
+s
+f
+t
+e
+a
+n
+p
+f
+i
+-
+i
+n
+i
+a
+c
+o
+D
+r
+e
+d
+a
+i
+f
+r
+e
+v
+r
+t
+a
+i
+A
+i
+i
+n
+o
+v
+s
+r
+c
+e
+n
+i
+I
+e
+e
+y
+d
+n
+a
+o
+s
+t
+n
+i
+.
+r
+o
+n
+d
+Name and Designation: Mrs. MVT Kawya
+Mobile : 076 8361698
+Institution (if not from the University): General Sir
+John Kotelawala Defense University
+E-mail : mvtkawya@kdu.ac.lk
+Area of expertise related to the proposed project:
+Name and Designation:
+Mobile :
+Institution (if not from the University):
+E-mail :
+Area of expertise related to the proposed project:
+Name and Designation:
+Mobile :
+Institution (if not from the University): E-mail :
+Area of expertise related to the proposed project:
+4. STUDENT
+Name: PHPA De Silva Mobile : 074 0190268
+Index No: D/BIS/22/0005 E-mail : 39-bis-0005@kdu.ac.lk
+Stream: Information Systems
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+5. Summary
+(a) Explain briefly the research problem, research approach, and expected outputs.
+Not exceeding one A4 page, font type Times New Roman, size 11, single space.
+This project aims to develop an AI-powered travel planner that provides personalized and efficient
+travel itineraries based on user preferences, budget, and travel dates. The system leverages AI models
+like Gemini and Firebase for authentication and data management. The application allows users to
+create profiles, plan trips, and receive recommendations for flights, hotels, and tourist attractions. The
+project demonstrates how AI can revolutionize the travel industry by offering tailored solutions for
+modern travelers.
+Research Approach:
+This project proposes an AI-Powered Travel Planner that generates personalized itineraries using
+Gemini AI, Firebase authentication, and real-time data. The system will allow users to create profiles,
+set preferences (travelers, budget, and dates), and receive AI-generated travel plans with flight and hotel
+recommendations. AI will also generate images and descriptions of locations to enhance the user
+experience. The methodology includes user profile management, itinerary generation, and API
+integration for flight and hotel bookings.
+Expected Outputs:
+• A web/mobile application that provides personalized travel planning.
+• AI-generated travel recommendations, including flights, hotels, and attractions.
+• Firebase-based authentication and secure user data management.
+• AI-generated images and location details for better visualization.
+• A user-friendly interface for seamless trip planning.
+(b) Give 3 – 5 keywords for the proposed project:
+• AI-powered travel planning
+• Personalized itinerary generation
+• Gemini AI
+• Firebase authentication
+• Smart tourism technology
+2
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+6. Research Problem
+6.1 Research problem/s
+Planning a trip requires extensive research, including selecting destinations, finding suitable flights, booking hotels,
+and optimizing itineraries based on preferences, budget, and time constraints. Travelers often struggle to gather and
+organize information efficiently, leading to suboptimal travel experiences.
+• Time-consuming research: Manually searching for flights, hotels, and attractions is tedious.
+• Lack of personalization: Generic travel recommendations do not consider individual preferences, budgets,
+or travel groups.
+• Difficulty in itinerary optimization: Travelers find it hard to plan activities efficiently within a limited
+timeframe.
+• Fragmented booking process: Users need to visit multiple platforms for flight and hotel bookings.
+6.2 Analysis of the problem/s & rationale for the research question
+• Growing demand for smart tourism solutions: AI-driven recommendations can streamline trip
+planning.
+• Existing travel apps lack full AI-powered automation: Most travel apps only provide booking services
+without AI-driven itinerary planning.
+• Personalized travel planning enhances user experience: AI can optimize trip plans based on
+preferences, real-time data, and budget constraints.
+• Efficiency and convenience: Automating the travel planning process reduces time spent on research and
+improves decision-making.
+7. Comprehensive literature review AND the complete list of references in the relevant area.
+(Attach additional sheets if necessary)
+The literature review will explore existing research and technologies related to AI-powered travel planning,
+itinerary optimization, and smart tourism.
+AI in Travel and Tourism
+AI is transforming the travel industry by personalizing travel experiences, optimizing itineraries, and
+o
+automating bookings.
+Studies highlight how machine learning models analyze user preferences to generate tailored
+o
+recommendations.
+3
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+Chatbots and virtual assistants powered by AI improve customer service in travel platforms.
+o
+AI-Based Itinerary Optimization
+AI-driven route optimization algorithms help minimize travel time and maximize experience.
+o
+Research on recommendation systems using AI suggests that collaborative filtering and content-based
+o
+filtering improve travel suggestions.
+Deep learning models have been used to generate travel itineraries based on historical user data and
+o
+preferences.
+Firebase for Authentication and AI Integration
+Firebase is widely used for secure authentication and real-time database management.
+o
+Studies indicate that serverless computing with Firebase enhances the scalability and performance of AI-
+o
+powered applications.
+Gemini AI for Smart Tourism
+Gemini AI (Google AI) enhances travel planning through natural language processing (NLP) and real-
+o
+time data analysis.
+Studies have shown that AI-generated content (e.g., images, travel descriptions) improves user engagement
+o
+in travel applications.
+o
+References
+• Authors: [Authors not specified]
+Published in: International Research Journal of Engineering and Technology (IRJET), Volume 11, Issue 4, April
+2024
+https://www.irjet.net/archives/V11/i4/IRJET-V11I4152.pdf
+Authors: [Authors not specified]
+Published in: Online Scientific Research Journal, 2024
+https://www.onlinescientificresearch.com/articles/transforming-travel-planning-the-impact-of-generative-ai-on-
+itinerary-optimization-cost-efficiency-and-user-experience.html
+Authors: Aparna Mote, Nitisha Rajgure, Sanika Koparde, Bhavana Munot, Tanishka Keswad, Tanaya Nalawade
+Published in: International Journal of Innovative Research in Information and Development (IJIRID), Volume 3,
+4
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+Issue 5, October 2024
+https://www.ijirid.in/3-5-24Oct/3-5-1-Aparna%20Mote-Nitisha%20Rajgure-Sanika%20Koparde-
+Bhavana%20Munot-Tanishka%20Keswad-Tanaya%20Nalawade.pdf
+• Authors: Jian Xie, Kai Zhang, Jiangjie Chen, Tinghui Zhu, Renze Lou, Yuandong Tian, Yanghua Xiao,
+Yu Su
+Published in: arXiv preprint arXiv:2402.01622, February 2024
+https://arxiv.org/abs/2402.01622
+• Authors: [Authors not specified]
+Published in: IEEE Conference Publication, 2024
+https://ieeexplore.ieee.org/abstract/document/10434354
+• Authors: [Authors not specified]
+Published in: arXiv preprint arXiv:2409.08069, September 2024
+personalization.
+https://arxiv.org/abs/2409.08069
+• Authors: [Authors not specified]
+Published in: Electronics, Volume 13, Issue 23, December 2024
+https://www.mdpi.com/2079-9292/13/23/4751
+• Authors: [Authors not specified]
+Published in: International Journal of Creative Research Thoughts (IJCRT), Volume 12, Issue 11, November
+2024
+https://ijcrt.org/papers/IJCRT2411488.pdf
+• Authors: [Authors not specified]
+Published in: International Journal of Future Generation Communication and Networking (IJFGCN), Volume 17,
+Issue 3, March 2024
+8. Originality & innovation of the proposed work
+This project introduces an AI-powered travel planning system that differentiates itself from existing travel apps
+through:
+1. AI-Generated Personalized Travel Itineraries
+Unlike traditional travel apps that rely on static recommendations, this system uses Gemini AI to generate
+customized trip plans based on:
+• User preferences (budget, travel group, dates, destinations).
+• Real-time data (weather, ticket availability, flight/hotel pricing).
+• Optimized scheduling to maximize travel experience within the available time.
+5
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+2. AI-Generated Content & Images
+• The platform will use AI to generate travel descriptions and images of destinations, enhancing user
+engagement and visualization.
+• This feature eliminates reliance on third-party databases and offers a more immersive and interactive user
+experience.
+3. Integrated Flight & Hotel Booking via AI Recommendations
+• Unlike many existing platforms that require users to search manually, this system automatically suggests,
+and links flights and hotels based on:
+Availability and price comparison.
+o
+Proximity to selected attractions.
+o
+User budget and preferences.
+o
+4. Firebase-Powered Authentication & Data Management
+• Using Firebase ensures secure and scalable authentication and data storage.
+• It allows seamless AI integration, real-time updates, and multi-device accessibility.
+5. Smart Travel Assistant Powered by Gemini AI
+• The system acts as a virtual travel assistant, providing:
+AI-based suggestions for alternative travel plans if there are budget constraints or booking
+o
+unavailability.
+Real-time updates on flight delays, weather conditions, and event recommendations.
+o
+6
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+9. Overall aim and specific objectives of the proposed work
+9.1 Overall aim
+To develop an AI-powered travel planner that generates personalized, efficient, and optimized travel
+itineraries based on user preferences, budget, and real-time data using Gemini AI and Firebase.
+9.2 Specific Objective/s
+• Develop a user-friendly interface for trip planning
+• Implement AI-based personalized itinerary generation
+• Integrate AI-powered recommendations for flights, hotels, and attractions
+• Enable AI-generated content and images for travel destinations
+• Implement Firebase for authentication and real-time data storage
+• Develop a trip review and modification feature
+• Ensure scalability and performance efficiency
+10. Methodology
+10.1 Describe Methodology
+(Attach additional sheets if necessary)
+1: System Design & Requirement Analysis
+• Identify functional and non-functional requirements.
+• Design the system architecture and user flow.
+2: Frontend & Backend Development
+• Frontend: Develop a user-friendly interface using React/Flutter.
+• Backend: Implement RESTful APIs using Node.js / .NET Core to handle travel data and AI
+processing.
+3: AI Model Integration
+• Use Gemini AI for itinerary generation, content creation, and recommendation logic.
+• Implement machine learning models for budget optimization and travel scheduling.
+4: Firebase Authentication & Database Setup
+• Implement secure login/signup and profile management with Firebase.
+• Store trip history, preferences, and itinerary details securely.
+5: AI-Generated Travel Itineraries & Booking Integration
+• Generate custom trip plans based on user input.
+• Integrate real-time APIs for flight and hotel bookings.
+7
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+6: Testing & Performance Optimization
+• Conduct unit, integration, and user acceptance testing (UAT).
+• Optimize API response time and AI model execution speed.
+7: Deployment & Final Review
+• Deploy on a cloud platform (AWS, Firebase Hosting, or Azure).
+• Conduct final system testing and documentation.
+8
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+10.2 Experimental design where applicable
+Please complete relevant sections
+Diagram 10.2.1
+9
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+Functional Requirement
+Num
+01 User authentication & profile management.
+02 AI-based trip itinerary generation.
+03 Real-time flight & hotel booking recommendations.
+04 AI-generated travel descriptions & images.
+05 Review & modify trip plans.
+06 Multi Language Travel Assistant, Live Travel Updates & Alerts and AR city
+Guide
+Functional Requirements
+Table 10.2.2 - Functional Requirements
+Non-functional requirement
+Num Non-Functional Requirements Specification
+01 The system should support multiple users Scalability
+simultaneously.
+02 Implement Firebase authentication and data protection. Security
+03 Optimize AI processing time and API response speed. Performance
+04 Ensure seamless navigation and accessibility. User-Friendly
+Interface
+Table 10.2.3 - Non-Functional Requirements
+• Performance:
+Ensure the system can handle 1,000+ concurrent users.
+o
+AI recommendations should be generated within 2–3 seconds.
+o
+10
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+10.3 Work plan
+Please attach the quarterly Gantt Chart to cover the proposed study, as per the format below.
+10.4 Indicators & milestones of progress
+Please list the milestones and indicators that will be used to measure the progress of the proposed
+Study
+1. Completion of requirement analysis and system design.
+2. Development of user authentication and profile creation.
+3. Integration of Gemini AI for recommendations.
+4. Testing and debugging of the application.
+5. Final deployment and user feedback collection.
+11
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+11. Ethical considerations
+Relevance to the project Relevant Not relevant
+12. Plan to protect the human & environmental safety issues related to the project
+• User Data Privacy & Security
+• AI Bias & Ethical Use of AI
+• Minimizing Environmental Impact
+• User Safety Considerations
+• Secure authentication & encrypted data storage with Firebase.
+• Fair AI recommendations to prevent bias in travel suggestions.
+• Integration of travel safety advisories for user awareness.
+• Eco-friendly recommendations to promote sustainable tourism.
+13. Expected Research Outputs
+Deliverables at the end of the project in point form
+• AI-Powered Travel Planner Application
+• User Profile and Authentication System
+• AI-Generated Itineraries & Content
+• Integrated Flight and Hotel Booking Services
+• Research Paper/Thesis
+• Codebase and Documentation
+12
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+14. Plan to utilize the research output
+The research output from this project will have significant practical applications and can be utilized in
+several ways:
+• Commercial Use
+• Academic Use
+• Consumer Use
+• Future Research and Development
+• Collaboration with In Stakeholders
+13
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+15. Research Outcomes
+15.1 Significance of research outcomes and the impact on national/socio-economic development of
+Sri Lanka.
+Please write in point form.
+This project has the potential to positively impact Sri Lanka's tourism sector and contribute to national
+socio-economic development in several ways:
+• Boosting Sri Lanka’s Tourism Industry
+• Economic Growth through Partnerships
+• Technological Advancement in Sri Lanka
+• Sustainability and Eco-Tourism
+15.2 Identify relevant stakeholders and potential beneficiaries
+• Tourism Industry Stakeholders
+• Local Businesses
+• End-Users (Travelers)
+• Technology Stakeholders
+• Government and Regulatory Bodies
+16. Plan to protect and exploit Intellectual Property (IP)?
+(Indicate if applicable)
+• Apply for a patent for the unique AI-powered recommendation system.
+• Trademark the application name and logo.
+• Explore licensing opportunities for the technology.
+14
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+17. Signature of Supervisors
+The details given above are correct and personally
+verified.
+(a) ………………………………
+(Student)
+………………………....
+(b) ……………………………… Date
+(Principal Supervisor)
+(c) ………………………………
+(Co- Supervisor -1)
+18. Recommendation and Approval
+The application is recommended.
+……………………………………………...…… …………………………..
+Department Project Coordinator Date
+The application is approved.
+……………………………………………...…… …………………………..
+Head of the Department Date
+15
+
+Application for Undergraduate final year research Project
+Faculty of Computing
+Guidelines for Applicants
+1. The proposed research project should necessarily be an original investigation.
+2. The problem to be tackled should be clearly identified.
+3. A comprehensive literature review should be done, and all details should be provided together with
+the list of references.
+4. The budget should be calculated correctly and stated in detail.
+5. A detailed time-based work plan (Gantt chart) should be included stating the proposed activities
+and time frames clearly.
+6. In the case of selection of a supervisor from an outside institution, it is mandatory to get an
+internal supervisor appointed.
+7. Softcopy can be obtained from the department in word format. Softcopy of the application should
+be submitted as PDF format.
+8. Incomplete applications will not be considered.
+TWO hard copies of the completed application form should be submitted to:
+Project Coordinator
+Department of Computer Science, Faculty of Computing
+An electronic version (PDF) should also be e-mailed to hoditm@kdu.ac.lk, on or before the deadline.
+16
+

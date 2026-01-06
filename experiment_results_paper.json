@@ -1,0 +1,78 @@
+{
+  "runs": [
+    {
+      "id": "PAPER_001",
+      "latency": 254.04,
+      "tokens": {
+        "total": 95354,
+        "prompt": 81141,
+        "completion": 14213,
+        "requests": 25
+      },
+      "feasible": true,
+      "days_found": 14
+    },
+    {
+      "id": "PAPER_002",
+      "latency": 188.53,
+      "tokens": {
+        "total": 86275,
+        "prompt": 78560,
+        "completion": 7715,
+        "requests": 23
+      },
+      "feasible": true,
+      "days_found": 5
+    },
+    {
+      "id": "PAPER_003",
+      "latency": 255.49,
+      "tokens": {
+        "total": 96085,
+        "prompt": 79121,
+        "completion": 16964,
+        "requests": 22
+      },
+      "feasible": true,
+      "days_found": 10
+    },
+    {
+      "id": "PAPER_004",
+      "latency": 237.78,
+      "tokens": {
+        "total": 105471,
+        "prompt": 92713,
+        "completion": 12758,
+        "requests": 26
+      },
+      "feasible": true,
+      "days_found": 14
+    },
+    {
+      "id": "PAPER_005",
+      "error": "litellm.RateLimitError: RateLimitError: OpenAIException - You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.",
+      "feasible": false
+    },
+    {
+      "id": "PAPER_006",
+      "error": "litellm.RateLimitError: RateLimitError: OpenAIException - You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.",
+      "feasible": false
+    },
+    {
+      "id": "PAPER_007",
+      "error": "litellm.RateLimitError: RateLimitError: OpenAIException - You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.",
+      "feasible": false
+    },
+    {
+      "id": "PAPER_008",
+      "error": "litellm.RateLimitError: RateLimitError: OpenAIException - You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.",
+      "feasible": false
+    }
+  ],
+  "summary": {
+    "avg_tokens": 47898.0,
+    "avg_latency": 116.98,
+    "feasibility_rate": "50.0%",
+    "total_runs": 8
+  }
+}

@@ -1497,7 +1497,7 @@ class TripPlannerTasks:
                 {self.__tip_section()}
             """),
             expected_output=dedent("""
-                Comprehensive flight search results with 10-15 real options:
+                Comprehensive flight search results with 5 real options:
                 
                 {{
                     "search_summary": {{
@@ -1531,7 +1531,7 @@ class TripPlannerTasks:
                     }}
                 }}
                 
-                Return AT LEAST 10 complete flight options with REAL API data!
+                Return TOP 5 complete flight options with REAL API data!
             """),
             agent=agent,
             context=[extraction_task]  # ✅ RECEIVES STRUCTURED PREFERENCES
@@ -1569,7 +1569,7 @@ class TripPlannerTasks:
                 
                 STEP 2: ✅ Use "Search hotels by destination" tool
                    - Input: dest_id, arrival_date, departure_date, adults=2, room_qty=1
-                   - Get AT LEAST 15 hotels with prices
+                   - Get TOP 5 hotels with prices
                    - If this fails, STOP and report error
                 
                 STEP 3: ✅ Calculate budget limit
@@ -1577,7 +1577,7 @@ class TripPlannerTasks:
                    - Filter: keep only hotels where price ≤ max_per_night
                 
                 STEP 4: ✅ Use "Get hotel reviews" tool
-                   - For EACH hotel (at least top 15), get reviews
+                   - For EACH hotel (top 5), get reviews
                    - Extract: review_score, number_of_reviews
                    - Sort by review_score (highest first)
                 
@@ -1600,7 +1600,7 @@ class TripPlannerTasks:
                 **OUTPUT VALIDATION:**
                 ⚠️ Your output MUST include:
                 - [ ] dest_id obtained from Step 1
-                - [ ] At least 15 hotels from Step 2
+                - [ ] At least 5 hotels from Step 2
                 - [ ] Review scores for each from Step 4
                 - [ ] Attractions for top 3 from Step 6
                 - [ ] Complete details for each hotel
@@ -1628,17 +1628,17 @@ class TripPlannerTasks:
                 #3. [Hotel Name] - [Same complete details]
                 
                 ═══════════════════════════════════════════════════════════
-                📋 ALL HOTEL OPTIONS (15+ hotels sorted by review score)
+                📋 ALL HOTEL OPTIONS (5 hotels sorted by review score)
                 ═══════════════════════════════════════════════════════════
                 
                 Provide JSON structure with complete hotel data as specified.
                 
-                Return AT LEAST 15 complete hotel options with REAL API data!
+                Return TOP 5 complete hotel options with REAL API data!
                 
                 ═══════════════════════════════════════════════════════════
                 ⚠️ VALIDATION REQUIREMENTS - YOUR OUTPUT MUST INCLUDE:
                 ═══════════════════════════════════════════════════════════
-                ✅ At least 10-15 hotels with complete information
+                ✅ At least 5 hotels with complete information
                 ✅ Review scores from Booking.com API for each hotel
                 ✅ Nearby attractions for top 3 recommended hotels
                 ✅ Complete pricing information (per night + total)
@@ -1773,8 +1773,8 @@ class TripPlannerTasks:
             description=dedent(f"""
                 You are the Itinerary Coordinator. You will receive COMPLETE DATA from:
                 1. Extraction Task: User preferences and budget breakdown
-                2. Flight Task: 10-15 flight options with complete details
-                3. Hotel Task: 10-15 hotel options with reviews and locations
+                2. Flight Task: Top 5 flight options with complete details
+                3. Hotel Task: Top 5 hotel options with reviews and locations
                 4. Attraction Task: Daily activity and restaurant suggestions
                 
                 Conversation ID: {conversation_id}
@@ -1813,7 +1813,7 @@ class TripPlannerTasks:
                 🥈 BEST VALUE: [Same detail]
                 🥉 CHEAPEST: [Same detail]
                 
-                **OTHER OPTIONS:** (Table with remaining 7-12 flights)
+                **OTHER OPTIONS:** (Table with remaining flights)
                 
                 ═══════════════════════════════════════════════════════════
                 🏨 HOTEL OPTIONS ANALYSIS

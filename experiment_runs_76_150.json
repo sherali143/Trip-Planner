@@ -1,0 +1,689 @@
+{
+  "runs": [
+    {
+      "run_id": 76,
+      "success": true,
+      "feasible": true,
+      "tokens": 58139,
+      "latency": 219.8,
+      "output_length": 8636,
+      "days_found": 6
+    },
+    {
+      "run_id": 77,
+      "success": true,
+      "feasible": true,
+      "tokens": 59896,
+      "latency": 285.3,
+      "output_length": 11427,
+      "days_found": 9
+    },
+    {
+      "run_id": 78,
+      "success": true,
+      "feasible": true,
+      "tokens": 60954,
+      "latency": 256.4,
+      "output_length": 4723,
+      "days_found": 14
+    },
+    {
+      "run_id": 79,
+      "success": true,
+      "feasible": false,
+      "tokens": 45775,
+      "latency": 139.6,
+      "output_length": 42,
+      "days_found": 0
+    },
+    {
+      "run_id": 80,
+      "success": true,
+      "feasible": true,
+      "tokens": 31249,
+      "latency": 99.5,
+      "output_length": 4206,
+      "days_found": 6
+    },
+    {
+      "run_id": 81,
+      "success": true,
+      "feasible": true,
+      "tokens": 65812,
+      "latency": 198.7,
+      "output_length": 3884,
+      "days_found": 5
+    },
+    {
+      "run_id": 82,
+      "success": true,
+      "feasible": true,
+      "tokens": 116542,
+      "latency": 378.9,
+      "output_length": 11905,
+      "days_found": 12
+    },
+    {
+      "run_id": 83,
+      "success": true,
+      "feasible": true,
+      "tokens": 67215,
+      "latency": 236.1,
+      "output_length": 8566,
+      "days_found": 14
+    },
+    {
+      "run_id": 84,
+      "success": true,
+      "feasible": true,
+      "tokens": 79414,
+      "latency": 290.3,
+      "output_length": 10428,
+      "days_found": 15
+    },
+    {
+      "run_id": 85,
+      "success": true,
+      "feasible": true,
+      "tokens": 87464,
+      "latency": 272.3,
+      "output_length": 7987,
+      "days_found": 6
+    },
+    {
+      "run_id": 86,
+      "success": true,
+      "feasible": true,
+      "tokens": 69251,
+      "latency": 371.6,
+      "output_length": 6649,
+      "days_found": 10
+    },
+    {
+      "run_id": 87,
+      "success": true,
+      "feasible": false,
+      "tokens": 20583,
+      "latency": 28.6,
+      "output_length": 955,
+      "days_found": 0
+    },
+    {
+      "run_id": 88,
+      "success": true,
+      "feasible": true,
+      "tokens": 94624,
+      "latency": 372.8,
+      "output_length": 7069,
+      "days_found": 10
+    },
+    {
+      "run_id": 89,
+      "success": true,
+      "feasible": true,
+      "tokens": 65569,
+      "latency": 277.6,
+      "output_length": 5644,
+      "days_found": 8
+    },
+    {
+      "run_id": 90,
+      "success": true,
+      "feasible": true,
+      "tokens": 89255,
+      "latency": 335.3,
+      "output_length": 9097,
+      "days_found": 21
+    },
+    {
+      "run_id": 91,
+      "success": true,
+      "feasible": true,
+      "tokens": 58557,
+      "latency": 145.1,
+      "output_length": 6266,
+      "days_found": 8
+    },
+    {
+      "run_id": 92,
+      "success": true,
+      "feasible": true,
+      "tokens": 80903,
+      "latency": 268.0,
+      "output_length": 9719,
+      "days_found": 8
+    },
+    {
+      "run_id": 93,
+      "success": true,
+      "feasible": false,
+      "tokens": 20203,
+      "latency": 23.0,
+      "output_length": 176,
+      "days_found": 0
+    },
+    {
+      "run_id": 94,
+      "success": true,
+      "feasible": true,
+      "tokens": 41242,
+      "latency": 118.7,
+      "output_length": 9421,
+      "days_found": 14
+    },
+    {
+      "run_id": 95,
+      "success": true,
+      "feasible": true,
+      "tokens": 73674,
+      "latency": 266.4,
+      "output_length": 8899,
+      "days_found": 20
+    },
+    {
+      "run_id": 96,
+      "success": true,
+      "feasible": true,
+      "tokens": 73237,
+      "latency": 342.2,
+      "output_length": 7494,
+      "days_found": 10
+    },
+    {
+      "run_id": 97,
+      "success": true,
+      "feasible": true,
+      "tokens": 58697,
+      "latency": 164.0,
+      "output_length": 7484,
+      "days_found": 14
+    },
+    {
+      "run_id": 98,
+      "success": true,
+      "feasible": false,
+      "tokens": 67223,
+      "latency": 289.1,
+      "output_length": 151,
+      "days_found": 0
+    },
+    {
+      "run_id": 99,
+      "success": true,
+      "feasible": true,
+      "tokens": 77185,
+      "latency": 270.3,
+      "output_length": 8449,
+      "days_found": 12
+    },
+    {
+      "run_id": 100,
+      "success": true,
+      "feasible": true,
+      "tokens": 58389,
+      "latency": 187.3,
+      "output_length": 8586,
+      "days_found": 7
+    },
+    {
+      "run_id": 101,
+      "success": true,
+      "feasible": true,
+      "tokens": 90531,
+      "latency": 307.7,
+      "output_length": 11034,
+      "days_found": 15
+    },
+    {
+      "run_id": 102,
+      "success": true,
+      "feasible": true,
+      "tokens": 75068,
+      "latency": 256.1,
+      "output_length": 8740,
+      "days_found": 12
+    },
+    {
+      "run_id": 103,
+      "success": true,
+      "feasible": true,
+      "tokens": 41378,
+      "latency": 368.0,
+      "output_length": 3828,
+      "days_found": 9
+    },
+    {
+      "run_id": 104,
+      "success": true,
+      "feasible": true,
+      "tokens": 92169,
+      "latency": 368.7,
+      "output_length": 5913,
+      "days_found": 11
+    },
+    {
+      "run_id": 105,
+      "success": true,
+      "feasible": true,
+      "tokens": 44107,
+      "latency": 133.2,
+      "output_length": 3187,
+      "days_found": 2
+    },
+    {
+      "run_id": 106,
+      "success": true,
+      "feasible": true,
+      "tokens": 66425,
+      "latency": 364.7,
+      "output_length": 13813,
+      "days_found": 15
+    },
+    {
+      "run_id": 107,
+      "success": true,
+      "feasible": true,
+      "tokens": 100899,
+      "latency": 439.1,
+      "output_length": 11227,
+      "days_found": 9
+    },
+    {
+      "run_id": 108,
+      "success": true,
+      "feasible": true,
+      "tokens": 41289,
+      "latency": 138.6,
+      "output_length": 7445,
+      "days_found": 14
+    },
+    {
+      "run_id": 109,
+      "success": true,
+      "feasible": false,
+      "tokens": 63238,
+      "latency": 266.0,
+      "output_length": 275,
+      "days_found": 0
+    },
+    {
+      "run_id": 110,
+      "success": true,
+      "feasible": false,
+      "tokens": 87691,
+      "latency": 323.1,
+      "output_length": 219,
+      "days_found": 0
+    },
+    {
+      "run_id": 111,
+      "success": true,
+      "feasible": false,
+      "tokens": 30117,
+      "latency": 35.6,
+      "output_length": 42,
+      "days_found": 0
+    },
+    {
+      "run_id": 112,
+      "success": true,
+      "feasible": false,
+      "tokens": 30994,
+      "latency": 117.8,
+      "output_length": 2797,
+      "days_found": 3
+    },
+    {
+      "run_id": 113,
+      "success": true,
+      "feasible": true,
+      "tokens": 99876,
+      "latency": 423.6,
+      "output_length": 9101,
+      "days_found": 15
+    },
+    {
+      "run_id": 114,
+      "success": true,
+      "feasible": true,
+      "tokens": 64139,
+      "latency": 273.8,
+      "output_length": 7509,
+      "days_found": 4
+    },
+    {
+      "run_id": 115,
+      "success": true,
+      "feasible": false,
+      "tokens": 46984,
+      "latency": 158.0,
+      "output_length": 42,
+      "days_found": 0
+    },
+    {
+      "run_id": 116,
+      "success": true,
+      "feasible": true,
+      "tokens": 71371,
+      "latency": 273.3,
+      "output_length": 3629,
+      "days_found": 7
+    },
+    {
+      "run_id": 117,
+      "success": true,
+      "feasible": true,
+      "tokens": 72650,
+      "latency": 254.6,
+      "output_length": 4557,
+      "days_found": 6
+    },
+    {
+      "run_id": 118,
+      "success": true,
+      "feasible": true,
+      "tokens": 77323,
+      "latency": 342.1,
+      "output_length": 7817,
+      "days_found": 14
+    },
+    {
+      "run_id": 119,
+      "success": true,
+      "feasible": false,
+      "tokens": 69572,
+      "latency": 311.9,
+      "output_length": 283,
+      "days_found": 0
+    },
+    {
+      "run_id": 120,
+      "success": true,
+      "feasible": true,
+      "tokens": 67476,
+      "latency": 250.3,
+      "output_length": 8857,
+      "days_found": 14
+    },
+    {
+      "run_id": 121,
+      "success": true,
+      "feasible": true,
+      "tokens": 91573,
+      "latency": 426.5,
+      "output_length": 7958,
+      "days_found": 10
+    },
+    {
+      "run_id": 122,
+      "success": true,
+      "feasible": false,
+      "tokens": 95566,
+      "latency": 328.1,
+      "output_length": 248,
+      "days_found": 0
+    },
+    {
+      "run_id": 123,
+      "success": true,
+      "feasible": true,
+      "tokens": 85447,
+      "latency": 371.3,
+      "output_length": 4074,
+      "days_found": 7
+    },
+    {
+      "run_id": 124,
+      "success": true,
+      "feasible": true,
+      "tokens": 71694,
+      "latency": 319.9,
+      "output_length": 9366,
+      "days_found": 10
+    },
+    {
+      "run_id": 125,
+      "success": true,
+      "feasible": false,
+      "tokens": 40267,
+      "latency": 85.5,
+      "output_length": 373,
+      "days_found": 0
+    },
+    {
+      "run_id": 126,
+      "success": true,
+      "feasible": true,
+      "tokens": 92654,
+      "latency": 463.9,
+      "output_length": 10051,
+      "days_found": 15
+    },
+    {
+      "run_id": 127,
+      "success": true,
+      "feasible": false,
+      "tokens": 57487,
+      "latency": 209.8,
+      "output_length": 260,
+      "days_found": 0
+    },
+    {
+      "run_id": 128,
+      "success": true,
+      "feasible": true,
+      "tokens": 88544,
+      "latency": 393.0,
+      "output_length": 11273,
+      "days_found": 21
+    },
+    {
+      "run_id": 129,
+      "success": true,
+      "feasible": true,
+      "tokens": 77370,
+      "latency": 362.6,
+      "output_length": 10613,
+      "days_found": 8
+    },
+    {
+      "run_id": 130,
+      "success": true,
+      "feasible": true,
+      "tokens": 78791,
+      "latency": 291.5,
+      "output_length": 5413,
+      "days_found": 6
+    },
+    {
+      "run_id": 131,
+      "success": true,
+      "feasible": true,
+      "tokens": 71836,
+      "latency": 398.5,
+      "output_length": 7639,
+      "days_found": 10
+    },
+    {
+      "run_id": 132,
+      "success": true,
+      "feasible": true,
+      "tokens": 48536,
+      "latency": 161.4,
+      "output_length": 6945,
+      "days_found": 9
+    },
+    {
+      "run_id": 133,
+      "success": false,
+      "error": "litellm.InternalServerError: InternalServerError: OpenAIException - Connection error.",
+      "latency": 244.9
+    },
+    {
+      "run_id": 134,
+      "success": true,
+      "feasible": false,
+      "tokens": 34706,
+      "latency": 132.3,
+      "output_length": 568,
+      "days_found": 0
+    },
+    {
+      "run_id": 135,
+      "success": true,
+      "feasible": false,
+      "tokens": 78887,
+      "latency": 379.2,
+      "output_length": 155,
+      "days_found": 0
+    },
+    {
+      "run_id": 136,
+      "success": true,
+      "feasible": false,
+      "tokens": 47814,
+      "latency": 278.2,
+      "output_length": 186,
+      "days_found": 0
+    },
+    {
+      "run_id": 137,
+      "success": true,
+      "feasible": true,
+      "tokens": 77413,
+      "latency": 333.2,
+      "output_length": 8632,
+      "days_found": 9
+    },
+    {
+      "run_id": 138,
+      "success": true,
+      "feasible": true,
+      "tokens": 45279,
+      "latency": 150.4,
+      "output_length": 3496,
+      "days_found": 6
+    },
+    {
+      "run_id": 139,
+      "success": true,
+      "feasible": true,
+      "tokens": 73447,
+      "latency": 299.5,
+      "output_length": 7082,
+      "days_found": 12
+    },
+    {
+      "run_id": 140,
+      "success": true,
+      "feasible": false,
+      "tokens": 42634,
+      "latency": 96.2,
+      "output_length": 42,
+      "days_found": 0
+    },
+    {
+      "run_id": 141,
+      "success": true,
+      "feasible": false,
+      "tokens": 67235,
+      "latency": 359.7,
+      "output_length": 228,
+      "days_found": 0
+    },
+    {
+      "run_id": 142,
+      "success": true,
+      "feasible": true,
+      "tokens": 59198,
+      "latency": 214.5,
+      "output_length": 3555,
+      "days_found": 3
+    },
+    {
+      "run_id": 143,
+      "success": true,
+      "feasible": true,
+      "tokens": 66134,
+      "latency": 251.7,
+      "output_length": 4821,
+      "days_found": 2
+    },
+    {
+      "run_id": 144,
+      "success": true,
+      "feasible": true,
+      "tokens": 77069,
+      "latency": 380.1,
+      "output_length": 9059,
+      "days_found": 15
+    },
+    {
+      "run_id": 145,
+      "success": true,
+      "feasible": false,
+      "tokens": 20224,
+      "latency": 22.4,
+      "output_length": 230,
+      "days_found": 0
+    },
+    {
+      "run_id": 146,
+      "success": true,
+      "feasible": true,
+      "tokens": 55104,
+      "latency": 290.8,
+      "output_length": 12177,
+      "days_found": 15
+    },
+    {
+      "run_id": 147,
+      "success": true,
+      "feasible": false,
+      "tokens": 35293,
+      "latency": 185.4,
+      "output_length": 239,
+      "days_found": 0
+    },
+    {
+      "run_id": 148,
+      "success": true,
+      "feasible": true,
+      "tokens": 47244,
+      "latency": 336.9,
+      "output_length": 8571,
+      "days_found": 6
+    },
+    {
+      "run_id": 149,
+      "success": true,
+      "feasible": true,
+      "tokens": 39588,
+      "latency": 117.8,
+      "output_length": 3678,
+      "days_found": 4
+    },
+    {
+      "run_id": 150,
+      "success": true,
+      "feasible": false,
+      "tokens": 27864,
+      "latency": 68.9,
+      "output_length": 1340,
+      "days_found": 0
+    }
+  ],
+  "summary": {
+    "total_runs": 75,
+    "successful": 74,
+    "feasible": 53,
+    "success_rate": "98.7%",
+    "feasibility_rate": "71.6%",
+    "avg_tokens": 64179,
+    "avg_latency": 256.1,
+    "total_tokens": 4749247
+  },
+  "timestamp": "2026-01-05T11:12:36.539959",
+  "total_runs": 75,
+  "run_range": "76-150"
+}

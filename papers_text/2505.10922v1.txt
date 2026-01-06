@@ -1,0 +1,453 @@
+5202
+yaM
+61
+]AM.sc[
+1v22901.5052:viXra
+VAIAGE: A MULTI-AGENT SOLUTION TO PERSONAL-
+IZED TRAVEL PLANNING
+JiexiGe∗ BinwenLiu∗ JiaminWang∗
+3040873839 3040938839 3040938254
+jessie-0918@berkeley.edu liubinwen@berkeley.edu post1ude@berkeley.edu
+ABSTRACT
+Planning trips is a cognitively intensive task involving conflicting user prefer-
+ences, dynamic external information, and multi-step temporal-spatial optimiza-
+tion. Traditionalplatformsoftenfallshort—theyprovidestaticresults,lackcon-
+textualadaptation,andfailtosupportreal-timeinteractionorintentrefinement.
+Our approach, Vaiage, addresses these challenges through a graph-structured
+multi-agentframeworkbuiltaroundlargelanguagemodels(LLMs)thatserveas
+both goal-conditioned recommenders and sequential planners. LLMs infer user
+intent,suggestpersonalizeddestinationsandactivities,andsynthesizeitineraries
+that align with contextual constraints such as budget, timing, group size, and
+weather.Throughnaturallanguageinteraction,structuredtooluse,andmap-based
+feedbackloops,Vaiageenablesadaptive,explainable,andend-to-endtravelplan-
+ninggroundedinbothsymbolicreasoningandconversationalunderstanding.
+To evaluate Vaiage, we conducted human-in-the-loop experiments using rubric-
+basedGPT-4assessmentsandqualitativefeedback. Thefullsystemachievedan
+averagescoreof8.5/10,outperformingtheno-strategy(7.2)andno-external-API
+(6.8)variants,particularlyinFeasibility. Qualitativeanalysisindicatedthatagent
+coordination—especiallytheStrategyandInformationAgents—significantlyim-
+proveditineraryqualitybyoptimizingtimeuseandintegratingreal-timecontext.
+These results demonstrate the effectiveness of combining LLM reasoning with
+symbolicagentcoordinationinopen-ended,real-worldplanningtasks.
+1 INTRODUCTION
+Planning a trip involves far more than selecting a few destinations—it requires balancing diverse
+userpreferences,navigatingreal-timeconstraints,andmakingcoherentdecisionsunderuncertainty.
+Yet,mosttravelplanningtoolsavailabletodayofferstaticresults,ignorereal-worldconditions,and
+providelittleroomfordynamicuserinteractionoradaptation.
+Recent advances in large language models have enabled AI agents to engage in natural, personal-
+ized dialogue and reason over open-ended instructions. This opens up new possibilities for travel
+planning. However,mostexistingsystemsremainlimited: recommendation-onlyplatformssuchas
+iPlan.aiandItineraryprovidelittleinteractionorcontextualawareness,whileLLM-onlyassistants
+like Skoot hallucinate plausible-sounding but impractical plans due to their lack of grounding in
+external data. These approaches fail to deliver adaptive, user-aligned itineraries in realistic travel
+scenarios.
+We introduce Vaiage, a multi-agent travel planning system that integrates the strengths of LLMs
+with real-time information access, modular agent collaboration, and structured decision-making.
+Vaiageoffersthreekeycapabilities:(1)real-timeAPIintegrationforenvironmentalawareness(e.g.,
+GoogleMaps,weather,Rapid),(2)adaptiveitineraryplanningthatrespondstousergoalsandcon-
+straints, and (3) virtual assistant support to refine plans, adjust budgets, and facilitate downstream
+actionssuchascarrentalservice.
+∗Correspondence:liubinwen@stu.xjtu.edu.cn.Theseauthorscontributedequally.
+Ourcodeisavailableat:https://github.com/Binwen6/Vaiage
+Ourvideopresentationandslidesareavailableat: https://drive.google.com/drive/folders/
+1jpp6yo29zyilfbyRx9H7vkYk2xcGPWcx?usp=sharin
+1
+
+2 BACKGROUND
+2.1 TEMPORALANDKNOWLEDGE-ENHANCEDREASONINGWITHLLMS
+Large language models have increasingly demonstrated the ability to perform temporal reasoning
+withindialogue-basedplanningtasks.Forexample,Suetal.(2024)proposedTimo,whichimproves
+a model’s understanding of event sequences by incorporating structured timeline representations.
+Retrieval-augmented generation methods (Lewis et al., 2020; Mao et al., 2021) further enhance
+planning by allowing models to access external knowledge when reasoning over user queries. To
+overcomethelimitationsofshortcontextwindows,memory-augmentedarchitectures(Khandelwal
+etal.,2019;Borgeaudetal.,2021;Wuetal.,2022)enableLLMstomaintaintemporalconsistency
+across multiple dialogue turns. In embodied and interactive scenarios, structured prompting has
+shown effectiveness in multi-step scheduling and decision support (Song et al., 2023; Sarch et al.,
+2023). Buildingontheseadvances,Vaiageemploysamulti-agentLLM-basedsystemthatsupports
+real-time, multi-day itinerary planning by aligning user preferences with time-constrained routes
+anddynamictravelconditions.
+2.2 PERSONALIZEDRECOMMENDATIONWITHLLMS
+Large language models (LLMs) have increasingly been applied to personalized recommendation
+tasks by leveraging their capacity for language understanding and adaptive reasoning. Lin et al.
+(2025) surveyed how LLMs can enhance user modeling and preference prediction within recom-
+mendersystems. RecentworkalsoexploresintegratingLLMswithstructuredretrievalmodulesfor
+context-aware suggestions, using dialogue-based interaction to refine recommendations over time
+(Lietal.,2023),andapplyinginstruction-tunedmodelsformorecontrollablerecommendationout-
+puts (Houlsby et al., 2022). These approaches highlight the role of LLMs in generating flexible,
+dynamic, and user-aligned content. In our system, a dedicated Recommend Agent processes user
+preferencesandattractiondatatoproduceitinerary-consistentsuggestions.
+3 METHODOLOGY
+3.1 EXTERNALDATAINTEGRATION
+VaiageintegratesmultiplestructuredAPIstosupportreal-worldawarenessandpersonalizedplan-
+ning:
+• GoogleMapsAPI:Usedforgeocoding,real-timedistanceanddurationestimation,nearby
+attractionsearch,androuteplanningwithwaypointoptimization.
+• OpenWeatherMap: Provides short-term weather forecasts, enabling weather-aware
+itineraryadjustments(e.g.,indoorattractionprioritizationonrainydays).
+• GooglePlacesAPI:TouristattractionsarefetchedandenrichedusingtheGooglePlaces
+API,combinedwithheuristicsandLLM-basedrerankingbasedonuserpreferences.
+• Car Rental API: Retrieves real-time car rental options through RapidAPI, allowing the
+systemtorecommendsuitabletransportationchoicesbasedontripconstraints.
+3.2 MULTI-AGENTARCHITECTURE
+Vaiageisbuiltuponamodularmulti-agentsysteminwhicheachagentisresponsibleforadistinct
+aspectofthetravelplanningworkflow. Specifically,thesystemincludes:
+Theagentscommunicateandcoordinatethroughacentralizedgraph-basedcontextmanager,termed
+TravelGraph.Thisframeworktracksusersessions,maintainspersistentstate,andenablesevent-
+drivenmessagepassingbetweenagents.Thegraphstructureallowsforreactiveupdates,makingthe
+systemrobusttoincrementalchangessuchasnewuserconstraintsorupdatedAPIdata.
+AllAPIcallsarehandledbytheInformationAgent,whichformatsresults,cachesrepeatedqueries,
+andintegratesthemintodownstreamagents’planninganddecision-makingworkflows.
+2
+
+Chat Agent: Initiates natural language conversations
+to extract structured user input, including destination,
+duration,preferences,andconstraints.
+Information Agent: Gathers essential real-world in-
+formation from external APIs such as maps, weather,
+and rentals. It acts as a shared knowledge provider for
+downstreamagents.
+Recommendation Agent: Scores and filters attractions
+using user preferences and LLM-assisted reranking.
+It ensures diversity, feasibility, and alignment with
+user-specifiedneeds.
+Route Agent: Constructs multi-day itineraries and
+budget.Itoptimizesforrouteefficiency,timeallocation.
+Strategy Agent: Refines the plan by analyzing leftover
+time, adding complementary attractions, and adjusting
+routes based on duration, constraints, and real-world
+feasibility.
+CommunicationAgent: Producesuser-facingmessages
+Figure1: multi-agentworkflow
+andmanagesoutputsforpotentialbookinginterfaces.
+3.3 LLMREASONINGANDPROMPTDESIGN
+AllagentsinVaiagearepoweredbylargelanguagemodels(LLMs),andarespecializedviacarefully
+designedprompttemplates.Eachagentisalignedtoaspecificsubtaskintheplanningpipeline,with
+distinctinstructions,input-outputschemas,andtool-accessconfigurations.
+For itinerary planning, the Route Agent and Strategy Agent employ LLMs to reason over se-
+quences of attractions, travel durations, and time constraints. The Route Agent leverages step-by-
+step prompting to generate multi-day itineraries that balance duration, location, and daily activity
+limits,whilealsoestimatingcosts. TheStrategyAgentenhancesthisbyanalyzingleftovertimeand
+proposingadditionalattractionsthatfitboththeuser’spreferencesandpracticalconstraints.
+Forattractionrecommendation,theRecommendAgentusesstructuredpromptstoevaluateuser
+profiles—such as budget, group type, health conditions, and hobbies—against a pool of potential
+destinations. TheLLMre-rankscandidateattractionsbasedonrelevanceanddiversity,considering
+factorslikecategorybalanceandweathersuitability.
+PrompttemplatesareprovidedinAppendixA.
+4 USER GUIDES
+Vaiageisanadvancedtravelplanningassistantpoweredbyasophisticatedmulti-agentAIarchitec-
+ture,designedtocraftpersonalized,seamlesstravelexperiences.Thiscomprehensiveguideprovides
+adetailedwalkthroughofVaiage’sfeatures,empoweringyoutoplanyourjourneywithconfidence
+andprecision.
+4.1 GETTINGSTARTED
+Upon launching Vaiage, you are welcomed by an intuitive chat interface 2, where an AI assistant
+standsreadytoguideyouthroughthetravelplanningprocess. Builtonarobustmulti-agentframe-
+work, Vaiageensuresafluidandtailoredexperiencefromtheoutset, adaptingtoyourpreferences
+andneeds.
+3
+
+Figure2: InitialChatInterfaceofVaiage,showcasingtheintuitiveentrypointfortravelplanning.
+Figure3: InformationCollectionandProcessing,illustratinghowVaiagetransformsuserinputinto
+actionabletravelinsights.
+4.2 INFORMATIONCOLLECTIONANDPROCESSING
+Vaiage begins by collecting essential traveler details to craft a personalized itinerary 3, including
+names,destinationcity,travelduration,budget,groupsize,presenceofchildren,healthconsidera-
+tions, hobbies, interests, startdate(optional), andspecialrequirementslikeaccessibilityordietary
+needs. Thisdataisprocessedintelligently,convertingthedestinationintogeographicalcoordinates,
+retrievingweatherforecasts,andanalyzingpreferences,localattractionpopularity,andaccessibility
+togenerateacuratedlistofattractionstailoredtoyourprofile.
+4.3 ATTRACTIONSELECTION
+With your preferences in mind, Vaiage presents a carefully curated selection of attractions 4. The
+interface allows you to explore detailed information about each attraction, view their locations on
+aninteractivemap,andselectthosethatresonatemostwithyourinterests. AI-drivenrecommenda-
+tionsenhancetheselectionprocessbysuggestingattractionsthatalignwithyourprofile,ensuringa
+meaningfulandengagingtravelexperience.
+4.4 STRATEGYPLANNING
+Afteryouselectyourattractions,Vaiage’sstrategyplanningmoduletakesovertocreateanoptimized
+itinerary5. Thesystemanalyzesfactorssuchasattractionopeninghours,weatherconditions,travel
+distances, and your stated preferences to craft a cohesive visiting plan. Transportation options are
+recommended to suit your needs, and precise timing suggestions ensure a balanced and enjoyable
+schedule,maximizingyourtimeateachdestination.
+4
+
+Figure4: AttractionSelectionInterface: Left–Overlappingoptionsforexploration;Right–Final-
+izedattractionchoices.
+Figure 5: Strategy Planning Interface, highlighting car recommendations and trip adjustments for
+optimalscheduling.
+4.5 ROUTEPLANNING
+Vaiage’srouteplanningfeaturedesignsefficienttravelpathsbetweenyourchosenattractions6. By
+considering traffic patterns, public transportation options, walking distances, and time of day, the
+system generates an optimal visiting order and provides detailed directions. This ensures smooth
+transitionsbetweenlocations,allowingyoutofocusonenjoyingyourjourneyratherthannavigating
+logistics.
+4.6 INTERACTIVEMAPFEATURES
+TheinteractivemapisacornerstoneofVaiage’suserexperience, offeringadynamicvisualization
+of your itinerary 7. Attractions are marked with color-coded icons, and optimal routes are clearly
+delineated. Nearby amenities, services, and public transportation options are highlighted, while
+5
+
+Figure6: RoutePlanningInterface,depictingefficienttravelpathsandtransportationoptions.
+Figure7: InteractiveMapFeatures,showcasingvisualnavigationtoolsandlocationmarkers.
+street-level details provide context for your surroundings. This feature empowers you to navigate
+yourdestinationwithconfidenceandease.
+4.7 BUDGETPLANNING
+Figure8: BudgetPlanningInterface,providingadetailedcostbreakdownandbudget-friendlysug-
+gestions.
+To keep your travel plans financially aligned, Vaiage’s budget planning tool estimates costs for
+attractions, transportation, and other expenses 8. A comprehensive cost breakdown is provided,
+alongwithsuggestionsforbudget-friendlyalternativeswhereapplicable. Thistransparentapproach
+ensuresyoucanmakeinformeddecisionsandstaywithinyourfinancialcomfortzone.
+4.8 TRIPCONFIRMATION
+TheTripConfirmationphaseistheculminationofyourplanningjourney,presentingacomprehen-
+sive overview of your itinerary 9. The interface is split into two complementary sections. On the
+6
+
+(a)LeftsideoftheTripConfirmation (b) Right side of the Trip Confirmation in-
+interface,detailingtheitineraryandlo- terface,featuringaninteractivemapandad-
+gistics. ditionaldetails.
+Figure 9: The itinerary confirmation interface is divided into itinerary details on the left and an
+interactivemapviewontheright.
+left, a detailed itinerary outlines your selected attractions, estimated visiting times, transportation
+arrangements,weatherforecasts,andafullbudgetbreakdown. Ontheright,aninteractivemapvi-
+sualizesyourplan,withcustomiconsmarkingattractions,optimalroutes,color-codedzones,nearby
+amenities,andpublictransportationoptions.
+At this stage, you can review and refine your itinerary, adjust visiting times or attraction order,
+and access real-time weather updates. Vaiage also allows you to export your itinerary in multiple
+formats or share it with travel companions. A final checklist ensures all critical elements—such
+as transportation, accommodations, special requirements, and emergency contacts—are in place,
+guaranteeingawell-organizedandstress-freetrip.
+4.9 PLANNINGANDOPTIMALUSE
+Vaiage automatically saves your planning session, enabling you to revisit, modify, or reset your
+itinerary at any time for a flexible and convenient experience. To maximize your experience, pro-
+videdetailedpreferencesduringtheinformationcollectionphase,engagewithAIrecommendations
+by offering feedback, and use the interactive map to visualize your plans. Consider weather fore-
+casts when scheduling activities and review budget estimates to align with your financial goals.
+LeveragingVaiage’sadaptivelearningrefinesyourtravelplanstomatchyourevolvingpreferences.
+4.10 TECHNICALREQUIREMENTSANDSUPPORT
+Vaiage requires a modern web browser (e.g., Chrome, Firefox, Safari, or Edge), a stable internet
+connection,JavaScriptenabled,andarecommendedscreenresolutionofatleast1024x768forop-
+timalaccessibility. Forsupport,thechatinterfaceoffersimmediateAI-drivenassistance,anderror
+messagesprovidespecificguidance. Toreachfurthersupport,userscanconsultthedocumentation
+or contact the development team through the project’s GitHub page https://github.com/
+Binwen6/Vaiage.
+5 EXPERIMENTS
+5.1 EVALUATIONSETUP
+WeevaluateVaiagebyassessingthealignmentbetweenuser-providedtrippreferencesandthemulti-
+agentsystem’sgeneratedtravelplans. SincetraditionalmetricssuchasBLEUorROUGEarenot
+7
+
+applicable to interactive planning tasks, we adopt a model-based evaluation strategy using large
+languagemodels(LLMs)asproxyjudges. Specifically,weleverageGPT-4andGPT-3.5toratethe
+systemoutputsalongmultipledimensions.
+5.2 SCENARIOSANDINPUTS
+Wedefineadiversesetoftravelplanningscenarios,including:
+• 4-dayTokyoculturaltourwithfocusonhistoryandculturalsites
+• 2-dayLosAngelesarchitecturetourwithmobilityconsiderations
+• 3-daySanDiegofamilytripwithchildren’sactivities
+• 2-dayShanghaishoppingandarchitectureexperience
+• 6-dayHongKongculturalexploration
+Eachscenarioincludes:
+• Natural language user input (e.g. ”I am planning a trip with a group of 3 adults to Los
+Angelesfor4days. Wehaveahighbudget. Iamingoodhealthbutgetstiredeasily. We
+areinterestedinarchitecture.”)
+• System-generatedresponse(selectedPOIs+ordereditinerary+budgetallocation)
+5.3 LLM-BASEDSCORING
+WepromptLLMswiththefulluserrequestandthesystem’soutput,askingthemtoratetheplanon
+multipledimensions:
+• Relevance: DothechosenPOIsalignwiththeuser’spreferencesandinterests?
+• Feasibility: Istheitinerarylogicallyandgeographicallycoherent? Doesitconsiderpracti-
+calconstraintslikeopeninghoursandtraveltime?
+• Personalization: Does the plan account for user-specific factors like health conditions,
+budgetconstraints,andgroupcomposition?
+• Satisfaction: Would a typical user likely accept this plan as-is? Does it provide a good
+balanceofactivities?
+Scoring is done on a 1-10 scale, with detailed justifications for each rating. We compare results
+acrossdifferentvariants:
+• Fullsystem(allagents)
+• Ablated: withouttheStrategyAgent
+• Ablated: withoutexternalAPIs(weather,POIdata)
+5.4 RESULTSANDFINDINGS
+Results show that the full system significantly outperforms ablated baselines, especially in terms
+of Relevance and Personalization. GPT-4 ratings for the full system averaged 8.5/10 across all
+scenarios, while the no-Strategy variant dropped to 7.2. The no-external-APIs variant showed the
+most significant drop in Feasibility scores (6.8/10), highlighting the importance of real-time data
+integration.
+Keyfindingsinclude:
+• Thesystemdemonstratesstrongcapabilityinhandlingdiverseuserpreferences,withpar-
+ticularlyhighscores(9/10)forarchitecture-focusedandculturaltours
+• Weather-aware planning contributed notably to Feasibility scores, especially for outdoor
+activities
+8
+
+• Budgetallocationshowsgoodalignmentwithuser-specifiedconstraints,withappropriate
+adjustmentsforgroupsizeandactivitytypes
+• Thesystemeffectivelybalancesmultiplecompetingfactors(e.g.,healthconditions,group
+preferences,timeconstraints)
+Qualitative analysis indicates that agent coordination improves contextual alignment, especially
+when combining POI filtering with user preference memory. The Strategy Agent’s role in opti-
+mizing daily schedules and the Information Agent’s contribution to gathering real-time data were
+particularlycrucialforhigh-qualityplangeneration.
+SampleplanratingsandoutputsnapshotsarepresentedinAppendixB.Theevaluationdata,includ-
+ingdetailedLLMassessmentsandhumanevaluations,isavailableintheprojectrepository.
+6 CONCLUSION
+Inthiswork,weintroduceVaiage,amodularmulti-agentsystemforpersonalizedtravelplanning.
+By combining LLMs, real-time data, and structured coordination, Vaiage delivers dynamic, user-
+adaptiveitinerariesbeyondstatictools.
+Itsagentspecializationandgraphmemoryenableflexible, goal-drivencollaboration. Futurework
+includes long-term personalization, collaborative planning, and booking integration. Vaiage high-
+lightsthepotentialofLLM-basedagentsinreal-worlddecision-makingtasks.
+REFERENCES
+SebastianBorgeaudetal. Improvinglanguagemodelsbyretrievingfromtrillionsoftokens. arXiv
+preprintarXiv:2112.04426,2021.
+NeilHoulsbyetal. Parameter-efficienttransferlearningfornlp. InICML,2022.
+UrvashiKhandelwaletal. Generalizationthroughmemorization: Nearestneighborlanguagemod-
+els. arXivpreprintarXiv:1911.00172,2019.
+PatrickLewisetal. Retrieval-augmentedgenerationforknowledge-intensivenlptasks. InAdvances
+inNeuralInformationProcessingSystems,2020.
+Zihan Li et al. Conversational recommendation with large language models. arXiv preprint
+arXiv:2304.02000,2023.
+JianghaoLinetal. Howcanrecommendersystemsbenefitfromllms: Asurvey. ACMTransactions
+onInformationSystems,2025.
+Yuning Mao et al. An empirical study on retrieval-augmented language models. arXiv preprint
+arXiv:2104.07567,2021.
+Alex Sarch et al. Memory-augmented agents for embodied instruction following. arXiv preprint
+arXiv:2303.12037,2023.
+YanSongetal. Planneragentswithlong-termmemoryfortask-orientedplanning. arXivpreprint
+arXiv:2301.00700,2023.
+ZhaochengSuetal. Timo: Towardsbettertemporalreasoningforlanguagemodel. arXivpreprint
+arXiv:2406.14192,2024.
+ShiyueWuetal. Memorizingtransformers. arXivpreprintarXiv:2203.08913,2022.
+9
+
+A PROMPT TEMPLATES
+Weshowbelowthecoreprompttemplatesusedbyselectedagents. Thesepromptsareusedtoguide
+thebehaviorofLLMsinplanningandrecommendation.
+A.1 STRATEGYAGENTPROMPT(ITINERARYGENERATION)
+PromptTemplate–StrategyAgent
+Youareatraveladvisorhelpingwithtriplogistics.Theuserisplanninga{N}-daytrip.
+User Preferences: Structured input including hobbies, health conditions, mobility status,
+groupcomposition(e.g.,withchildren),andbudgetlevel.
+WeatherSummary: Forecastedconditionsduringthetrip(e.g.,rainy,sunny).
+Pre-selected Attractions: A list of must-include attractions that must appear in the final
+plan.
+Available Attractions: A full list of candidate attractions (with durations and locations),
+possiblyoverlappingwithpre-selectedones.
+Instructions:
+• Distributeattractionsacrossthe{N}daysassuming8hoursperday.
+• Prioritizeproximitytominimizetraveltime.
+• Adaptschedulingbasedon:
+– Healthormobilityconstraints(e.g.,fewerspotsperday)
+– Family-friendlyneeds(e.g.,includechild-orientedcontent)
+– Userinterests(e.g.,history,nature,food)
+– Budgetlevel(e.g.,avoidhigh-costattractions)
+– Weatherconditions(e.g.,preferindoorspotsonrainydays)
+OutputFormat: ReturnavalidJSONobjectmappingeachdaytoalistofattractionnames.
+Example:
+{"day1": ["Attraction A", "Attraction B"],
+"day2": ["Attraction C", "Attraction D"]}
+Donotincludeanymarkdownorboldformatting.
+A.2 RECOMMENDAGENTPROMPT(ATTRACTIONRERANKING)
+PromptTemplate–RecommendAgent
+You are an expert travel recommender. Your task is to rank the provided list of attractions
+basedontheuser’spreferences,thedetailsofeachattraction,andthecurrentweathersum-
+mary.
+UserPreferences: Structuredprofileincludinghobbies, healthconditions, mobilitystatus,
+groupcomposition(e.g.,withchildren),andbudgetlevel.
+WeatherSummary: Forecastedconditionsduringthetripperiod.
+Attractions List: Each attraction includes metadata such as id, name, category,
+estimated duration,price level,rating,andashortdescription(ifavail-
+able).
+RankingCriteria:
+• UserHobbies&Interests: Matchtostatedhobbies(e.g.,history,art,nature).
+• Health&Accessibility: Adjustforphysicallimitationsorlowendurance.
+• ChildSuitability: Iftravelingwithchildren,prioritizefamily-friendlyoptions.
+• Budget: Respectfinancialconstraintsandfilterouthigh-costspotswhenneeded.
+10
+
+• WeatherCompatibility: Matchindoor/outdoortypeswithweatherforecast.
+• CategoryBalance: Ensurediversityintopsuggestions;removeduplicates.
+OutputFormat: ReturnavalidJSONlistofattractionidsrankedfrommosttoleastrec-
+ommended.
+Example:
+["id1", "id2", "id3"]
+Donotincludeanyexplanationorextraformatting.
+11
+
+B EVALUATION
+B.1 EVALUATIONSCORES
+Figure10: DistributionofLLMEvaluationScores
+B.2 OUTPUTSAMPLES
+B.2.1 ARCHITECTURE-FOCUSEDTOUR(HIGHSCOREEXAMPLE)
+User Request: ”Hello, I’m Emma Wilson. I’m planning a trip with a group of 3 adults to Los
+Angelesfor4days. Wehaven’tdecidedonastartdateyet. Wehaveahighbudget. Iamingood
+healthbutgetstiredeasily. Weareinterestedinarchitecture.”
+SystemResponse:
+• AgentRecommendation: Carrentalisrecommended
+• SelectedAttractions:
+– WaltDisneyConcertHall(FrankGehry-designedmusichall)
+– LosAngelesCityHall(1928landmark)
+– BradburyBuilding(Victorianarchitecture)
+– NaturalHistoryMuseum
+– CaliforniaScienceCenter
+• BudgetAllocation:
+– Total: $2,901.96
+– Accommodation: $1,200
+– Food: $720
+– Transport: $240
+– Attractions: $630
+– CarRental: $103.62
+– Fuel: $8.34
+LLMEvaluationScore: 9/10
+Justification: ”Excellentfocusonarchitecturewithwell-chosenlandmarks. Goodbalanceofcul-
+tural sites and museums. Car rental recommendation is practical for LA. The plan demonstrates
+strongconsiderationofuserpreferencesandpracticalconstraints.”
+12
+
+B.2.2 FAMILYTRIPWITHHEALTHCONSIDERATIONS
+UserRequest: ”I’mplanningafamilytriptoSanDiegowithmyspouseandthreechildren(ages4,
+7,and9). WehaveamediumbudgetandIhavechronicbackpain. We’reinterestedinwatersports,
+music,andfamily-friendlyactivities.”
+SystemResponse:
+• AgentRecommendation: Carrentalrecommendedformobility
+• SelectedAttractions:
+– SeaWorldSanDiego
+– FiestaIsland(watersports)
+– BalboaPark
+– SanDiegoZoo
+– Children’sMuseum
+• BudgetAllocation:
+– Total: $2,880
+– Accommodation: $1,200
+– Food: $720
+– Transport: $240
+– Attractions: $720
+LLMEvaluationScore: 7/10
+Justification: ”The plan effectively includes water sports and family-friendly activities, aligning
+with user interests. The car rental recommendation is practical for mobility issues. However, it
+lacksspecificmusic/concertoptionsandcouldbetterbalanceattractionsfordifferentagegroups.”
+B.2.3 CULTURALTOURWITHBUDGETCONSTRAINTS
+UserRequest: ”I’mplanningasolotriptoHongKongfor6days. Ihavealowbudgetbutwantto
+experiencelocalculture,visitmuseums,andtakephotos. Ihavechronicbackpain.”
+SystemResponse:
+• AgentRecommendation: Nocarrentalneeded(efficientpublictransport)
+• SelectedAttractions:
+– HongKongMuseumofHistory
+– VictoriaPeak
+– AvenueofStars
+– TempleStreetNightMarket
+– HongKongHeritageMuseum
+• BudgetAllocation:
+– Total: $2,085.07
+– Accommodation: $800
+– Food: $480
+– Transport: $160
+– Attractions: $560
+– CarRental: $81.21
+– Fuel: $3.86
+LLMEvaluationScore: 7/10
+Justification: ”Theplanaddressestheuser’sinterestinmuseums,historicalsites,photography,and
+sightseeingwithappropriatelocations. Theno-car-rentalrecommendationisappropriateforHong
+Kong’sefficientpublictransport. However,theitinerarycouldbettercatertotheuser’sbackpainby
+includingmorerestperiodsandaccessibilityconsiderations.”
+13
+
