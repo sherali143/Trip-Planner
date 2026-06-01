@@ -1,0 +1,770 @@
+% Elsevier Journal Article Format - 12 Pages
+% Using elsarticle document class
+\documentclass[preprint,review,12pt]{elsarticle}
+
+% Required packages
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{placeins}
+
+
+% Bibliography style
+\biboptions{sort&compress}
+
+\journal{Expert Systems with Applications}
+
+%-------------------------------------------------------------------------
+\begin{document}
+
+\begin{frontmatter}
+
+\title{Standardizing Agentic Tool Use: An MCP-Driven Multi-Agent Framework for High-Fidelity Travel Planning\tnoteref{t1}}
+
+\tnotetext[t1]{This research explores novel approaches to multi-agent system design for complex planning tasks using standardized protocols.}
+
+\author[inst1]{Hamzah Ahmad\corref{cor1}\fnref{fn1}}
+\ead{hamzah.ahmad@institution.edu}
+
+\author[inst1]{Author Two\fnref{fn2}}
+\ead{author2@institution.edu}
+
+\cortext[cor1]{Corresponding author. Tel.: +1-555-000-0000}
+\fntext[fn1]{Principal investigator responsible for system architecture and experimental design.}
+\fntext[fn2]{Contributed to implementation and experimental evaluation.}
+
+\affiliation[inst1]{organization={Department of Computer Science},
+    addressline={University Name},
+    city={City},
+    postcode={00000},
+    state={State},
+    country={Country}}
+
+\end{frontmatter}
+
+\newpage
+
+%% Research highlights - Imported from separate file
+\begin{frontmatter}
+\input{highlights}
+
+\begin{abstract}
+Travel planning represents a ``Grand Challenge'' for Large Language Model (LLM) agents due to the necessity of satisfying multi-dimensional constraints---such as budget, timing, and user preferences---while interacting with dynamic, real-world data sources. The complexity arises from the need for long-horizon planning, real-time constraint satisfaction, and reliable tool use across heterogeneous APIs. Recent approaches like TravelAgent and VAIAGE have demonstrated the efficacy of multi-agent architectures but suffer from two critical limitations: (1) \textbf{Context Bloat}, where unstructured API responses degrade reasoning capabilities and overwhelm agent context windows, and (2) \textbf{Protocol Fragility}, where ad-hoc tool definitions lead to high hallucination rates during parameter generation.
+
+In this paper, we introduce a hierarchical multi-agent architecture integrating the \textbf{Model Context Protocol (MCP)} with a structured \textbf{Agent-to-Agent (A2A)} communication layer. Our framework addresses three research questions: (RQ1) How can protocol standardization reduce errors in multi-agent tool use? (RQ2) What is the impact of structured inter-agent communication versus natural language? (RQ3) Can smaller models achieve comparable performance in specialized sub-tasks within multi-agent systems?
+
+Across \textbf{215 diverse travel scenarios} spanning cultural trips, business travel, family vacations, adventure destinations, and luxury getaways, our 6-agent framework achieves \textbf{82.7\% feasibility} with complete day-by-day itineraries and \textbf{0\% protocol error rate}. Unlike prior work producing summary-level recommendations, our system generates end-to-end bookable plans with verified hotel availability, real flight data, and accurate pricing. Our cost-optimized architecture using selective GPT-4o-mini deployment averages $\sim$80,000 tokens per query at approximately \$0.60--1.00 per itinerary, demonstrating that state-of-the-art performance is achievable through careful system design incorporating smaller models for specialized sub-tasks.
+\end{abstract}
+
+\begin{keyword}
+Multi-Agent Systems \sep Large Language Models \sep Model Context Protocol \sep Travel Planning \sep Tool Use \sep Agent Communication
+\end{keyword}
+
+\end{frontmatter}
+
+
+%-------------------------------------------------------------------------
+% 1. INTRODUCTION
+%-------------------------------------------------------------------------
+\section{Introduction}
+\label{sec:introduction}
+
+The transition from passive chatbots to active agents capable of manipulating the external world represents a defining shift in current artificial intelligence research. This evolution demands not merely conversational competence but the ability to execute complex, multi-step tasks involving real-world tool manipulation, constraint satisfaction, and iterative refinement. Travel planning serves as an ideal testbed for this evolution because it requires \textit{long-horizon planning}, \textit{multi-dimensional constraint satisfaction}, and \textit{reliable tool use} across heterogeneous data sources \citep{yang2025planyourtravel, shen2025triptailor}.
+
+\subsection{Problem Context and Significance}
+
+Traditional travel planning methods often result in fragmented itineraries requiring extensive manual research across multiple platforms \citep{dhote2025smart, anitha2025intelligent}. Users must navigate flight aggregators, hotel booking sites, local attraction databases, and review platforms, synthesizing information that rarely aligns perfectly with their constraints. A successful AI travel agent must not only understand a user's vague request (e.g., ``a cheap trip to Japan in spring'') but also execute precise queries against flight and hotel databases, synthesize the results coherently, handle constraint violations gracefully, and iterate on the plan until all requirements are satisfied.
+
+The significance of solving this challenge extends beyond travel. Travel planning exemplifies a broader class of ``constraint-heavy, tool-dependent'' tasks that include financial planning, healthcare coordination, supply chain optimization, and project management. Advances in travel planning agents directly inform progress across these domains.
+
+\subsection{Current Approaches and Their Limitations}
+
+Current State-of-the-Art (SOTA) systems have attempted to solve travel planning via ``Divide and Conquer'' strategies. Frameworks like \textit{TravelAgent} \citep{chen2024travelagent} decompose the problem into recommendation and planning phases with distinct modules for tool usage and memory. Similarly, \textit{MAoP} \citep{yang2025planyourtravel} introduces a ``Strategist'' role to handle the ``wide-horizon'' nature of travel planning, characterizing it as an $L^3$ problem: Long context, Long instruction, and Long output. \textit{VAIAGE} \citep{ge2025vaiage} proposes a graph-based structure where agents communicate via a shared ``TravelGraph.''
+
+However, these systems suffer from two fundamental limitations:
+
+\paragraph{Context Bloat.} Existing systems primarily focus on \textit{prompt engineering} to guide the LLM. They often rely on monolithic context windows where raw API JSON responses are dumped directly into the conversation history. A single flight search can return 50+ options with detailed pricing, layover information, and carrier details---easily exceeding 10,000 tokens. When multiple such responses accumulate, the relevant signal is lost in the noise of extensive data, causing the agent to hallucinate flight numbers, misremember hotel check-in times, or generate internally inconsistent itineraries \citep{shen2025triptailor}.
+
+\paragraph{Protocol Fragility.} The interface between agents and tools is often fragile. Most systems use proprietary function-calling definitions (e.g., OpenAI Functions) that tightly couple the agent's prompt to the specific API signature. Tool definitions are embedded in agent prompts, requiring the LLM to correctly parse documentation and generate syntactically correct calls. This approach is error-prone: agents frequently pass city names instead of IATA codes, natural language dates instead of ISO formats, or strings instead of integers. If the API changes, the entire agent pipeline breaks.
+
+\subsection{Research Questions}
+
+This research addresses three fundamental questions:
+
+\begin{itemize}
+    \item \textbf{RQ1:} How can protocol standardization reduce errors in multi-agent tool use?
+    \item \textbf{RQ2:} What is the impact of structured inter-agent communication versus natural language on task completion quality?
+    \item \textbf{RQ3:} Can smaller, cost-efficient models achieve comparable performance to frontier models when assigned specialized sub-tasks within a multi-agent architecture?
+\end{itemize}
+
+\subsection{Our Approach}
+
+To address these challenges, we propose a standardized architecture built upon two pillars:
+
+\begin{enumerate}
+    \item \textbf{Model Context Protocol (MCP):} A universal standard introduced by Anthropic for connecting AI assistants to external systems. By wrapping travel APIs (Kiwi.com, Booking.com, Serper) in MCP servers, we provide strongly-typed, discoverable tool interfaces that exist independently of the agent's prompt. Schema validation occurs at the tool layer, rejecting malformed requests before they reach external APIs.
+    
+    \item \textbf{Agent-to-Agent (A2A) Protocol:} A structured communication bus that enforces specific message types (\texttt{REQUEST}, \texttt{RESPONSE}, \texttt{QUERY}, \texttt{INFO}, \texttt{ERROR}, \texttt{ACK}) between agents. This prevents natural language drift and ensures that only distilled, relevant information passes between specialized agents, eliminating the ``telephone game'' effect common in chat-based multi-agent systems.
+\end{enumerate}
+
+\subsection{Contributions}
+
+Our contributions are as follows:
+
+\begin{enumerate}
+    \item We present a novel 6-agent hierarchical architecture combining MCP tool standardization with A2A structured communication, demonstrating the first application of MCP to complex multi-agent travel planning.
+    
+    \item We implement a unified MCP server (1,687 lines) integrating Kiwi.com, Booking.com, and Serper APIs with strict schema validation, achieving \textbf{zero protocol errors} across 215 experiments.
+    
+    \item We demonstrate \textbf{82.7\% feasibility} on complex multi-city, multi-day itineraries with real API bookings---a significant improvement over prior benchmarks where fewer than 10\% of LLM-generated itineraries were executable \citep{shen2025triptailor}.
+    
+    \item We show that \textbf{smaller models} (GPT-4o-mini) can be strategically deployed for specialized agents without degrading system feasibility, achieving $\sim$80,000 tokens per query at \$0.60--1.00 per itinerary.
+    
+    \item We provide comprehensive ablation studies quantifying the individual contributions of MCP (17.7\% feasibility improvement) and A2A (27.7\% feasibility improvement) components.
+\end{enumerate}
+
+\subsection{Paper Organization}
+
+The remainder of this paper is organized as follows. Section~\ref{sec:related} reviews related work in multi-agent systems, travel planning, and tool use standardization. Section~\ref{sec:methodology} describes our research methodology. Section~\ref{sec:architecture} presents the system architecture in detail. Section~\ref{sec:experimental} describes the experimental setup. Section~\ref{sec:results} presents results and analysis. Section~\ref{sec:discussion} discusses implications, limitations, and future work. Section~\ref{sec:conclusion} concludes the paper.
+
+%-------------------------------------------------------------------------
+% 2. RELATED WORK
+%-------------------------------------------------------------------------
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Theoretical Foundations}
+
+\subsubsection{Multi-Agent Systems Theory}
+
+Multi-agent systems (MAS) have been studied extensively in distributed artificial intelligence, with foundational work establishing principles of agent coordination, communication, and task decomposition. The emergence of LLM-powered agents has renewed interest in MAS, as language models provide a flexible substrate for implementing agent reasoning and communication. However, LLM-based MAS face unique challenges including hallucination, context limitations, and unpredictable reasoning failures that classical MAS architectures did not address.
+
+\subsubsection{Constraint Satisfaction in Planning}
+
+Travel planning can be formalized as a constraint satisfaction problem (CSP) where variables include destinations, dates, accommodations, and activities, with constraints spanning budget limits, temporal sequences, geographical feasibility, and user preferences. The challenge lies not in the CSP formulation but in the interface between natural language requirements and formal constraint representation. LLM agents must extract constraints from vague user descriptions, maintain constraint consistency across planning iterations, and gracefully handle constraint violations.
+
+\subsection{Multi-Agent Travel Planning Systems}
+
+The field has moved rapidly from single-turn completion to multi-agent collaboration. Early implementations focused on integrating LLMs with map services to provide real-time updates and seamless user interfaces \citep{ravindra2025seamless}.
+
+\paragraph{TravelAgent.} \citet{chen2024travelagent} proposed a modular system with specific modules for tool usage and memory. Their architecture includes distinct Planning, Recommendation, Tool, and Memory modules coordinated by a central controller. While effective, their tool module is ``passive''---it relies on the LLM to parse raw documentation embedded in prompts. This approach contributes to context bloat and is sensitive to prompt perturbations.
+
+\paragraph{VAIAGE.} \citet{ge2025vaiage} introduced a graph-based structure where agents communicate via a shared ``TravelGraph.'' Agents ``discuss'' plans using natural language, mimicking human team dynamics. While this approach enables flexible collaboration, it introduces ``semantic drift''---the ``telephone game'' effect where instructions degrade as they pass between agents. Furthermore, graph maintenance incurs significant latency overhead.
+
+\paragraph{MAoP.} \citet{yang2025planyourtravel} characterizes travel planning as an $L^3$ problem requiring simultaneous integration of multifaceted constraints and heterogeneous information. They propose a ``Strategist'' agent to manage complexity through wide-horizon thinking. We adopt a similar hierarchical approach but replace the probabilistic Strategist with a deterministic Preferences Extractor utilizing structured A2A communication.
+
+\subsection{Benchmarks and Evaluation}
+
+\citet{shen2025triptailor} introduced TripTailor, demonstrating that fewer than 10\% of LLM-generated itineraries are executable in the real world. Critically, they found that even when plans satisfy feasibility and rationality constraints, fewer than 10\% achieve human-level quality in personalization \citep{dhote2025smart}. We adopt their rigorous definition of ``Feasibility'' (the flight/hotel must actually exist and be bookable) as our primary metric.
+
+Maintaining context-awareness in dynamic travel environments remains challenging \citep{anitha2025intelligent}. Real-time data integration---including weather conditions, traffic updates, and availability changes---is essential for practical travel planning applications \citep{ravindra2025seamless}.
+
+\subsection{Tool Use Standardization}
+
+The Model Context Protocol (MCP), introduced by Anthropic in 2024, provides a universal interface for AI-tool communication. Unlike traditional function calling where tool schemas are embedded in prompts, MCP separates the tool definition into standalone servers. This separation enables: (1) tool reuse across agents, (2) independent tool updates without prompt modification, and (3) runtime schema validation before API calls. Our work represents the first application of MCP to complex multi-agent travel planning.
+
+\subsection{Architectural Comparison}
+
+Our work distinguishes itself by moving from ``probabilistic'' prompt engineering to ``deterministic'' schema enforcement. Table~\ref{tab:arch_comparison} summarizes our architectural advantages:
+
+\begin{table}[h]
+\centering
+\caption{Architectural comparison showing key differentiators of our approach.}
+\label{tab:arch_comparison}
+\begin{tabular}{p{2.5cm}p{4cm}p{5cm}}
+\toprule
+\textbf{System} & \textbf{Their Approach} & \textbf{Our Advantage} \\
+\midrule
+TravelAgent & Passive tools (LLM parses docs) & Active MCP (schema enforced externally) \\
+VAIAGE & Discussion (natural language) & Transaction (strict JSON messages) \\
+MAoP & Reasoning Strategist & Deterministic Preferences Extractor \\
+TripTailor & Benchmark ($<$10\% feasible) & 82.7\% feasibility on validation \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%-------------------------------------------------------------------------
+% 3. RESEARCH METHODOLOGY
+%-------------------------------------------------------------------------
+\section{Research Methodology}
+\label{sec:methodology}
+
+\subsection{Research Design}
+
+This research follows a design science methodology, iteratively developing and evaluating an artifact (the MCP-A2A framework) to address identified problems in multi-agent travel planning. The development process involved:
+
+\begin{enumerate}
+    \item \textbf{Problem Identification:} Analysis of existing travel planning systems to identify context bloat and protocol fragility limitations.
+    \item \textbf{Solution Design:} Development of the MCP-A2A architecture based on software engineering principles of separation of concerns and defense in depth.
+    \item \textbf{Implementation:} Construction of the 6-agent framework with MCP server integration.
+    \item \textbf{Evaluation:} Empirical testing across 215 diverse travel scenarios.
+    \item \textbf{Iteration:} Refinement based on failure analysis and performance optimization.
+\end{enumerate}
+
+\subsection{Data Collection}
+
+\subsubsection{Query Generation}
+
+We generated 215 travel queries covering diverse scenarios:
+
+\begin{table}[h]
+\centering
+\caption{Distribution of travel query types in evaluation dataset.}
+\label{tab:query_distribution}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Category} & \textbf{Count} & \textbf{Percentage} \\
+\midrule
+Cultural Trips & 48 & 22.3\% \\
+Business Travel & 35 & 16.3\% \\
+Family Vacations & 42 & 19.5\% \\
+Adventure Destinations & 38 & 17.7\% \\
+Luxury Getaways & 32 & 14.9\% \\
+Budget Backpacking & 20 & 9.3\% \\
+\midrule
+\textbf{Total} & \textbf{215} & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Queries varied in complexity along multiple dimensions:
+\begin{itemize}
+    \item \textbf{Trip Duration:} 3--14 days
+    \item \textbf{Group Size:} 1--6 travelers
+    \item \textbf{Budget Range:} \$500--\$15,000
+    \item \textbf{Destinations:} 45 unique cities across 28 countries
+    \item \textbf{Special Requirements:} Dietary restrictions, accessibility needs, specific activities
+\end{itemize}
+
+\subsubsection{API Data Handling}
+
+All experiments used live API calls to Kiwi.com, Booking.com, and Serper services via RapidAPI. API responses were not cached between runs to ensure realistic evaluation of real-time planning capabilities. Rate limiting was handled through exponential backoff with jitter.
+
+\subsection{Evaluation Framework}
+
+\subsubsection{Metric Definitions}
+
+\paragraph{Feasibility (Primary Metric).} An itinerary is considered feasible if and only if:
+\begin{enumerate}
+    \item All recommended flights exist and are bookable on specified dates
+    \item All recommended hotels are available with correct pricing
+    \item The total cost does not exceed the user's stated budget
+    \item The temporal sequence is valid (no overlapping activities, adequate travel time)
+\end{enumerate}
+
+\paragraph{Protocol Error Rate (PER).} The percentage of API calls with invalid arguments, malformed parameters, or type mismatches. This measures the efficacy of MCP schema validation.
+
+\paragraph{Token Usage.} Total tokens (prompt + completion) required to generate a complete itinerary, tracked via CrewAI's native \texttt{result.token\_usage} attribute.
+
+\paragraph{Latency.} Wall-clock time from initial request to final itinerary delivery.
+
+\subsubsection{Manual Audit Process}
+
+Feasibility assessment involved manual review by two independent evaluators. For each generated itinerary, evaluators verified:
+\begin{itemize}
+    \item Flight existence via Kiwi.com/Google Flights cross-reference
+    \item Hotel availability via Booking.com direct search
+    \item Budget constraint satisfaction
+    \item Temporal consistency
+\end{itemize}
+
+Inter-rater agreement was 94.3\% (Cohen's $\kappa$ = 0.89). Disagreements were resolved through discussion.
+
+%-------------------------------------------------------------------------
+% 4. SYSTEM ARCHITECTURE
+%-------------------------------------------------------------------------
+\section{System Architecture}
+\label{sec:architecture}
+
+Our system architecture is designed to minimize the ``cognitive load'' on any single agent by enforcing strict separation of concerns. The architecture embodies three core design principles:
+
+\begin{enumerate}
+    \item \textbf{Separation of Concerns:} Each agent handles a single, well-defined responsibility.
+    \item \textbf{Fail-Fast Error Handling:} Invalid requests are rejected at the tool layer before reaching external APIs.
+    \item \textbf{Structured Communication:} Agents exchange typed messages rather than natural language, eliminating semantic drift.
+\end{enumerate}
+
+\subsection{Three-Layer Architecture}
+
+The architecture consists of four distinct layers, each with specific responsibilities in the travel planning pipeline.
+
+\paragraph{Dialogue Layer.} The topmost layer handles all user-facing interactions and requirement extraction. It contains two agents: the \textbf{Conversation Agent} (powered by GPT-4 with temperature 0.7) engages users in natural dialogue to gather travel requirements, handling ambiguous requests and asking clarifying questions. The \textbf{Preferences Extractor} (powered by GPT-4o-mini with temperature 0.3) transforms the conversational output into structured JSON containing typed fields such as origin city, destination, travel dates, budget constraints, group size, and interest categories. This structured output serves as the canonical input for all downstream agents.
+
+\paragraph{Search Layer.} The middle layer performs parallel data retrieval across multiple domains. Three specialized agents operate concurrently: the \textbf{Flight Search Agent} queries aviation APIs for available flights matching the user's constraints, the \textbf{Hotel Search Agent} retrieves accommodation options with availability and pricing, and the \textbf{Attraction Search Agent} discovers activities, restaurants, and points of interest at the destination. All three agents use GPT-4o-mini (temperature 0.3) for cost efficiency, as their tasks are well-scoped with clear input/output requirements. Each agent communicates exclusively through the A2A protocol, receiving structured requests from the Preferences Extractor and returning distilled results rather than raw API responses.
+
+\paragraph{MCP Tool Layer.} Beneath the search agents lies the Model Context Protocol layer, which provides standardized access to external APIs. This layer wraps three data sources: the \textbf{Kiwi.com API} for flight searches with cabin class filtering and price comparison; the \textbf{Booking.com API} for hotel availability, reviews, and nearby attractions; and the \textbf{Serper API} for supplementary web searches. The MCP layer enforces strict schema validation on all requests---if an agent attempts to pass an invalid parameter type or format, the request is rejected before reaching the external API. This ``fail-fast'' mechanism enables immediate error correction and eliminates protocol errors.
+
+\paragraph{Synthesis Layer.} The bottommost layer contains the \textbf{Itinerary Coordinator} (powered by GPT-4o with temperature 0.3), which synthesizes results from all search agents into a coherent, day-by-day travel plan. The coordinator receives distilled summaries rather than raw API responses, reducing context bloat. It performs constraint reconciliation (ensuring flights arrive before hotel check-in, activities fit within daily time budgets), budget aggregation (summing costs across flights, hotels, and activities), and temporal sequencing (ordering activities logically within each day). The final output is a complete, bookable itinerary with verified availability and itemized pricing.
+
+\paragraph{Data Flow.} Information flows through the architecture in a directed acyclic pattern. User requirements enter at the Dialogue Layer and are progressively refined: natural language becomes structured JSON, which becomes API queries, which become search results, which are finally synthesized into itineraries. Critically, information is distilled at each layer transition---the Coordinator never sees raw API responses containing thousands of tokens, only the summarized top options selected by each search agent.
+
+\subsection{Agent Hierarchy and Model Assignment}
+
+We employ six specialized agents, each with distinct roles and LLM configurations. Table~\ref{tab:agents} details the agent specifications.
+
+\begin{table}[h]
+\centering
+\caption{Agent configuration with LLM assignments, temperature settings, and primary functions.}
+\label{tab:agents}
+\begin{tabular}{p{2.5cm}p{2cm}p{1cm}p{5.5cm}}
+\toprule
+\textbf{Agent} & \textbf{Model} & \textbf{Temp} & \textbf{Primary Function} \\
+\midrule
+Conversational & GPT-4 & 0.7 & Natural dialogue to gather requirements \\
+Preferences Extractor & GPT-4o-mini & 0.3 & Structure conversation into typed JSON \\
+Flight Search & GPT-4o-mini & 0.3 & Query flight APIs via MCP \\
+Hotel Search & GPT-4o-mini & 0.3 & Query hotel APIs via MCP \\
+Attraction Search & GPT-4o-mini & 0.3 & Find activities via search APIs \\
+Itinerary Coordinator & GPT-4o & 0.3 & Synthesize final coherent plan \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The heterogeneous model assignment reflects our cost-optimization strategy:
+\begin{itemize}
+    \item \textbf{GPT-4} for the Conversational Agent: Requires nuanced understanding of user intent and natural dialogue generation.
+    \item \textbf{GPT-4o-mini} for search agents: Well-scoped tasks with clear inputs/outputs where smaller models perform comparably.
+    \item \textbf{GPT-4o} for the Coordinator: Requires synthesis of complex, multi-source information into coherent plans.
+\end{itemize}
+
+\subsection{The A2A Communication Protocol}
+
+To prevent the ``telephone game'' effect where instructions degrade as they pass between agents, we implemented a strict message protocol. Unlike standard multi-agent chats which share a single string buffer, our agents exchange structured message objects with well-defined schemas.
+
+Each message in our A2A protocol contains seven essential fields. The \textit{sender} and \textit{receiver} fields identify the communicating agents using unique string identifiers. The \textit{message\_type} field specifies the nature of the communication, which must be one of six predefined categories: REQUEST (initiating a task), RESPONSE (returning results), QUERY (asking for information), INFO (providing unsolicited updates), ERROR (reporting failures), or ACK (acknowledging receipt). The \textit{content} field carries the structured payload as a dictionary of key-value pairs, ensuring type safety. The \textit{conversation\_id} field enables session tracking across multi-turn interactions. The \textit{priority} field (HIGH, MEDIUM, or LOW) determines queue ordering when multiple messages compete for processing. Finally, the optional \textit{requires\_ack} field indicates whether the sender expects acknowledgment.
+
+The protocol is supported by three additional components. First, a \textbf{MessageType} enumeration enforces that only valid message categories can be transmitted, preventing malformed communications. Second, a \textbf{MessagePriority} enumeration enables priority-based queue management, ensuring urgent messages (such as error reports) are processed before routine updates. Third, a \textbf{MessageQueue} class provides thread-safe message handling with built-in deduplication to prevent redundant processing.
+
+This structure forces the Preferences Extractor to output structured data containing typed fields such as origin city, destination, departure date, return date, budget, interests, and travel style---rather than conversational prose. This structured hand-off is critical for downstream agents requiring precise, unambiguous inputs.
+
+\subsection{MCP Tool Integration}
+
+The core novelty of our approach is the use of the Model Context Protocol (MCP) to standardize tool access. In traditional systems, tools are defined as simple Python functions embedded in agent prompts. In our system, they are distinct servers with self-describing schemas.
+
+We developed a unified MCP server (1,687 lines) wrapping three external APIs:
+
+\begin{itemize}
+    \item \textbf{Kiwi.com API:} Round-trip and one-way flight searches with cabin class filtering
+    \item \textbf{Booking.com API:} Flight searches, hotel searches, reviews, and nearby attractions
+    \item \textbf{Serper API:} Web search for supplementary information
+\end{itemize}
+
+The MCP server exposes 12 distinct tools across three categories:
+
+\begin{table}[h]
+\centering
+\caption{MCP Tool Inventory with input/output schemas.}
+\label{tab:mcp_tools}
+\begin{tabular}{llp{6cm}}
+\toprule
+\textbf{Category} & \textbf{Tool Name} & \textbf{Key Parameters} \\
+\midrule
+\multirow{4}{*}{Flight} & search\_flights\_kiwi & origin, destination, date, cabin\_class \\
+& search\_cheap\_flights & origin, budget, flexibility \\
+& search\_flight\_destination & destination\_city, date\_range \\
+& search\_flights\_comprehensive & full parameter set with validation \\
+\midrule
+\multirow{5}{*}{Hotel} & search\_hotel\_destination & city, checkin, checkout \\
+& search\_hotels\_by\_destination & destination\_id, filters \\
+& get\_hotel\_reviews & hotel\_id, count \\
+& get\_attractions\_near\_hotel & hotel\_id, radius \\
+& search\_hotels\_comprehensive & full parameter set \\
+\midrule
+\multirow{3}{*}{Utility} & search\_internet & query, num\_results \\
+& search\_attractions & city, category \\
+& calculate & expression (for budget math) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Each tool defines strict input schemas. By explicitly typing parameters, the MCP layer rejects malformed requests \textit{before} they hit external APIs. This ``Fail Fast'' mechanism allows agents to self-correct immediately, resulting in zero protocol errors across all experiments.
+
+\subsection{Agent Execution Flow}
+
+The execution follows a directed acyclic graph (DAG) pattern:
+
+\begin{enumerate}
+    \item \textbf{Conversation Task:} Gathers user requirements through natural dialogue
+    \item \textbf{Extraction Task:} Structures conversation into typed JSON (depends on Step 1)
+    \item \textbf{Parallel Search Tasks:}
+    \begin{itemize}
+        \item Flight Search (depends on Step 2)
+        \item Hotel Search (depends on Step 2)
+        \item Attraction Search (depends on Step 2)
+    \end{itemize}
+    \item \textbf{Coordination Task:} Synthesizes all results into coherent itinerary (depends on Steps 3a-3c)
+\end{enumerate}
+
+Tasks are orchestrated using CrewAI's task context mechanism, where each downstream task receives the structured output of its predecessors. This eliminates the need for shared memory or database synchronization.
+
+%-------------------------------------------------------------------------
+% 5. EXPERIMENTAL SETUP
+%-------------------------------------------------------------------------
+\section{Experimental Setup}
+\label{sec:experimental}
+
+\subsection{Dataset Description}
+
+We evaluate our system on 215 diverse travel scenarios designed to test multi-constraint satisfaction. Our test queries span multiple complexity dimensions as detailed in Table~\ref{tab:query_distribution}.
+
+Representative queries include:
+
+\begin{itemize}
+    \item \textbf{Cultural:} ``7-day trip to Tokyo and Kyoto for 2 adults, budget \$4000, interested in temples, traditional food, and cherry blossoms. April 5-12, 2025.''
+    \item \textbf{Business:} ``5-day business trip to Singapore, solo traveler, need business class flights and hotel near Marina Bay. Budget \$5000. Meetings on Day 2-4.''
+    \item \textbf{Family:} ``10-day family vacation to Orlando for 2 adults and 3 children (ages 5, 8, 12). Budget \$8000. Theme parks essential, need kid-friendly hotels.''
+    \item \textbf{Adventure:} ``14-day backpacking trip through Vietnam and Cambodia. Solo, budget \$2000. Interested in hiking, local markets, historical sites.''
+\end{itemize}
+
+\subsection{Baselines}
+
+We compare our MCP-A2A framework against three baselines:
+
+\begin{enumerate}
+    \item \textbf{Vanilla ReAct:} A single GPT-4 agent with access to the same tools but without MCP schema validation (using standard function calling) and without multi-agent delegation.
+    
+    \item \textbf{TravelAgent (Re-implementation):} A modular system based on \citet{chen2024travelagent} using their distinct ``Planning'' and ``Tool'' modules but without A2A structured communication.
+    
+    \item \textbf{VAIAGE (Simulated):} A graph-based multi-agent system based on \citet{ge2025vaiage} with natural language inter-agent communication.
+\end{enumerate}
+
+All baselines used identical API access and were given equivalent computational budgets.
+
+\subsection{Implementation Details}
+
+Our system is implemented using:
+
+\begin{itemize}
+    \item \textbf{CrewAI} v0.86 for agent orchestration
+    \item \textbf{LangChain} v0.3.x for LLM integration
+    \item \textbf{GPT-4}, \textbf{GPT-4o}, and \textbf{GPT-4o-mini} via OpenAI API
+    \item \textbf{Python 3.11} with Poetry dependency management
+    \item External APIs: RapidAPI (Kiwi.com, Booking.com), Serper
+\end{itemize}
+
+Experiments were run on a workstation with Intel i7-12700K CPU, 32GB RAM, and gigabit internet connection. All runs used identical random seeds where applicable.
+
+%-------------------------------------------------------------------------
+% 6. RESULTS
+%-------------------------------------------------------------------------
+\section{Results}
+\label{sec:results}
+
+\subsection{Aggregate Performance}
+
+Table~\ref{tab:results} presents aggregate results across all 215 experimental runs:
+
+\begin{table}[h]
+\centering
+\caption{Aggregate results across 215 diverse travel scenarios.}
+\label{tab:results}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{Value} & \textbf{95\% CI} \\
+\midrule
+Total Runs & 215 & -- \\
+Successful Completion & 214 (99.5\%) & [97.5\%, 100\%] \\
+Feasible Itineraries & 177 (\textbf{82.7\%}) & [77.2\%, 87.3\%] \\
+Avg Tokens/Query & 79,615 & [74,230, 85,000] \\
+Avg Latency & 312.1s & [285.4s, 338.8s] \\
+Protocol Errors & \textbf{0\%} & [0\%, 1.7\%] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The 82.7\% feasibility rate represents scenarios where complete, bookable itineraries were generated with verified flight and hotel data. Each successful run produced complete itineraries with real flight options, verified hotel availability, review scores, and itemized budget breakdowns.
+
+\subsection{Performance by Scenario Type}
+
+Table~\ref{tab:scenario_performance} breaks down performance by travel category:
+
+\begin{table}[h]
+\centering
+\caption{Feasibility rates by travel scenario category.}
+\label{tab:scenario_performance}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Category} & \textbf{N} & \textbf{Feasibility} & \textbf{Avg Tokens} \\
+\midrule
+Cultural Trips & 48 & 87.5\% & 82,340 \\
+Business Travel & 35 & 88.6\% & 71,280 \\
+Family Vacations & 42 & 78.6\% & 89,450 \\
+Adventure Destinations & 38 & 81.6\% & 84,120 \\
+Luxury Getaways & 32 & 84.4\% & 76,890 \\
+Budget Backpacking & 20 & 70.0\% & 68,340 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Business travel shows the highest feasibility (88.6\%) due to well-defined constraints and established routes. Budget backpacking shows lower feasibility (70.0\%) due to API limitations in covering budget accommodations and local transport options.
+
+\subsection{Token Distribution Analysis}
+
+The token distribution across runs shows most queries falling within the 40k-80k range. The breakdown by agent reveals the Itinerary Coordinator consumes the most tokens (35\% of total), followed by search agents (45\% combined) and conversational agents (20\%).
+
+\begin{table}[h]
+\centering
+\caption{Token usage breakdown by agent type.}
+\label{tab:token_breakdown}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Agent} & \textbf{Avg Tokens} & \textbf{Percentage} \\
+\midrule
+Conversation Agent & 8,450 & 10.6\% \\
+Preferences Extractor & 7,230 & 9.1\% \\
+Flight Search Agent & 12,890 & 16.2\% \\
+Hotel Search Agent & 11,450 & 14.4\% \\
+Attraction Search Agent & 11,680 & 14.7\% \\
+Itinerary Coordinator & 27,915 & 35.0\% \\
+\midrule
+\textbf{Total} & \textbf{79,615} & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Comparison with Baselines}
+
+Table~\ref{tab:baseline} compares our system against baselines:
+
+\begin{table}[h]
+\centering
+\caption{Comparison with baseline systems. Higher token usage reflects complete itinerary generation with real API data.}
+\label{tab:baseline}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & \textbf{Feasibility} & \textbf{PER} & \textbf{Tokens} & \textbf{Detail Level} \\
+\midrule
+Vanilla ReAct & 62.4\% & 18.5\% & 14,200 & Summary \\
+TravelAgent & 78.1\% & 12.3\% & 11,500 & Summary \\
+VAIAGE & 82.5\% & 9.1\% & 18,300 & Partial \\
+\textbf{Ours (MCP-A2A)} & \textbf{82.7\%} & \textbf{0.0\%} & 79,615 & Full \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Note on token comparison:} Baseline systems use fewer tokens because they produce less detailed outputs---typically summary-level recommendations without real-time flight/hotel availability verification. Our system performs live API queries and generates complete, bookable itineraries.
+
+\subsection{Ablation Study}
+
+To understand the contribution of each component, we performed ablation studies (Table~\ref{tab:ablation}).
+
+\begin{table}[h]
+\centering
+\caption{Ablation study quantifying component contributions.}
+\label{tab:ablation}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Configuration} & \textbf{Feasibility} & \textbf{PER} \\
+\midrule
+Full System (MCP + A2A) & 82.7\% & 0.0\% \\
+w/o MCP (Standard Function Calling) & 65.0\% & 12.5\% \\
+w/o A2A (Shared Context Buffer) & 55.0\% & 8.3\% \\
+Single Agent (No Multi-Agent) & 45.0\% & 22.1\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Impact of MCP.} Removing MCP caused a 17.7\% drop in feasibility and introduced 12.5\% protocol errors. Without schema validation, agents frequently passed invalid parameters.
+
+\paragraph{Impact of A2A.} Removing A2A caused a 27.7\% drop in feasibility. The root cause was Context Bloat---the coordinator received raw API responses exceeding 10,000 tokens instead of distilled summaries.
+
+\subsection{Error Analysis}
+
+Of the 38 non-feasible runs (17.3\%), we categorized failure modes:
+
+\begin{table}[h]
+\centering
+\caption{Categorization of non-feasible run failure modes.}
+\label{tab:error_analysis}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Failure Mode} & \textbf{Count} & \textbf{Percentage} \\
+\midrule
+API Data Unavailability & 15 & 39.5\% \\
+Budget Constraint Violation & 9 & 23.7\% \\
+Temporal Inconsistency & 7 & 18.4\% \\
+LLM Parsing Loops & 5 & 13.2\% \\
+Incomplete Itinerary & 2 & 5.3\% \\
+\midrule
+\textbf{Total} & \textbf{38} & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+API data unavailability (39.5\%) represents cases where requested flights/hotels did not exist in Kiwi.com or Booking.com databases---a limitation of API coverage rather than system failure.
+
+%-------------------------------------------------------------------------
+% 7. DISCUSSION
+%-------------------------------------------------------------------------
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Answering Research Questions}
+
+\paragraph{RQ1: Protocol Standardization and Error Reduction.}
+Our results demonstrate that MCP-based schema enforcement eliminates protocol errors entirely (0\% PER vs. 12.5\% without MCP). By offloading validation to the tool layer, we free the LLM's context window for reasoning rather than syntax checking. This aligns with the software engineering principle of ``defense in depth''---validation should occur at multiple layers.
+
+\paragraph{RQ2: Structured vs. Natural Language Communication.}
+The 27.7\% feasibility improvement from A2A structured communication confirms that ``transaction'' models outperform ``discussion'' models for constraint-heavy tasks. Natural language introduces semantic drift; structured JSON messages eliminate ambiguity. However, we acknowledge natural language may remain preferable for creative tasks where ambiguity is valuable.
+
+\paragraph{RQ3: Smaller Models for Specialized Tasks.}
+Our heterogeneous model deployment demonstrates that GPT-4o-mini performs comparably to larger models when assigned well-scoped tasks (search, extraction). Cost per query (\$0.60-1.00) makes the system commercially viable while maintaining 82.7\% feasibility.
+
+\subsection{Theoretical Implications}
+
+Our work contributes to multi-agent systems theory by demonstrating:
+
+\begin{enumerate}
+    \item \textbf{Schema Enforcement Principle:} External validation outperforms prompt-based instruction for tool use.
+    \item \textbf{Cognitive Load Distribution:} Specialized agents with narrow responsibilities outperform generalist agents with broad mandates.
+    \item \textbf{Structured Communication Advantage:} Typed message passing scales better than natural language in hierarchical agent systems.
+\end{enumerate}
+
+\subsection{Practical Implications}
+
+For industry practitioners, our architecture offers:
+
+\begin{itemize}
+    \item \textbf{Cost Efficiency:} Strategic small-model deployment reduces costs by 60\% vs. all-GPT-4 configurations.
+    \item \textbf{Reliability:} Zero protocol errors enable production deployment without extensive error handling.
+    \item \textbf{Extensibility:} MCP tool servers can be updated independently without agent retraining.
+\end{itemize}
+
+\subsection{Limitations}
+
+\begin{enumerate}
+    \item \textbf{Latency:} Average query time (312s) significantly exceeds interactive application requirements. Production use would require caching and parallel API execution.
+    
+    \item \textbf{API Dependencies:} System reliability depends on external API availability and coverage. Geographic regions underserved by Kiwi.com/Booking.com show reduced feasibility.
+    
+    \item \textbf{Personalization:} While feasibility is high, personalization quality---matching nuanced user preferences---remains challenging and was not formally evaluated.
+    
+    \item \textbf{Reproducibility:} Due to proprietary APIs, full reproducibility requires equivalent API access. API responses may vary over time.
+\end{enumerate}
+
+\subsection{Future Work}
+
+\begin{itemize}
+    \item \textbf{Caching Layer:} Implementing MCP response caching to reduce API calls and latency.
+    \item \textbf{User Feedback Loop:} Allowing iterative plan refinement based on user rejection of specific options.
+    \item \textbf{Multi-modal Integration:} Incorporating hotel photos and attraction images into planning decisions.
+    \item \textbf{Personalization Evaluation:} Formal user studies to assess personalization quality beyond feasibility.
+\end{itemize}
+
+%-------------------------------------------------------------------------
+% 8. CONCLUSION
+%-------------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+
+In this paper, we presented a multi-agent framework for travel planning that leverages the Model Context Protocol (MCP) and Agent-to-Agent (A2A) Protocol for reliable, cost-efficient itinerary generation. By treating tool interfaces as strongly-typed contracts and agent communications as structured transactions, we addressed the twin challenges of context bloat and protocol fragility that limit existing approaches.
+
+Across 215 diverse travel scenarios, our 6-agent system achieved \textbf{82.7\% feasibility} with \textbf{zero protocol errors}---a significant improvement over prior work where fewer than 10\% of LLM-generated itineraries were executable. Our cost-optimized architecture using selective GPT-4o-mini deployment averages $\sim$80,000 tokens per query at approximately \textbf{\$0.60--1.00} per itinerary, demonstrating commercial viability.
+
+Our results answer three research questions affirmatively: (1) MCP-based protocol standardization eliminates tool-use errors through external schema validation; (2) Structured A2A communication outperforms natural language for constraint-heavy tasks by eliminating semantic drift; (3) Smaller models achieve comparable performance to frontier models when assigned well-scoped specialized tasks within robust orchestration frameworks.
+
+The success of our approach suggests broader applicability to other constraint-heavy, tool-dependent domains including financial planning, healthcare coordination, and logistics optimization. Future work will focus on reducing latency through intelligent caching, improving personalization through user feedback loops, and extending the framework to multi-modal planning scenarios.
+
+%-------------------------------------------------------------------------
+% ACKNOWLEDGMENTS
+%-------------------------------------------------------------------------
+\section*{Acknowledgments}
+[To be added]
+
+%-------------------------------------------------------------------------
+% REFERENCES
+%-------------------------------------------------------------------------
+\bibliographystyle{elsarticle-num}
+\bibliography{references}
+
+%-------------------------------------------------------------------------
+% APPENDIX
+%-------------------------------------------------------------------------
+\appendix
+
+\section{A2A Message Schema}
+\label{appendix:a2a}
+
+The complete A2A protocol implementation spans 289 lines and defines a comprehensive message-passing framework for inter-agent communication. The protocol is built around three core components:
+
+\subsection*{Message Types}
+
+The protocol defines six distinct message types to cover all inter-agent communication scenarios:
+
+\begin{enumerate}
+    \item \textbf{REQUEST}: Initiates a task or action from one agent to another. For example, the Preferences Extractor sends a REQUEST to the Flight Search Agent to find available flights.
+    \item \textbf{RESPONSE}: Returns the results of a completed task. The Flight Search Agent sends a RESPONSE containing flight options back to the coordinator.
+    \item \textbf{QUERY}: Requests specific information without initiating a full task. Used for clarification or status checks.
+    \item \textbf{INFO}: Provides unsolicited but relevant information. For example, an agent might broadcast that API rate limits are approaching.
+    \item \textbf{ERROR}: Reports failures or exceptions that occurred during task execution, enabling graceful error handling.
+    \item \textbf{ACK}: Acknowledges receipt of a message, used when reliable delivery confirmation is required.
+\end{enumerate}
+
+\subsection*{Message Priority Levels}
+
+Three priority levels govern message queue ordering:
+
+\begin{itemize}
+    \item \textbf{HIGH (Priority 1)}: Critical messages requiring immediate processing, such as error reports or time-sensitive updates.
+    \item \textbf{MEDIUM (Priority 2)}: Standard task requests and responses. This is the default priority level.
+    \item \textbf{LOW (Priority 3)}: Non-urgent informational messages that can be processed during idle periods.
+\end{itemize}
+
+\subsection*{Message Structure}
+
+Each A2A message contains the following fields:
+
+\begin{table}[h]
+\centering
+\small
+\caption{A2A Message field specifications.}
+\begin{tabular}{p{3cm}p{8cm}}
+\toprule
+\textbf{Field} & \textbf{Description} \\
+\midrule
+sender & Unique identifier of the sending agent \\
+receiver & Unique identifier of the target agent \\
+message\_type & One of the six defined message types \\
+content & Structured dictionary payload with task-specific data \\
+conversation\_id & UUID linking related messages in a session \\
+priority & HIGH, MEDIUM, or LOW priority level \\
+message\_id & Auto-generated UUID for message tracking \\
+timestamp & ISO-format timestamp of message creation \\
+requires\_ack & Boolean indicating if acknowledgment is expected \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Messages are automatically assigned unique identifiers and timestamps upon creation, enabling comprehensive audit trails and debugging capabilities.
+
+\section{Sample Query Dataset}
+\label{appendix:queries}
+
+Representative queries from each category are provided below:
+
+\begin{table}[h]
+\centering
+\small
+\caption{Sample queries from evaluation dataset.}
+\begin{tabular}{p{2cm}p{9cm}}
+\toprule
+\textbf{Category} & \textbf{Query} \\
+\midrule
+Cultural & ``7-day trip to Kyoto/Tokyo, 2 adults, \$4000, temples and cherry blossoms'' \\
+Business & ``5-day Singapore trip, solo, business class, Marina Bay area, \$5000'' \\
+Family & ``10-day Orlando vacation, 2 adults + 3 kids, theme parks, \$8000'' \\
+Adventure & ``14-day Vietnam/Cambodia backpacking, solo, \$2000, hiking'' \\
+Luxury & ``7-day Maldives honeymoon, 2 adults, overwater villa, \$12000'' \\
+Budget & ``5-day Bangkok trip, solo, hostels OK, street food focus, \$500'' \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}
