@@ -1,6 +1,10 @@
 """
 Quick test script to verify API tools are working
 """
+import sys
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import os
 from dotenv import load_dotenv
 from tools.mcp_tools import search_hotel_destination, search_round_trip_flights
@@ -41,3 +45,4 @@ print(result2[:500] + "..." if len(result2) > 500 else result2)
 print("\n" + "="*60)
 print("Tests Complete")
 print("="*60)
+

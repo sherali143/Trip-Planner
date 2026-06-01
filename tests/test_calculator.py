@@ -4,7 +4,10 @@ Tests for the safe calculator implementation.
 Verifies that the AST-based calculator correctly evaluates mathematical
 expressions while rejecting potentially malicious code.
 """
-
+import sys
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pytest
 import ast
 import operator
@@ -16,7 +19,6 @@ class SafeCalculator:
     Safe arithmetic evaluator using AST parsing.
     Only allows: +, -, *, /, //, %, ** and numeric literals.
     """
-    
     OPERATORS = {
         ast.Add: operator.add,
         ast.Sub: operator.sub,
@@ -82,7 +84,6 @@ class CalculatorTools:
 
 class TestSafeCalculator:
     """Test the SafeCalculator class directly."""
-    
     @pytest.fixture
     def calculator(self):
         return SafeCalculator()
@@ -230,7 +231,6 @@ class TestSafeCalculator:
 
 class TestCalculatorToolsIntegration:
     """Test the CalculatorTools class that wraps SafeCalculator for LangChain."""
-    
     def test_calculate_tool_basic(self):
         """Test the calculate tool with basic expressions."""
         result = CalculatorTools().calculate("200 * 7")
@@ -254,3 +254,4 @@ class TestCalculatorToolsIntegration:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+

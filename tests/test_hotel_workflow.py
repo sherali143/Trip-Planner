@@ -1,6 +1,10 @@
 """
 Test complete hotel search workflow with review scores
 """
+import sys
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tools.mcp_tools import (
     search_hotel_destination,
     search_hotels,
@@ -83,3 +87,4 @@ print("   ✅ Hotel destination search")
 print("   ✅ Hotel search with dates")
 print("   ✅ Hotel review scores")
 print("   ✅ Nearby attractions")
+

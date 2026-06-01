@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 """
 Token Reduction Experiment Runner
 
@@ -273,3 +276,4 @@ def run_comparison_experiment():
 
 if __name__ == "__main__":
     run_comparison_experiment()
+

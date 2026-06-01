@@ -2,7 +2,10 @@
 Test script to isolate and debug the flight search functionality.
 Uses a simple agent to test the MCP flight tools directly.
 """
-
+import sys
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import os
 from dotenv import load_dotenv
 from crewai import Agent, Task, Crew, Process
@@ -121,3 +124,4 @@ print("📋 TEST RESULT")
 print("="*70)
 print(result)
 print("="*70)
+

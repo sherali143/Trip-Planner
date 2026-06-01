@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 """
 Run 75 improved iterations (runs 151-225) with:
 1. Higher max_iter values
@@ -333,3 +336,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 """
 Run optimized system: 2 test runs first, then 75 iterations if tests pass.
 """
@@ -180,3 +183,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

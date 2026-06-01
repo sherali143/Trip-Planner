@@ -1,7 +1,10 @@
 """
 Direct test of flight API - no CrewAI, just raw API calls
 """
-
+import sys
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import requests
 import os
 from dotenv import load_dotenv
@@ -119,3 +122,4 @@ except Exception as e:
 print("\n" + "="*70)
 print("DIRECT API TESTS COMPLETE")
 print("="*70)
+

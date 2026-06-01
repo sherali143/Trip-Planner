@@ -1,6 +1,10 @@
 """
 Test script to verify MCP server integration
 """
+import sys
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import asyncio
 import os
 import sys
@@ -18,7 +22,6 @@ from tools.mcp_tools import (
 
 async def test_mcp_server():
     """Test the unified MCP server"""
-    
     print("🚀 Testing Unified MCP Server Integration")
     print("=" * 50)
     
@@ -121,7 +124,6 @@ async def test_mcp_server():
 
 def test_sync_tools():
     """Test the sync tool wrappers that agents will use"""
-    
     print("\n3️⃣ Testing Sync Tool Wrappers...")
     
     # Test flight search tool

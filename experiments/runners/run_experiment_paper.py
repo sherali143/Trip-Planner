@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 """
 Trip Planner Research Experiment - 8 Iterations for Paper Validation
 
@@ -200,3 +203,4 @@ def run_experiment():
 
 if __name__ == "__main__":
     run_experiment()
+

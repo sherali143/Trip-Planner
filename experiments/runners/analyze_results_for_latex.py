@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import json
 import sys
 
@@ -63,3 +66,4 @@ def generate_latex_tables(json_file):
 
 if __name__ == "__main__":
     generate_latex_tables("experiment_results_paper.json")
+

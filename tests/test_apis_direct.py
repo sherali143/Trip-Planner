@@ -1,6 +1,10 @@
 """
 Direct test of hotel API functions (bypass LangChain tool wrapper)
 """
+import sys
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import json
 import requests
 import os
@@ -115,3 +119,4 @@ if hotel_data.get("status"):
 print("\n" + "="*70)
 print("✅ ALL APIS WORKING PERFECTLY")
 print("="*70)
+

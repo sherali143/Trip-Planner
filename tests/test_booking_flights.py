@@ -3,7 +3,10 @@ Test Booking.com Flights API
 - searchDestination: Get airport/city IDs
 - searchFlights: Search for actual flights
 """
-
+import sys
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import requests
 import json
 import os
@@ -138,3 +141,4 @@ if isb_id and doha_id:
         print(f"Full response: {json.dumps(flight_data, indent=2)[:500]}")
 else:
     print("\n❌ Could not find airport IDs")
+

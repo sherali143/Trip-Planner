@@ -2,7 +2,10 @@
 Test Runner for Trip Planner
 Runs all tests for multiple iterations and logs results.
 """
-
+import sys
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import subprocess
 import sys
 import json
@@ -137,3 +140,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     run_tests(args.iterations)
+

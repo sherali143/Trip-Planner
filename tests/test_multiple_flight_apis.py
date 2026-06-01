@@ -1,7 +1,10 @@
 """
 Test Multiple Flight APIs to find best working one
 """
-
+import sys
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import requests
 import json
 import os
@@ -249,3 +252,4 @@ The best API will be one that:
 2. Shows multiple airlines (not just PIA)
 3. Has correct pricing
 """)
+

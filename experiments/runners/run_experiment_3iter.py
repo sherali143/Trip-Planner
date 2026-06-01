@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 """
 Trip Planner Research Experiment - 3 Iterations for Verification
 Runs the first 3 complex travel scenarios to generate performance metrics for quick validation.
@@ -174,3 +177,4 @@ def run_experiment():
 
 if __name__ == "__main__":
     run_experiment()
+

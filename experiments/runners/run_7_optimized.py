@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 """
 Run 7 additional optimized experiments to complete paper validation data.
 Uses TripPlannerAgentsOptimized with GPT-4o-mini for non-critical agents.
@@ -220,3 +223,4 @@ def run_optimized_experiments():
 
 if __name__ == "__main__":
     run_optimized_experiments()
+
