@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 """
 Agent Cards for A2A Protocol Communication
 

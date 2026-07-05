@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  trip-planner:
+    build: .
+    container_name: ai-trip-planner
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - ./.cache:/app/.cache
+    restart: unless-stopped

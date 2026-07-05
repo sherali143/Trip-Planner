@@ -34,22 +34,22 @@ class TripPlannerAgents:
     """
     
     def __init__(self):
-        # GPT-4o for conversation agent (faster and better at instruction following)
+        # Configurable model via env var (defaults to gpt-4o for backward compatibility)
+        model = os.getenv("OPENAI_MODEL", "gpt-4o")
+        
         self.llm_conversation = ChatOpenAI(
-            model="gpt-4o",  # type: ignore
+            model=model,  # type: ignore
             temperature=0.7  # type: ignore
         )
         
-        # GPT-4o for other agents (faster, good for structured tasks)
         self.llm_standard = ChatOpenAI(
-            model="gpt-4o",  # type: ignore
-            temperature=0.3  # type: ignore - Lower temp for consistent outputs
+            model=model,  # type: ignore
+            temperature=0.3  # type: ignore
         )
         
-        # GPT-4o for coordinator
         self.llm_coordinator = ChatOpenAI(
-            model="gpt-4o",  # type: ignore
-            temperature=0.3  # type: ignore - Low temp for consistent itinerary
+            model=model,  # type: ignore
+            temperature=0.3  # type: ignore
         )
     
     def conversational_agent(self) -> Agent:

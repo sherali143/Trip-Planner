@@ -50,7 +50,7 @@ class TripPlannerCrew:
     4. Itinerary Coordinator synthesizes everything into final plan
     """
     
-    def __init__(self, parallel_mode: bool = False):
+    def __init__(self, parallel_mode: bool = True):
         self.agents_class = TripPlannerAgents()
         self.tasks_class = TripPlannerTasks()
         self.a2a_protocol = A2AProtocol()
@@ -718,8 +718,48 @@ typically costs at least $800-$1500 per person for a week-long trip.
         return str(result)
 
 
+def validate_api_keys():
+    """Validate that all required API keys are present at startup."""
+    required_keys = {
+        "OPENAI_API_KEY": "OpenAI (powers all agents)",
+        "SERPER_API_KEY": "Serper (web search for attractions & restaurants)",
+        "RAPIDAPI_KEY": "RapidAPI (flights via Kiwi.com + hotels via Booking.com)",
+    }
+    
+    missing = []
+    for key, description in required_keys.items():
+        if not os.getenv(key):
+            missing.append(f"  - {key} ({description})")
+    
+    if missing:
+        print("""
+╔══════════════════════════════════════════════════════════════════════════╗
+║                      ❌ MISSING API KEYS                                ║
+╚══════════════════════════════════════════════════════════════════════════╝
+""")
+        print("The following required API keys are missing:\n")
+        print("\n".join(missing))
+        print(f"""
+To fix this:
+  1. Copy .env.example to .env:  cp .env.example .env
+  2. Fill in your API keys in .env
+  3. Run the planner again
+
+Need API keys?
+  - OpenAI:   https://platform.openai.com/api-keys
+  - Serper:   https://serper.dev/
+  - RapidAPI: https://rapidapi.com/ (subscribe to Kiwi.com + Booking.com APIs)
+""")
+        return False
+    return True
+
+
 def main():
     """Main entry point for the trip planner"""
+    
+    # Validate API keys before starting
+    if not validate_api_keys():
+        return
     
     print("""
     ╔══════════════════════════════════════════════════════════════════════╗
