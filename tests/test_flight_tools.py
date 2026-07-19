@@ -10,7 +10,7 @@ load_dotenv()
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from tools.mcp_tools import _call_kiwi_api_direct, _search_round_trip_flights
+from src.tools.mcp_tools import _call_kiwi_api_direct, _search_round_trip_flights
 
 print("="*70)
 print("🧪 TESTING DIRECT FLIGHT API CALL")

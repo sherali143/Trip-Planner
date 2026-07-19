@@ -7,7 +7,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from tools.mcp_tools import _call_booking_flights_api
+from src.tools.mcp_tools import _call_booking_flights_api
 import json
 
 print("="*70)

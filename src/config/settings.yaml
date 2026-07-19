@@ -14,7 +14,7 @@ agents:
   
   preferences_extractor:
     model: "gpt-4"
-    temperature: 0.3  # Lower temperature for structured extraction
+    temperature: 0.3
     max_tokens: 1500
     enabled: true
   
@@ -47,7 +47,7 @@ agents:
 # ===========================================
 
 a2a_protocol:
-  message_timeout: 60  # seconds
+  message_timeout: 60
   max_retries: 3
   enable_logging: true
   log_level: "INFO"
@@ -58,13 +58,11 @@ a2a_protocol:
 # ===========================================
 
 budget_defaults:
-  # Default percentage allocations
   flights_percentage: 0.40
   accommodation_percentage: 0.30
   activities_percentage: 0.20
   meals_percentage: 0.10
   
-  # Adjustments based on travel style
   luxury:
     accommodation_percentage: 0.40
     meals_percentage: 0.15
@@ -80,12 +78,6 @@ search_tools:
   serper_api:
     enabled: true
     max_results: 5
-    # Serper API is used for all searches:
-    # - Flight searches
-    # - Hotel searches
-    # - Attraction searches
-    # - Restaurant searches
-    # - General web searches
   
   calculator:
     enabled: true

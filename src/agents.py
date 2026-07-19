@@ -6,7 +6,7 @@ from typing import List, Optional
 import os
 
 # All tools now come from the unified MCP tools module
-from tools.mcp_tools import (
+from src.tools import (
     # Flight tools
     search_comprehensive_flights,
     search_round_trip_flights,

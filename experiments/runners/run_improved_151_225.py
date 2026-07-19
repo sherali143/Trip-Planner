@@ -126,7 +126,7 @@ def create_improved_agents():
     llm_standard = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
     llm_coordinator = ChatOpenAI(model="gpt-4o", temperature=0.3)
     
-    from tools.mcp_tools import (
+    from src.tools.mcp_tools import (
         search_comprehensive_flights, search_round_trip_flights,
         search_hotels_comprehensive, search_hotel_destination,
         search_hotels_by_dest_id, get_hotel_reviews,

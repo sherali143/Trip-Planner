@@ -16,19 +16,19 @@ from textwrap import dedent
 from dotenv import load_dotenv
 from typing import Dict, Any, Optional, Tuple
 
-from agents import TripPlannerAgents
-from tasks import TripPlannerTasks
-from a2a_protocol import A2AProtocol, A2AMessage, MessageType
-from agent_cards import AGENT_REGISTRY
+from src.agents import TripPlannerAgents
+from src.tasks import TripPlannerTasks
+from src.comms import A2AProtocol, A2AMessage, MessageType
+from src.comms.registry import AGENT_REGISTRY
 
 # Import utility modules for enhanced functionality
-from utils.itinerary_validator import (
+from src.core.validators import (
     validate_day_count, 
     regenerate_if_incomplete,
     extract_trip_duration_from_extraction,
     add_completion_notice
 )
-from utils.cache_manager import get_cache
+from src.core.cache import get_cache
 
 # Load environment variables from .env file
 load_dotenv()
@@ -716,98 +716,4 @@ typically costs at least $800-$1500 per person for a week-long trip.
         self.a2a_protocol.end_conversation(conversation_id)
         
         return str(result)
-
-
-def validate_api_keys():
-    """Validate that all required API keys are present at startup."""
-    required_keys = {
-        "OPENAI_API_KEY": "OpenAI (powers all agents)",
-        "SERPER_API_KEY": "Serper (web search for attractions & restaurants)",
-        "RAPIDAPI_KEY": "RapidAPI (flights via Kiwi.com + hotels via Booking.com)",
-    }
-    
-    missing = []
-    for key, description in required_keys.items():
-        if not os.getenv(key):
-            missing.append(f"  - {key} ({description})")
-    
-    if missing:
-        print("""
-╔══════════════════════════════════════════════════════════════════════════╗
-║                      ❌ MISSING API KEYS                                ║
-╚══════════════════════════════════════════════════════════════════════════╝
-""")
-        print("The following required API keys are missing:\n")
-        print("\n".join(missing))
-        print(f"""
-To fix this:
-  1. Copy .env.example to .env:  cp .env.example .env
-  2. Fill in your API keys in .env
-  3. Run the planner again
-
-Need API keys?
-  - OpenAI:   https://platform.openai.com/api-keys
-  - Serper:   https://serper.dev/
-  - RapidAPI: https://rapidapi.com/ (subscribe to Kiwi.com + Booking.com APIs)
-""")
-        return False
-    return True
-
-
-def main():
-    """Main entry point for the trip planner"""
-    
-    # Validate API keys before starting
-    if not validate_api_keys():
-        return
-    
-    print("""
-    ╔══════════════════════════════════════════════════════════════════════╗
-    ║                                                                      ║
-    ║              🌍 AI TRIP PLANNER WITH A2A & MCP 🌍                   ║
-    ║                                                                      ║
-    ║  Features:                                                          ║
-    ║  ✅ Agent-to-Agent (A2A) Communication Protocol                     ║
-    ║  ✅ Model Context Protocol (MCP) Tool Integration                   ║
-    ║  ✅ Multi-Agent Collaborative Planning                              ║
-    ║  ✅ Intelligent Budget Optimization                                 ║
-    ║  ✅ Comprehensive Itinerary Generation                              ║
-    ║                                                                      ║
-    ╚══════════════════════════════════════════════════════════════════════╝
-    """)
-    
-    # Get user input
-    print("\n📝 Please describe your ideal trip:")
-    print("   (e.g., 'I want to visit Paris for 5 days with a $3000 budget.')\n")
-    
-    user_input = input("Your trip request: ").strip()
-    
-    if not user_input:
-        # Use example if no input provided
-        user_input = dedent("""
-            I want to plan a trip to Tokyo, Japan. I'm traveling from New York 
-            and would like to go in March 2024 for about 7 days. My budget is around 
-            $4000. I'm interested in experiencing Japanese culture, trying authentic 
-            food, visiting temples, and maybe seeing Mt. Fuji. I prefer moderate 
-            accommodation, nothing too fancy but comfortable. I like a good balance 
-            of activities - not too rushed but I want to see the highlights.
-        """).strip()
-        print(f"\n💡 Using example trip request:\n{user_input}\n")
-    
-    # Initialize and run trip planner
-    trip_planner = TripPlannerCrew()
-    itinerary = trip_planner.plan_trip(user_input)
-    
-    # Display final itinerary
-    print("\n" + "="*80)
-    print("📋 YOUR COMPLETE TRAVEL ITINERARY")
-    print("="*80 + "\n")
-    print(itinerary)
-    print("\n" + "="*80)
-    print("✨ Happy Travels! ✨")
-    print("="*80 + "\n")
-
-
-if __name__ == "__main__":
-    main()
 

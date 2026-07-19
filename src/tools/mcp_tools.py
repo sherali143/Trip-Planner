@@ -29,8 +29,8 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Path to unified MCP server
-MCP_SERVERS_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "mcp_servers")
-UNIFIED_SERVER_PATH = os.path.join(MCP_SERVERS_PATH, "trip_planner_mcp_server.py")
+MCP_SERVERS_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "server")
+UNIFIED_SERVER_PATH = os.path.join(MCP_SERVERS_PATH, "mcp.py")
 
 
 class MCPClient:

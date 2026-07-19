@@ -7,7 +7,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import os
 from dotenv import load_dotenv
-from tools.mcp_tools import search_hotel_destination, search_round_trip_flights
+from src.tools.mcp_tools import search_hotel_destination, search_round_trip_flights
 
 # Load environment
 load_dotenv()

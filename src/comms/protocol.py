@@ -14,7 +14,7 @@ from dataclasses import dataclass, asdict
 from queue import Queue
 import logging
 
-from agent_cards import get_agent_card, validate_communication
+from src.comms.registry import get_agent_card, validate_communication
 
 
 logging.basicConfig(level=logging.INFO)

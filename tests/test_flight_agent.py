@@ -16,7 +16,7 @@ from textwrap import dedent
 load_dotenv()
 
 # Import the flight tools
-from tools.mcp_tools import (
+from src.tools.mcp_tools import (
     search_comprehensive_flights,
     search_round_trip_flights,
     search_internet
