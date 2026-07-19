@@ -30,7 +30,7 @@ load_dotenv()
 
 # Path to unified MCP server
 MCP_SERVERS_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "server")
-UNIFIED_SERVER_PATH = os.path.join(MCP_SERVERS_PATH, "mcp.py")
+UNIFIED_SERVER_PATH = os.path.join(MCP_SERVERS_PATH, "mcp_server.py")
 
 
 class MCPClient:
@@ -314,8 +314,9 @@ def _call_booking_flights_api(
     to_id = dest_result["airport_id"]
     dest_name = dest_result.get("name", destination_city)
     
-    # Step 3: Search flights
-    url = f"https://{BOOKING_HOST}/api/v1/flights/searchFlights"
+    # Step 3: Search flights via getMinPrice endpoint
+    # Note: searchFlights endpoint is unstable on provider side, so we use getMinPrice
+    url = f"https://{BOOKING_HOST}/api/v1/flights/getMinPrice"
     
     params = {
         "fromId": from_id,
@@ -323,8 +324,6 @@ def _call_booking_flights_api(
         "departDate": departure_date,
         "pageNo": 1,
         "adults": adults,
-        "children": "",
-        "sort": "BEST",
         "cabinClass": cabin_class,
         "currency_code": "USD"
     }
@@ -337,18 +336,13 @@ def _call_booking_flights_api(
         response.raise_for_status()
         data = response.json()
         
-        if not data.get("status"):
-            return json.dumps({
-                "success": False,
-                "error": data.get("message", "API error")
-            })
-        
-        flight_offers = data.get("data", {}).get("flightOffers", [])
+        flight_offers = data.get("data", [])
         
         if not flight_offers:
+            # Flight API returned no results; agent will fall back to search_internet
             return json.dumps({
                 "success": True,
-                "message": f"No flights found from {origin_city} to {destination_city} on {departure_date}",
+                "message": f"No flights found via API for {origin_city} to {destination_city} on {departure_date}. Use search_internet as fallback.",
                 "flights": []
             })
         
