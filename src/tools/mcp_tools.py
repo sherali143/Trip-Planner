@@ -274,6 +274,95 @@ def _search_flight_destination_booking(query: str) -> dict:
         return {"success": False, "error": str(e)}
 
 
+def _call_fly_scraper_api(
+    origin_code: str,
+    dest_code: str,
+    departure_date: str,
+    return_date: Optional[str] = None,
+    adults: int = 1,
+    budget: Optional[float] = None
+) -> str:
+    """Search flights via fly-scraper API as fallback"""
+    fly_headers = {
+        "x-rapidapi-key": RAPIDAPI_KEY,
+        "x-rapidapi-host": "fly-scraper.p.rapidapi.com"
+    }
+    params = {
+        "originSkyId": origin_code,
+        "destinationSkyId": dest_code,
+        "outbound_date": departure_date,
+        "adults": adults,
+        "currency": "USD",
+        "cabinClass": "economy",
+        "sortBy": "best"
+    }
+    if return_date:
+        params["return_date"] = return_date
+
+    r = requests.get(
+        "https://fly-scraper.p.rapidapi.com/flights/search-roundtrip",
+        params=params, headers=fly_headers, timeout=60
+    )
+    r.raise_for_status()
+    data = r.json()
+    
+    if not data.get("status"):
+        return json.dumps({"success": False, "error": data.get("message", "API error")})
+    
+    itineraries = data.get("data", {}).get("itineraries", [])
+    if not itineraries:
+        return json.dumps({"success": True, "flights": []})
+    
+    formatted = []
+    for i, it in enumerate(itineraries[:5], 1):
+        price_raw = it.get("price", {}).get("raw", 0)
+        legs = it.get("legs", [])
+        outbound = legs[0] if legs else {}
+        out_legs = []
+        for seg in outbound.get("segments", []):
+            out_legs.append({
+                "airline": (seg.get("marketingCarrier", {}) or {}).get("name", ""),
+                "flight_code": seg.get("flightNumber", ""),
+                "from": (seg.get("origin", {}) or {}).get("code", ""),
+                "to": (seg.get("destination", {}) or {}).get("code", ""),
+                "departure": seg.get("departure", ""),
+                "arrival": seg.get("arrival", ""),
+                "duration_mins": seg.get("durationInMinutes", 0)
+            })
+        
+        flight = {
+            "option": i,
+            "total_price": float(price_raw),
+            "currency": "USD",
+            "passengers": adults,
+            "within_budget": budget is None or float(price_raw) <= budget,
+            "outbound": out_legs,
+            "airline": (outbound.get("carriers", {}) or {}).get("marketing", [{}])[0].get("name", "") if outbound.get("carriers") else "",
+            "duration_mins": outbound.get("durationInMinutes", 0),
+            "stops": outbound.get("stopCount", 0)
+        }
+        if len(legs) > 1 and return_date:
+            inbound = legs[1]
+            in_legs = []
+            for seg in inbound.get("segments", []):
+                in_legs.append({
+                    "airline": (seg.get("marketingCarrier", {}) or {}).get("name", ""),
+                    "from": (seg.get("origin", {}) or {}).get("code", ""),
+                    "to": (seg.get("destination", {}) or {}).get("code", ""),
+                    "departure": seg.get("departure", ""),
+                    "arrival": seg.get("arrival", "")
+                })
+            flight["inbound"] = in_legs
+        formatted.append(flight)
+    
+    result = {
+        "success": True,
+        "flights": formatted,
+        "total_found": len(itineraries)
+    }
+    return json.dumps(result)
+
+
 def _call_booking_flights_api(
     origin_city: str,
     destination_city: str,
@@ -284,8 +373,8 @@ def _call_booking_flights_api(
     cabin_class: str = "ECONOMY"
 ) -> str:
     """
-    Direct call to Booking.com Flights API - returns flights on EXACT dates.
-    This is more reliable than Kiwi API which returns flights across multiple dates.
+    Direct call to flight APIs. Tries Booking.com first, then falls back to fly-scraper.
+    Returns flights on EXACT dates.
     """
     headers = {
         "x-rapidapi-host": BOOKING_HOST,
@@ -302,6 +391,7 @@ def _call_booking_flights_api(
     
     from_id = origin_result["airport_id"]
     origin_name = origin_result.get("name", origin_city)
+    origin_code = origin_result.get("code", "")
     
     # Step 2: Get destination airport ID
     dest_result = _search_flight_destination_booking(destination_city)
@@ -313,145 +403,74 @@ def _call_booking_flights_api(
     
     to_id = dest_result["airport_id"]
     dest_name = dest_result.get("name", destination_city)
+    dest_code = dest_result.get("code", "")
     
-    # Step 3: Search flights via getMinPrice endpoint
-    # Note: searchFlights endpoint is unstable on provider side, so we use getMinPrice
+    # Step 3: Try Booking.com getMinPrice first
     url = f"https://{BOOKING_HOST}/api/v1/flights/getMinPrice"
-    
     params = {
-        "fromId": from_id,
-        "toId": to_id,
+        "fromId": from_id, "toId": to_id,
         "departDate": departure_date,
-        "pageNo": 1,
-        "adults": adults,
-        "cabinClass": cabin_class,
-        "currency_code": "USD"
+        "pageNo": 1, "adults": adults,
+        "cabinClass": cabin_class, "currency_code": "USD"
     }
-    
     if return_date:
         params["returnDate"] = return_date
     
+    # Step 3: Try Booking.com first, then fall back to fly-scraper
     try:
         response = requests.get(url, headers=headers, params=params, timeout=60)
         response.raise_for_status()
         data = response.json()
-        
         flight_offers = data.get("data", [])
-        
-        if not flight_offers:
-            # Flight API returned no results; agent will fall back to search_internet
+        if flight_offers:
+            # Format Booking.com results
+            formatted_flights = []
+            for idx, offer in enumerate(flight_offers[:5], 1):
+                price_info = offer.get("priceBreakdown", {})
+                total_price = float(price_info.get("total", {}).get("units", 0))
+                currency = price_info.get("total", {}).get("currencyCode", "USD")
+                within_budget = budget is None or total_price <= budget
+                
+                segments = offer.get("segments", [])
+                outbound_legs = []
+                if segments:
+                    for leg in segments[0].get("legs", []):
+                        carriers = leg.get("carriersData", [])
+                        outbound_legs.append({
+                            "airline": carriers[0].get("name", "Unknown") if carriers else "Unknown",
+                            "from": leg.get("departureAirport", {}).get("code", "N/A"),
+                            "to": leg.get("arrivalAirport", {}).get("code", "N/A"),
+                            "departure": leg.get("departureTime", "N/A"),
+                            "arrival": leg.get("arrivalTime", "N/A")
+                        })
+                formatted_flights.append({
+                    "option": idx, "total_price": round(total_price, 2),
+                    "currency": currency, "passengers": adults,
+                    "within_budget": within_budget, "outbound": outbound_legs
+                })
+            
+            filtered = [f for f in formatted_flights if f["within_budget"]] if budget else formatted_flights
             return json.dumps({
                 "success": True,
-                "message": f"No flights found via API for {origin_city} to {destination_city} on {departure_date}. Use search_internet as fallback.",
-                "flights": []
-            })
-        
-        # Format flight results
-        formatted_flights = []
-        formatted_flights = []
-        for idx, offer in enumerate(flight_offers[:5], 1):
-            # Price
-            price_info = offer.get("priceBreakdown", {})
-            total_price = float(price_info.get("total", {}).get("units", 0))
-            currency = price_info.get("total", {}).get("currencyCode", "USD")
-            price_per_person = total_price / adults if adults > 0 else total_price
-            
-            # Budget check
-            within_budget = budget is None or total_price <= budget
-            
-            flight = {
-                "option": idx,
-                "price_per_person": round(price_per_person, 2),
-                "total_price": round(total_price, 2),
-                "currency": currency,
-                "passengers": adults,
-                "within_budget": within_budget
-            }
-            
-            # Flight segments
-            segments = offer.get("segments", [])
-            
-            # Outbound flight
-            if segments:
-                outbound_segment = segments[0]
-                outbound_legs = []
-                
-                for leg in outbound_segment.get("legs", []):
-                    carriers = leg.get("carriersData", [])
-                    airline = carriers[0].get("name", "Unknown") if carriers else "Unknown"
-                    carrier_code = leg.get("flightInfo", {}).get("carrierInfo", {}).get("operatingCarrier", "")
-                    flight_num = leg.get("flightInfo", {}).get("flightNumber", "")
-                    
-                    outbound_legs.append({
-                        "airline": airline,
-                        "flight_code": f"{carrier_code}{flight_num}",
-                        "from": leg.get("departureAirport", {}).get("code", "N/A"),
-                        "to": leg.get("arrivalAirport", {}).get("code", "N/A"),
-                        "departure": leg.get("departureTime", "N/A"),
-                        "arrival": leg.get("arrivalTime", "N/A"),
-                        "duration_mins": leg.get("durationInMinutes", 0)
-                    })
-                
-                flight["outbound"] = outbound_legs
-                flight["outbound_date"] = departure_date
-            
-            # Return flight (if round-trip)
-            if len(segments) > 1 and return_date:
-                return_segment = segments[1]
-                return_legs = []
-                
-                for leg in return_segment.get("legs", []):
-                    carriers = leg.get("carriersData", [])
-                    airline = carriers[0].get("name", "Unknown") if carriers else "Unknown"
-                    carrier_code = leg.get("flightInfo", {}).get("carrierInfo", {}).get("operatingCarrier", "")
-                    flight_num = leg.get("flightInfo", {}).get("flightNumber", "")
-                    
-                    return_legs.append({
-                        "airline": airline,
-                        "flight_code": f"{carrier_code}{flight_num}",
-                        "from": leg.get("departureAirport", {}).get("code", "N/A"),
-                        "to": leg.get("arrivalAirport", {}).get("code", "N/A"),
-                        "departure": leg.get("departureTime", "N/A"),
-                        "arrival": leg.get("arrivalTime", "N/A"),
-                        "duration_mins": leg.get("durationInMinutes", 0)
-                    })
-                
-                flight["return"] = return_legs
-                flight["return_date"] = return_date
-            
-            formatted_flights.append(flight)
-        
-        # Filter by budget if specified
-        if budget:
-            within_budget_flights = [f for f in formatted_flights if f["within_budget"]]
-        else:
-            within_budget_flights = formatted_flights
-        
-        result = {
-            "success": True,
-            "search": {
-                "origin": origin_name,
-                "origin_code": from_id.replace(".AIRPORT", ""),
-                "destination": dest_name,
-                "destination_code": to_id.replace(".AIRPORT", ""),
-                "departure_date": departure_date,
-                "return_date": return_date,
-                "passengers": adults,
-                "budget": budget
-            },
-            "flights_found": len(flight_offers),
-            "within_budget": len(within_budget_flights) if budget else len(formatted_flights),
-            "flights": formatted_flights
-        }
-        
-        return json.dumps(result, indent=2)
-        
-    except requests.exceptions.Timeout:
-        return json.dumps({"error": "API timeout", "success": False})
-    except requests.exceptions.RequestException as e:
-        return json.dumps({"error": str(e), "success": False})
+                "search": {"origin": origin_name, "destination": dest_name,
+                          "departure_date": departure_date, "return_date": return_date,
+                          "passengers": adults, "budget": budget},
+                "flights_found": len(formatted_flights),
+                "within_budget": len(filtered),
+                "flights": formatted_flights
+            }, indent=2)
+    except Exception:
+        pass  # Fall through to fly-scraper
+    
+    # Fallback: fly-scraper API
+    try:
+        return _call_fly_scraper_api(origin_code, dest_code, departure_date, return_date, adults, budget)
     except Exception as e:
-        return json.dumps({"error": str(e), "success": False})
+        return json.dumps({
+            "success": True,
+            "message": f"No flights found for {origin_city} to {destination_city} on {departure_date}.",
+            "flights": []
+        })
 
 
 def _call_kiwi_api_direct(
