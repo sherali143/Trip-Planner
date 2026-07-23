@@ -14,9 +14,6 @@ class AgentCapability(Enum):
     """Defines agent capabilities"""
     CONVERSATION = "conversation"
     DATA_EXTRACTION = "data_extraction"
-    FLIGHT_SEARCH = "flight_search"
-    HOTEL_SEARCH = "hotel_search"
-    ATTRACTION_SEARCH = "attraction_search"
     COORDINATION = "coordination"
     BUDGET_CALCULATION = "budget_calculation"
 
@@ -117,94 +114,6 @@ PREFERENCES_EXTRACTOR_CARD = AgentCard(
         }
     },
     can_receive_from=["conversational_agent"],
-    can_send_to=["flight_search_agent", "hotel_agent", "attraction_agent", "conversational_agent"]
-)
-
-FLIGHT_SEARCH_AGENT_CARD = AgentCard(
-    agent_id="flight_search_agent",
-    agent_name="Flight Search Specialist",
-    role="Flight search and recommendation",
-    capabilities=[AgentCapability.FLIGHT_SEARCH],
-    description="""Queries MCP Flight Search Server to find optimal flight options.
-    Filters and ranks results based on budget, timing, and preferences.""",
-    input_schema={
-        "type": "object",
-        "properties": {
-            "origin": {"type": "string"},
-            "destination": {"type": "string"},
-            "departure_date": {"type": "string"},
-            "return_date": {"type": "string"},
-            "budget": {"type": "number"},
-            "preferences": {"type": "object"}
-        }
-    },
-    output_schema={
-        "type": "object",
-        "properties": {
-            "flights": {"type": "array"},
-            "recommendation": {"type": "string"},
-            "reasoning": {"type": "string"},
-            "total_cost": {"type": "number"}
-        }
-    },
-    can_receive_from=["preferences_extractor"],
-    can_send_to=["itinerary_coordinator"]
-)
-
-HOTEL_AGENT_CARD = AgentCard(
-    agent_id="hotel_agent",
-    agent_name="Hotel Search Specialist",
-    role="Accommodation search and recommendation",
-    capabilities=[AgentCapability.HOTEL_SEARCH],
-    description="""Queries MCP Accommodation Server to find suitable hotels.
-    Matches hotels to budget and preferences.""",
-    input_schema={
-        "type": "object",
-        "properties": {
-            "destination": {"type": "string"},
-            "checkin_date": {"type": "string"},
-            "checkout_date": {"type": "string"},
-            "budget": {"type": "number"},
-            "preferences": {"type": "object"}
-        }
-    },
-    output_schema={
-        "type": "object",
-        "properties": {
-            "hotels": {"type": "array"},
-            "recommendation": {"type": "string"},
-            "total_cost": {"type": "number"}
-        }
-    },
-    can_receive_from=["preferences_extractor"],
-    can_send_to=["itinerary_coordinator"]
-)
-
-ATTRACTION_AGENT_CARD = AgentCard(
-    agent_id="attraction_agent",
-    agent_name="Attractions & Activities Specialist",
-    role="Attraction and experience discovery",
-    capabilities=[AgentCapability.ATTRACTION_SEARCH],
-    description="""Queries MCP Attractions Server to discover activities and experiences.
-    Categorizes by day and matches to user interests.""",
-    input_schema={
-        "type": "object",
-        "properties": {
-            "destination": {"type": "string"},
-            "interests": {"type": "array"},
-            "activity_level": {"type": "string"},
-            "trip_duration": {"type": "number"}
-        }
-    },
-    output_schema={
-        "type": "object",
-        "properties": {
-            "attractions": {"type": "array"},
-            "daily_categories": {"type": "object"},
-            "estimated_costs": {"type": "object"}
-        }
-    },
-    can_receive_from=["preferences_extractor"],
     can_send_to=["itinerary_coordinator"]
 )
 
@@ -218,10 +127,11 @@ ITINERARY_COORDINATOR_CARD = AgentCard(
     input_schema={
         "type": "object",
         "properties": {
+            "preferences": {"type": "object"},
             "flight_data": {"type": "object"},
             "hotel_data": {"type": "object"},
             "attraction_data": {"type": "object"},
-            "user_preferences": {"type": "object"}
+            "restaurant_data": {"type": "object"}
         }
     },
     output_schema={
@@ -231,26 +141,145 @@ ITINERARY_COORDINATOR_CARD = AgentCard(
             "daily_schedule": {"type": "array"},
             "total_cost": {"type": "number"},
             "cost_breakdown": {"type": "object"},
-            "booking_links": {"type": "object"},
             "tips": {"type": "array"}
         }
     },
-    can_receive_from=["flight_search_agent", "hotel_agent", "attraction_agent"],
+    can_receive_from=["preferences_extractor", "flight_data_provider", "hotel_data_provider", "attraction_data_provider", "restaurant_data_provider"],
     can_send_to=["user"]
 )
 
+FLIGHT_DATA_PROVIDER_CARD = AgentCard(
+    agent_id="flight_data_provider",
+    agent_name="Flight Data Provider",
+    role="Real-time flight search via fly-scraper API",
+    capabilities=[AgentCapability.DATA_EXTRACTION],
+    description="""Queries the fly-scraper API for real-time flight data.
+    Returns available flights with pricing, airlines, and schedules within budget.""",
+    input_schema={
+        "type": "object",
+        "properties": {
+            "origin": {"type": "string"},
+            "destination": {"type": "string"},
+            "departure_date": {"type": "string"},
+            "return_date": {"type": "string"},
+            "adults": {"type": "integer"},
+            "budget": {"type": "number"}
+        }
+    },
+    output_schema={
+        "type": "object",
+        "properties": {
+            "flights": {"type": "array"},
+            "search_summary": {"type": "object"}
+        }
+    },
+    can_receive_from=["preferences_extractor"],
+    can_send_to=["itinerary_coordinator"]
+)
 
-# ============================================
-# AGENT REGISTRY
-# ============================================
+HOTEL_DATA_PROVIDER_CARD = AgentCard(
+    agent_id="hotel_data_provider",
+    agent_name="Hotel Data Provider",
+    role="Real-time hotel search via Booking.com API",
+    capabilities=[AgentCapability.DATA_EXTRACTION],
+    description="""Queries Booking.com API for real-time hotel availability.
+    Returns hotels with pricing, reviews, ratings, and nearby attractions.""",
+    input_schema={
+        "type": "object",
+        "properties": {
+            "destination": {"type": "string"},
+            "checkin_date": {"type": "string"},
+            "checkout_date": {"type": "string"},
+            "budget_per_night": {"type": "number"},
+            "adults": {"type": "integer"},
+            "rooms": {"type": "integer"}
+        }
+    },
+    output_schema={
+        "type": "object",
+        "properties": {
+            "hotels": {"type": "array"},
+            "search_summary": {"type": "object"}
+        }
+    },
+    can_receive_from=["preferences_extractor"],
+    can_send_to=["itinerary_coordinator"]
+)
+
+ATTRACTION_DATA_PROVIDER_CARD = AgentCard(
+    agent_id="attraction_data_provider",
+    agent_name="Attraction Data Provider",
+    role="Attraction and activity search via Serper API",
+    capabilities=[AgentCapability.DATA_EXTRACTION],
+    description="""Searches for tourist attractions, activities, and points of interest
+    using Serper web search API based on user interests and destination.""",
+    input_schema={
+        "type": "object",
+        "properties": {
+            "destination": {"type": "string"},
+            "interests": {"type": "array"},
+            "duration_days": {"type": "integer"}
+        }
+    },
+    output_schema={
+        "type": "object",
+        "properties": {
+            "attractions": {"type": "array"},
+            "daily_suggestions": {"type": "array"}
+        }
+    },
+    can_receive_from=["preferences_extractor"],
+    can_send_to=["itinerary_coordinator"]
+)
+
+RESTAURANT_DATA_PROVIDER_CARD = AgentCard(
+    agent_id="restaurant_data_provider",
+    agent_name="Restaurant Data Provider",
+    role="Restaurant search via Serper API",
+    capabilities=[AgentCapability.DATA_EXTRACTION],
+    description="""Searches for restaurants and dining options using Serper web search API.
+    Returns restaurant recommendations with cuisine types and price ranges.""",
+    input_schema={
+        "type": "object",
+        "properties": {
+            "destination": {"type": "string"},
+            "cuisine_types": {"type": "string"},
+            "budget_per_meal": {"type": "number"}
+        }
+    },
+    output_schema={
+        "type": "object",
+        "properties": {
+            "restaurants": {"type": "array"},
+            "recommendations": {"type": "array"}
+        }
+    },
+    can_receive_from=["preferences_extractor"],
+    can_send_to=["itinerary_coordinator"]
+)
+
+
+USER_CARD = AgentCard(
+    agent_id="user",
+    agent_name="End User",
+    role="Human user receiving the final itinerary",
+    capabilities=[],
+    description="The human user who initiated the trip planning request.",
+    input_schema={"type": "object", "properties": {}},
+    output_schema={"type": "object", "properties": {}},
+    can_receive_from=["itinerary_coordinator"],
+    can_send_to=["conversational_agent"]
+)
 
 AGENT_REGISTRY: Dict[str, AgentCard] = {
     "conversational_agent": CONVERSATIONAL_AGENT_CARD,
     "preferences_extractor": PREFERENCES_EXTRACTOR_CARD,
-    "flight_search_agent": FLIGHT_SEARCH_AGENT_CARD,
-    "hotel_agent": HOTEL_AGENT_CARD,
-    "attraction_agent": ATTRACTION_AGENT_CARD,
-    "itinerary_coordinator": ITINERARY_COORDINATOR_CARD
+    "itinerary_coordinator": ITINERARY_COORDINATOR_CARD,
+    "flight_data_provider": FLIGHT_DATA_PROVIDER_CARD,
+    "hotel_data_provider": HOTEL_DATA_PROVIDER_CARD,
+    "attraction_data_provider": ATTRACTION_DATA_PROVIDER_CARD,
+    "restaurant_data_provider": RESTAURANT_DATA_PROVIDER_CARD,
+    "user": USER_CARD
 }
 
 
@@ -263,5 +292,8 @@ def get_agent_card(agent_id: str) -> AgentCard:
 
 def validate_communication(sender_id: str, receiver_id: str) -> bool:
     """Validate if communication is allowed between two agents"""
-    sender_card = get_agent_card(sender_id)
-    return receiver_id in sender_card.can_send_to
+    try:
+        sender_card = get_agent_card(sender_id)
+        return receiver_id in sender_card.can_send_to
+    except ValueError:
+        return False

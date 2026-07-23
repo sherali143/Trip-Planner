@@ -7,15 +7,15 @@ import os
 from dotenv import load_dotenv
 from textwrap import dedent
 
-load_dotenv()
+load_dotenv(override=True)
 
 
 def validate_api_keys():
     """Validate that all required API keys are present at startup."""
     required_keys = {
-        "OPENAI_API_KEY": "OpenAI (powers all agents)",
+        "GOOGLE_API_KEY": "Google Gemini (powers all LLM agents)",
         "SERPER_API_KEY": "Serper (web search for attractions & restaurants)",
-        "RAPIDAPI_KEY": "RapidAPI (flights via Kiwi.com + hotels via Booking.com)",
+        "RAPIDAPI_KEY": "RapidAPI (flights + hotels via Booking.com)",
     }
 
     missing = []
@@ -38,9 +38,9 @@ To fix this:
   3. Run the planner again
 
 Need API keys?
-  - OpenAI:   https://platform.openai.com/api-keys
-  - Serper:   https://serper.dev/
-  - RapidAPI: https://rapidapi.com/ (subscribe to Kiwi.com + Booking.com APIs)
+  - Google Gemini: https://aistudio.google.com/apikey
+  - Serper:        https://serper.dev/
+  - RapidAPI:      https://rapidapi.com/ (subscribe to Booking.com API)
 """)
         return False
     return True

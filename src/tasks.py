@@ -71,20 +71,17 @@ class TripPlannerTasks:
                 User Input: {user_input}
                 Conversation ID: {conversation_id}
                 
-                Your goal is to gather complete information about:
-                1. **Destination**: Where do they want to go? (be specific about cities)
-                2. **Origin**: Where are they traveling from?
-                3. **Dates**: When do they want to travel? Are dates flexible?
-                4. **Budget**: What is their total budget? How do they prefer to allocate it?
-                5. **Interests**: What activities and experiences interest them?
-                   (museums, outdoor activities, food, nightlife, shopping, relaxation, etc.)
-                6. **Travel Style**: Do they prefer luxury, budget-friendly, or moderate experiences?
-                7. **Special Requirements**: Any dietary restrictions, accessibility needs, or 
-                   other special considerations?
+                You MUST ask ALL 8 questions below ONE AT A TIME. Do NOT skip any.
+                Wait for the user's answer before asking the next question.
                 
-                Ask follow-up questions as needed. Be warm, engaging, and helpful. Once you 
-                have gathered comprehensive information, clearly indicate that the conversation 
-                is complete and ready for data extraction.
+                1. Destination?
+                2. How many people are traveling?
+                3. Origin (where from)?
+                4. Dates (departure + return)?
+                5. Total budget in USD?
+                6. Interests?
+                7. Travel style (luxury/moderate/budget)?
+                8. Special requirements?
                 
                 {self.__tip_section()}
             """),
@@ -245,362 +242,36 @@ class TripPlannerTasks:
             output_json=TravelPreferences  # ✅ STRUCTURED OUTPUT WITH VALIDATION
         )
     
-    def flight_search_task(self, agent, conversation_id: str, extraction_task):
-        """
-        Task for Flight Search Agent to find flights
-        
-        NOW INCLUDES: Proper context from extraction task
-        """
-        return Task(
-            description=dedent(f"""
-                You have received structured travel preferences via the extraction task context.
-                
-                ⚠️⚠️⚠️ CRITICAL: USE EXACT DATES FROM EXTRACTION ⚠️⚠️⚠️
-                
-                ACCESS THE PREFERENCES LIKE THIS:
-                - preferences = context from extraction_task
-                - origin = preferences['origin']
-                - destination = preferences['destination']
-                - departure_date = preferences['departure_date']  ← USE THIS EXACT DATE
-                - return_date = preferences['return_date']  ← USE THIS EXACT DATE
-                - flight_budget = preferences['budget_breakdown']['flights']
-                - adults = preferences['total_travelers']  ← USE THIS EXACT NUMBER
-                
-                Conversation ID: {conversation_id}
-                
-                **Your Mission:**
-                Use the "Search comprehensive flights" tool to find real flights within budget.
-                
-                **MANDATORY STEPS:**
-                1. READ the extraction task output CAREFULLY
-                2. USE THE EXACT departure_date and return_date - DO NOT CHANGE THEM
-                3. Convert city names to IATA codes:
-                   - Islamabad → ISB
-                   - Doha → DOH
-                   - Dubai → DXB
-                   - London → LHR
-                   - Paris → CDG
-                   - New York → JFK
-                4. Call "Search comprehensive flights" with:
-                   - origin: IATA code (e.g., "ISB")
-                   - destination: IATA code (e.g., "DOH")
-                   - departure_date: EXACT date from extraction (YYYY-MM-DD)
-                   - return_date: EXACT date from extraction (YYYY-MM-DD)
-                   - adults: number from extraction
-                   - budget: flight budget from extraction
-                5. Present flight options with complete details
-                6. If API fails, use search_internet as backup
-                
-                **EXAMPLE:**
-                If extraction says departure_date="2025-12-15", return_date="2025-12-25"
-                You MUST search for flights on 2025-12-15 returning 2025-12-25
-                NOT 2026, NOT different dates!
-                
-                **FOR EACH FLIGHT INCLUDE:**
-                - Airline, flight number
-                - Departure/arrival times and airports
-                - Total duration and stops
-                - Price per person and total price
-                - Whether it's within budget
-                
-                **BUDGET COMPLIANCE:**
-                - flight_budget from extraction task = HARD LIMIT
-                - Only show flights ≤ this amount
-                - If no flights fit, clearly state and show cheapest option
-                
-                CRITICAL: Return REAL data from tools. No fake information.
-                CRITICAL: USE THE EXACT DATES FROM EXTRACTION - DO NOT MODIFY THEM!
-                
-                {self.__tip_section()}
-            """),
-            expected_output=dedent("""
-                Comprehensive flight search results with 5 real options:
-                
-                {{
-                    "search_summary": {{
-                        "origin": "string",
-                        "destination": "string",
-                        "departure_date": "string",
-                        "return_date": "string",
-                        "flight_budget_limit": number,
-                        "total_options_found": number
-                    }},
-                    "all_flights": [
-                        {{
-                            "option_id": "FLIGHT-001",
-                            "airline": "string",
-                            "flight_number": "string",
-                            "outbound": {{ detailed flight info }},
-                            "return": {{ detailed flight info }},
-                            "pricing": {{ complete breakdown }},
-                            "booking_link": "url",
-                            "analysis": {{
-                                "pros": [],
-                                "cons": [],
-                                "recommendation_score": number
-                            }}
-                        }}
-                    ],
-                    "categorized_options": {{
-                        "cheapest_5": [],
-                        "fastest_5": [],
-                        "best_value_5": []
-                    }}
-                }}
-                
-                Return TOP 5 complete flight options with REAL API data!
-            """),
-            agent=agent,
-            context=[extraction_task]  # ✅ RECEIVES STRUCTURED PREFERENCES
-        )
-    
-    def hotel_search_task(self, agent, conversation_id: str, extraction_task):
-        """
-        Task for Hotel Agent to find hotels
-        
-        NOW INCLUDES: Proper context and mandatory validation
-        """
-        return Task(
-            description=dedent(f"""
-                You have received structured travel preferences via the extraction task context.
-                
-                ACCESS THE PREFERENCES LIKE THIS:
-                - preferences = context from extraction_task
-                - destination = preferences['destination']
-                - checkin = preferences['departure_date']
-                - checkout = preferences['return_date']
-                - nights = preferences['trip_duration']
-                - hotel_budget = preferences['budget_breakdown']['accommodation']
-                
-                Conversation ID: {conversation_id}
-                
-                **Your Mission:**
-                Use Booking.com API tools to find real hotels within budget.
-                
-                **MANDATORY PROCESS - YOU CANNOT SKIP STEPS:**
-                
-                STEP 1: ✅ Use "Search hotel destination" tool
-                   - Input: destination city name
-                   - Extract: dest_id from response
-                   - If this fails, STOP and report error
-                
-                STEP 2: ✅ Use "Search hotels by destination" tool
-                   - Input: dest_id, arrival_date, departure_date, adults=2, room_qty=1
-                   - Get TOP 5 hotels with prices
-                   - If this fails, STOP and report error
-                
-                STEP 3: ✅ Calculate budget limit
-                   - Use calculator: hotel_budget ÷ nights = max_per_night
-                   - Filter: keep only hotels where price ≤ max_per_night
-                
-                STEP 4: ✅ Use "Get hotel reviews" tool
-                   - For EACH hotel (top 5), get reviews
-                   - Extract: review_score, number_of_reviews
-                   - Sort by review_score (highest first)
-                
-                STEP 5: ✅ Pick TOP 3 hotels (highest rated within budget)
-                
-                STEP 6: ✅ Use "Get attractions near hotel" tool
-                   - For your TOP 3, get nearby attractions
-                   - This helps user make decision
-                
-                **FOR EACH HOTEL INCLUDE:**
-                - Name, star rating, address
-                - Review score (X.X/10) and number of reviews
-                - Price per night and total cost
-                - Complete amenities list
-                - Nearby attractions (from API)
-                - Neighborhood description
-                - Pros/cons analysis
-                - Booking links
-                
-                **OUTPUT VALIDATION:**
-                ⚠️ Your output MUST include:
-                - [ ] dest_id obtained from Step 1
-                - [ ] At least 5 hotels from Step 2
-                - [ ] Review scores for each from Step 4
-                - [ ] Attractions for top 3 from Step 6
-                - [ ] Complete details for each hotel
-                
-                IF ANY STEP FAILS, explicitly state which step and why.
-                "No data available" is UNACCEPTABLE - use the tools!
-                
-                {self.__tip_section()}
-            """),
-            expected_output=dedent("""
-                COMPREHENSIVE hotel search results RANKED BY REVIEW SCORES:
-                
-                ═══════════════════════════════════════════════════════════
-                🏆 TOP 3 RECOMMENDED HOTELS
-                ═══════════════════════════════════════════════════════════
-                
-                #1. [Hotel Name] - Review Score: X.X/10 (XXX reviews)
-                    - Price: $XX/night ($XXX total)
-                    - Location: [Neighborhood + description]
-                    - Nearby Attractions: [From API - list top 5]
-                    - Why recommended: [Based on reviews + user preferences]
-                    - Booking link: [URL]
-                
-                #2. [Hotel Name] - [Same complete details]
-                #3. [Hotel Name] - [Same complete details]
-                
-                ═══════════════════════════════════════════════════════════
-                📋 ALL HOTEL OPTIONS (5 hotels sorted by review score)
-                ═══════════════════════════════════════════════════════════
-                
-                Provide JSON structure with complete hotel data as specified.
-                
-                Return TOP 5 complete hotel options with REAL API data!
-                
-                ═══════════════════════════════════════════════════════════
-                ⚠️ VALIDATION REQUIREMENTS - YOUR OUTPUT MUST INCLUDE:
-                ═══════════════════════════════════════════════════════════
-                ✅ At least 5 hotels with complete information
-                ✅ Review scores from Booking.com API for each hotel
-                ✅ Nearby attractions for top 3 recommended hotels
-                ✅ Complete pricing information (per night + total)
-                ✅ NO "missing data" or "not available" responses
-                
-                ❌ If any of these are missing, the task has FAILED and you must try again.
-            """),
-            agent=agent,
-            context=[extraction_task]  # ✅ RECEIVES STRUCTURED PREFERENCES
-        )
-    
-    def attraction_search_task(self, agent, conversation_id: str, extraction_task):
-        """
-        Task for Attraction Agent to find activities
-        
-        NOW INCLUDES: Proper context from extraction and budget tracking
-        """
-        return Task(
-            description=dedent(f"""
-                You have received structured travel preferences via the extraction task context.
-                
-                ACCESS THE PREFERENCES LIKE THIS:
-                - preferences = context from extraction_task
-                - destination = preferences['destination']
-                - interests = preferences['interests']
-                - trip_duration = preferences['trip_duration']
-                - activities_budget = preferences['budget_breakdown']['activities']
-                - meals_budget = preferences['budget_breakdown']['meals']
-                
-                Conversation ID: {conversation_id}
-                
-                **Your Mission:**
-                Find comprehensive activity and restaurant options within budget.
-                
-                **PROCESS:**
-                1. Calculate daily budget: (activities_budget + meals_budget) ÷ trip_duration
-                2. Use search_attractions tool with destination and interests
-                3. Use search_restaurants tool for dining options
-                4. Use search_internet extensively for:
-                   - Current events during travel dates
-                   - Hidden gems and local favorites
-                   - Recently opened spots
-                   - Festival or seasonal events
-                
-                **FOR EACH DAY, PROVIDE:**
-                - Morning activity (9 AM - 12 PM) with complete details
-                - Lunch recommendation with 3 menu items and prices
-                - Afternoon activity (2 PM - 6 PM) with complete details
-                - Dinner recommendation with 3 menu items and prices
-                - Evening activity or rest option
-                - Coffee/snack spots
-                - Daily cost total (must be ≤ daily_budget)
-                - Transport details between locations
-                
-                **FOR EACH ATTRACTION:**
-                - Full description (what it is, why special)
-                - Exact address and transport from hotel
-                - Opening hours and best visiting time
-                - Entry cost and booking needs
-                - Duration needed (realistic)
-                - Top 5 highlights to see
-                - Insider tips
-                
-                **FOR EACH RESTAURANT:**
-                - Full description of cuisine and ambiance
-                - 3-5 signature dishes with prices
-                - Price range per person
-                - Reservation requirements
-                - Why recommended
-                - Alternative nearby options
-                
-                **BUDGET TRACKING:**
-                - Track spending for each day
-                - Mix free/low-cost with paid activities
-                - Ensure daily total ≤ daily_budget
-                - Provide budget-friendly alternatives
-                
-                {self.__tip_section()}
-            """),
-            expected_output=dedent("""
-                COMPREHENSIVE attraction and restaurant guide for EACH day:
-                
-                {{
-                    "daily_budget": number,
-                    "daily_itinerary": [
-                        {{
-                            "day": 1,
-                            "date": "string",
-                            "theme": "string",
-                            "morning_activity": {{
-                                "name": "string",
-                                "description": "detailed 2-3 sentences",
-                                "address": "full address",
-                                "transport": "how to get there",
-                                "duration": "X hours",
-                                "cost": "$XX",
-                                "opening_hours": "string",
-                                "highlights": ["top 5 things to see"],
-                                "insider_tips": ["tip 1", "tip 2"]
-                            }},
-                            "lunch": {{
-                                "restaurant_name": "string",
-                                "cuisine": "string",
-                                "signature_dishes": ["dish 1 ($XX)", "dish 2", "dish 3"],
-                                "price_range": "$XX-XX",
-                                "why_recommended": "string"
-                            }},
-                            "afternoon_activity": {{ same detail }},
-                            "dinner": {{ same detail }},
-                            "evening_activity": {{ same detail }},
-                            "day_summary": {{
-                                "total_cost": "$XXX",
-                                "within_budget": true/false
-                            }}
-                        }}
-                    ]
-                }}
-                
-                Provide EXTENSIVE detail for EACH DAY of the trip!
-            """),
-            agent=agent,
-            context=[extraction_task]  # ✅ RECEIVES STRUCTURED PREFERENCES
-        )
-    
-    def coordination_task(self, agent, conversation_id: str, extraction_task, flight_task, hotel_task, attraction_task):
+    def coordination_task(self, agent, conversation_id: str, extraction_task,
+                          a2a_message_history: str = ""):
         """
         Task for Itinerary Coordinator to create detailed itinerary
         
-        NOW INCLUDES: All context from previous tasks + detailed instructions
+        Data is received via A2A messages from multiple data provider agents.
         """
         return Task(
             description=dedent(f"""
-                You are the Itinerary Coordinator. You will receive COMPLETE DATA from:
-                1. Extraction Task: User preferences and budget breakdown
-                2. Flight Task: Top 5 flight options with complete details
-                3. Hotel Task: Top 5 hotel options with reviews and locations
-                4. Attraction Task: Daily activity and restaurant suggestions
+                You are the Itinerary Coordinator. You receive data via the A2A protocol
+                from multiple specialized agents in the system. Below is the complete
+                A2A message history containing all information you need.
                 
                 Conversation ID: {conversation_id}
+                
+                ═══════════════════════════════════════════════════════════
+                📨 A2A MESSAGE HISTORY (formatted for your context)
+                ═══════════════════════════════════════════════════════════
+                
+                {a2a_message_history}
+                
+                ═══════════════════════════════════════════════════════════
+                END OF A2A MESSAGES — use the data above to build the itinerary
+                ═══════════════════════════════════════════════════════════
                 
                 ═══════════════════════════════════════════════════════════
                 ⚠️⚠️⚠️ CRITICAL: WRITE ALL DAYS INDIVIDUALLY ⚠️⚠️⚠️
                 ═══════════════════════════════════════════════════════════
                 
-                BEFORE writing: Check extraction task for trip_duration (e.g., 15 days)
+                BEFORE writing: Check the extraction task context for trip_duration
                 REQUIREMENT: Create EXACTLY that many "DAY X:" sections with full details
                 FORBIDDEN: "[Continue with Days X-Y]" or "Similar to Day 1" = COMPLETE FAILURE
                 
@@ -608,13 +279,13 @@ class TripPlannerTasks:
                 
                 **YOUR PROCESS:**
                 
-                STEP 1: PRESENT ALL OPTIONS
+                STEP 1: PRESENT ALL OPTIONS FROM THE A2A MESSAGES
                 
                 ═══════════════════════════════════════════════════════════
-                ✈️ FLIGHT OPTIONS ANALYSIS
+                ✈️ FLIGHT OPTIONS ANALYSIS (from flight_data_provider A2A message)
                 ═══════════════════════════════════════════════════════════
                 
-                Present ALL flights received from Flight Agent:
+                Present ALL flights received from the Flight Data Provider:
                 
                 **YOUR TOP 3 RECOMMENDED FLIGHTS:**
                 (Explain WHY based on user preferences)
@@ -633,10 +304,10 @@ class TripPlannerTasks:
                 **OTHER OPTIONS:** (Table with remaining flights)
                 
                 ═══════════════════════════════════════════════════════════
-                🏨 HOTEL OPTIONS ANALYSIS
+                🏨 HOTEL OPTIONS ANALYSIS (from hotel_data_provider A2A message)
                 ═══════════════════════════════════════════════════════════
                 
-                Present ALL hotels received from Hotel Agent:
+                Present ALL hotels received from the Hotel Data Provider:
                 
                 **YOUR TOP 3 RECOMMENDED HOTELS:**
                 (Explain WHY based on user preferences and review scores)
@@ -873,8 +544,10 @@ class TripPlannerTasks:
                 
                 Before submitting, verify you have included:
                 
-                - [ ] All flights from Flight Agent presented
-                - [ ] All hotels from Hotel Agent presented
+                - [ ] All flights from A2A flight_data_provider message
+                - [ ] All hotels from A2A hotel_data_provider message
+                - [ ] Attractions from A2A attraction_data_provider message
+                - [ ] Restaurants from A2A restaurant_data_provider message
                 - [ ] Budget warning if budget is too low
                 - [ ] DAY 1 complete schedule (arrival day)
                 - [ ] DAY 2 complete schedule
@@ -907,5 +580,5 @@ class TripPlannerTasks:
                 ✅ ACCEPTABLE: "Day 1: [full details], Day 2: [full details], Day 3: [full details]..."
             """),
             agent=agent,
-            context=[extraction_task, flight_task, hotel_task, attraction_task]  # ✅ ALL CONTEXT
+            context=[extraction_task]
         )

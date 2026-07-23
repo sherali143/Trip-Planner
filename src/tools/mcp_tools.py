@@ -227,7 +227,6 @@ class HotelsByDestIdInput(BaseModel):
 import requests
 
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
-KIWI_HOST = "kiwi-com-cheap-flights.p.rapidapi.com"
 BOOKING_HOST = "booking-com15.p.rapidapi.com"
 
 
@@ -274,6 +273,59 @@ def _search_flight_destination_booking(query: str) -> dict:
         return {"success": False, "error": str(e)}
 
 
+CITY_TO_SKYID = {
+    "islamabad": "ISB", "karachi": "KHI", "lahore": "LHE",
+    "london": "LOND", "manchester": "MAN", "birmingham": "BHX",
+    "new york": "NYCA", "los angeles": "LAXA", "chicago": "CHIA",
+    "san francisco": "SFOA", "miami": "MIAA", "boston": "BOSA",
+    "washington": "WASA", "seattle": "SEAA", "dallas": "DFWA",
+    "paris": "PARI", "nice": "NCE", "lyon": "LYS",
+    "dubai": "DXB", "abu dhabi": "AUH", "doha": "DOH",
+    "tokyo": "TYOA", "osaka": "OSAA", "kyoto": "UKY",
+    "bangkok": "BKK", "phuket": "HKT", "singapore": "SIN",
+    "kuala lumpur": "KUL", "bali": "DPS", "jakarta": "CGK",
+    "istanbul": "IST", "ankara": "ESB", "antalya": "AYT",
+    "barcelona": "BCN", "madrid": "MAD", "rome": "ROMA",
+    "milan": "MILA", "venice": "VCE", "florence": "FLR",
+    "amsterdam": "AMS", "brussels": "BRU", "vienna": "VIE",
+    "zurich": "ZRH", "geneva": "GVA", "munich": "MUC",
+    "frankfurt": "FRA", "berlin": "BER", "hamburg": "HAM",
+    "sydney": "SYD", "melbourne": "MEL", "auckland": "AKL",
+    "hong kong": "HKG", "seoul": "SEL", "beijing": "BJS",
+    "shanghai": "SHA", "mumbai": "BOM", "delhi": "DEL",
+    "cairo": "CAI", "casablanca": "CMN", "cape town": "CPT",
+    "rio de janeiro": "RIO", "sao paulo": "SAO", "buenos aires": "BUE",
+    "stockholm": "ARN", "oslo": "OSL", "copenhagen": "CPH",
+    "helsinki": "HEL", "reykjavik": "KEF", "dublin": "DUB",
+}
+
+
+def _resolve_sky_id(location: str) -> str:
+    """Resolve a city name to a SkyID code for the fly-scraper API."""
+    loc = location.strip().lower()
+    if not loc:
+        return location
+    # If already a short uppercase code like "ISB" or "LOND", pass through
+    if len(loc) <= 4 and loc.isalpha() and location.isupper():
+        return location
+    # Check direct match
+    if loc in CITY_TO_SKYID:
+        return CITY_TO_SKYID[loc]
+    # Check partial match (e.g. "new york city" → "NYCA")
+    for key, code in CITY_TO_SKYID.items():
+        if key in loc or loc in key:
+            return code
+    # Fallback: try Booking.com API resolution
+    try:
+        result = _search_flight_destination_booking(location)
+        if result.get("success") and result.get("code"):
+            return result["code"]
+    except Exception:
+        pass
+    # Last resort: use the input as-is (API will error, but we tried)
+    return location
+
+
 def _call_fly_scraper_api(
     origin_code: str,
     dest_code: str,
@@ -282,14 +334,20 @@ def _call_fly_scraper_api(
     adults: int = 1,
     budget: Optional[float] = None
 ) -> str:
-    """Search flights via fly-scraper API as fallback"""
+    """Search flights via fly-scraper API with automatic city-to-SkyID resolution"""
+    origin_sky = _resolve_sky_id(origin_code)
+    dest_sky = _resolve_sky_id(dest_code)
+    
+    if origin_sky != origin_code or dest_sky != dest_code:
+        print(f"  Resolved {origin_code} → {origin_sky}, {dest_code} → {dest_sky}")
+    
     fly_headers = {
         "x-rapidapi-key": RAPIDAPI_KEY,
         "x-rapidapi-host": "fly-scraper.p.rapidapi.com"
     }
     params = {
-        "originSkyId": origin_code,
-        "destinationSkyId": dest_code,
+        "originSkyId": origin_sky,
+        "destinationSkyId": dest_sky,
         "outbound_date": departure_date,
         "adults": adults,
         "currency": "USD",
@@ -373,253 +431,32 @@ def _call_booking_flights_api(
     cabin_class: str = "ECONOMY"
 ) -> str:
     """
-    Direct call to flight APIs. Tries Booking.com first, then falls back to fly-scraper.
-    Returns flights on EXACT dates.
+    Search flights via fly-scraper API.
+    Uses local city-to-SkyID map first, falls back to Booking.com API.
     """
-    headers = {
-        "x-rapidapi-host": BOOKING_HOST,
-        "x-rapidapi-key": RAPIDAPI_KEY
-    }
-    
-    # Step 1: Get origin airport ID
-    origin_result = _search_flight_destination_booking(origin_city)
-    if not origin_result.get("success"):
-        return json.dumps({
-            "success": False,
-            "error": f"Could not find airport for '{origin_city}': {origin_result.get('error')}"
-        })
-    
-    from_id = origin_result["airport_id"]
-    origin_name = origin_result.get("name", origin_city)
-    origin_code = origin_result.get("code", "")
-    
-    # Step 2: Get destination airport ID
-    dest_result = _search_flight_destination_booking(destination_city)
-    if not dest_result.get("success"):
-        return json.dumps({
-            "success": False,
-            "error": f"Could not find airport for '{destination_city}': {dest_result.get('error')}"
-        })
-    
-    to_id = dest_result["airport_id"]
-    dest_name = dest_result.get("name", destination_city)
-    dest_code = dest_result.get("code", "")
-    
-    # Step 3: Try Booking.com getMinPrice first
-    url = f"https://{BOOKING_HOST}/api/v1/flights/getMinPrice"
-    params = {
-        "fromId": from_id, "toId": to_id,
-        "departDate": departure_date,
-        "pageNo": 1, "adults": adults,
-        "cabinClass": cabin_class, "currency_code": "USD"
-    }
-    if return_date:
-        params["returnDate"] = return_date
-    
-    # Step 3: Try Booking.com first, then fall back to fly-scraper
-    try:
-        response = requests.get(url, headers=headers, params=params, timeout=60)
-        response.raise_for_status()
-        data = response.json()
-        flight_offers = data.get("data", [])
-        if flight_offers:
-            # Format Booking.com results
-            formatted_flights = []
-            for idx, offer in enumerate(flight_offers[:5], 1):
-                price_info = offer.get("priceBreakdown", {})
-                total_price = float(price_info.get("total", {}).get("units", 0))
-                currency = price_info.get("total", {}).get("currencyCode", "USD")
-                within_budget = budget is None or total_price <= budget
-                
-                segments = offer.get("segments", [])
-                outbound_legs = []
-                if segments:
-                    for leg in segments[0].get("legs", []):
-                        carriers = leg.get("carriersData", [])
-                        outbound_legs.append({
-                            "airline": carriers[0].get("name", "Unknown") if carriers else "Unknown",
-                            "from": leg.get("departureAirport", {}).get("code", "N/A"),
-                            "to": leg.get("arrivalAirport", {}).get("code", "N/A"),
-                            "departure": leg.get("departureTime", "N/A"),
-                            "arrival": leg.get("arrivalTime", "N/A")
-                        })
-                formatted_flights.append({
-                    "option": idx, "total_price": round(total_price, 2),
-                    "currency": currency, "passengers": adults,
-                    "within_budget": within_budget, "outbound": outbound_legs
-                })
-            
-            filtered = [f for f in formatted_flights if f["within_budget"]] if budget else formatted_flights
-            return json.dumps({
-                "success": True,
-                "search": {"origin": origin_name, "destination": dest_name,
-                          "departure_date": departure_date, "return_date": return_date,
-                          "passengers": adults, "budget": budget},
-                "flights_found": len(formatted_flights),
-                "within_budget": len(filtered),
-                "flights": formatted_flights
-            }, indent=2)
-    except Exception:
-        pass  # Fall through to fly-scraper
-    
-    # Fallback: fly-scraper API
+    # Try local resolution first
+    origin_code = _resolve_sky_id(origin_city)
+    if origin_code == origin_city:
+        origin_result = _search_flight_destination_booking(origin_city)
+        if not origin_result.get("success"):
+            return json.dumps({"success": False, "error": f"Could not find airport for '{origin_city}'"})
+        origin_code = origin_result.get("code", "")
+
+    dest_code = _resolve_sky_id(destination_city)
+    if dest_code == destination_city:
+        dest_result = _search_flight_destination_booking(destination_city)
+        if not dest_result.get("success"):
+            return json.dumps({"success": False, "error": f"Could not find airport for '{destination_city}'"})
+        dest_code = dest_result.get("code", "")
+
     try:
         return _call_fly_scraper_api(origin_code, dest_code, departure_date, return_date, adults, budget)
     except Exception as e:
-        return json.dumps({
-            "success": True,
-            "message": f"No flights found for {origin_city} to {destination_city} on {departure_date}.",
-            "flights": []
-        })
-
-
-def _call_kiwi_api_direct(
-    origin: str,
-    destination: str,
-    departure_date: str,
-    return_date: Optional[str] = None,
-    adults: int = 1,
-    cabin_class: str = "ECONOMY"
-) -> str:
-    """
-    Direct call to Kiwi.com API - bypasses MCP for reliability with large responses
-    """
-    headers = {
-        "x-rapidapi-host": KIWI_HOST,
-        "x-rapidapi-key": RAPIDAPI_KEY
-    }
-    
-    # Determine one-way or round-trip
-    if return_date:
-        url = f"https://{KIWI_HOST}/round-trip"
-        params = {
-            "source": origin,
-            "destination": destination,
-            "departureDate": departure_date,
-            "returnDate": return_date,
-            "adults": 1,  # API works best with 1, we multiply price
-            "adultsHoldBags": "[0]",
-            "adultsHandBags": "[1]",
-            "currency": "USD",
-            "cabinClass": cabin_class
-        }
-    else:
-        url = f"https://{KIWI_HOST}/one-way"
-        params = {
-            "source": origin,
-            "destination": destination,
-            "date": departure_date,
-            "adults": 1,
-            "adultsHoldBags": "[0]",
-            "adultsHandBags": "[1]",
-            "currency": "USD"
-        }
-    
-    try:
-        response = requests.get(url, headers=headers, params=params, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        
-        if "error" in data:
-            return json.dumps({"error": data.get("error"), "success": False})
-        
-        # Parse and format results
-        itineraries = data.get("itineraries", [])
-        
-        if not itineraries:
-            return json.dumps({
-                "success": True,
-                "message": "No flights found for this route/date",
-                "flights": []
-            })
-        
-        # Format flight results
-        formatted_flights = []
-        formatted_flights = []
-        for i, itin in enumerate(itineraries[:5], 1):
-            price_info = itin.get("price", {})
-            price_per_person = float(price_info.get("amount", 0))
-            total_price = price_per_person * adults
-            
-            flight = {
-                "option": i,
-                "price_per_person": price_per_person,
-                "total_price": total_price,
-                "currency": "USD",
-                "passengers": adults
-            }
-            
-            # Get outbound flight details
-            outbound = itin.get("outbound", {})
-            if outbound:
-                sectors = outbound.get("sectorSegments", [])
-                outbound_legs = []
-                for seg in sectors:
-                    segment = seg.get("segment", {})
-                    carrier = segment.get("carrier", {})
-                    source = segment.get("source", {})
-                    dest = segment.get("destination", {})
-                    
-                    outbound_legs.append({
-                        "airline": carrier.get("name", "Unknown"),
-                        "flight_code": f"{carrier.get('code', '')}{segment.get('code', '')}",
-                        "from": source.get("station", {}).get("code", "N/A"),
-                        "to": dest.get("station", {}).get("code", "N/A"),
-                        "departure": source.get("localTime", "N/A")[:16] if source.get("localTime") else "N/A",
-                        "arrival": dest.get("localTime", "N/A")[:16] if dest.get("localTime") else "N/A"
-                    })
-                flight["outbound"] = outbound_legs
-            
-            # Get return flight details if round-trip
-            inbound = itin.get("inbound", {})
-            if inbound:
-                sectors = inbound.get("sectorSegments", [])
-                return_legs = []
-                for seg in sectors:
-                    segment = seg.get("segment", {})
-                    carrier = segment.get("carrier", {})
-                    source = segment.get("source", {})
-                    dest = segment.get("destination", {})
-                    
-                    return_legs.append({
-                        "airline": carrier.get("name", "Unknown"),
-                        "flight_code": f"{carrier.get('code', '')}{segment.get('code', '')}",
-                        "from": source.get("station", {}).get("code", "N/A"),
-                        "to": dest.get("station", {}).get("code", "N/A"),
-                        "departure": source.get("localTime", "N/A")[:16] if source.get("localTime") else "N/A",
-                        "arrival": dest.get("localTime", "N/A")[:16] if dest.get("localTime") else "N/A"
-                    })
-                flight["return"] = return_legs
-            
-            formatted_flights.append(flight)
-        
-        # Create summary
-        result = {
-            "success": True,
-            "search": {
-                "origin": origin,
-                "destination": destination,
-                "departure": departure_date,
-                "return": return_date,
-                "passengers": adults
-            },
-            "flights_found": len(itineraries),
-            "showing": len(formatted_flights),
-            "flights": formatted_flights
-        }
-        
-        return json.dumps(result, indent=2)
-        
-    except requests.exceptions.Timeout:
-        return json.dumps({"error": "API timeout", "success": False})
-    except requests.exceptions.RequestException as e:
-        return json.dumps({"error": str(e), "success": False})
-    except Exception as e:
-        return json.dumps({"error": str(e), "success": False})
+        return json.dumps({"success": True, "flights": []})
 
 
 # ============================================
-# FLIGHT SEARCH TOOLS (Structured) - Using Booking.com API
+# FLIGHT SEARCH TOOLS (Structured) - Using fly-scraper API
 # ============================================
 
 def _search_round_trip_flights(
