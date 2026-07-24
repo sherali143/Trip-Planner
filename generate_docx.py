@@ -260,13 +260,13 @@ add_para('')
 add_table(
     ['Metric', '6-Agent (Proposal)', '3-Agent (Optimized)', 'Improvement'],
     [
-        ['LLM calls per trip', '5', '2', '60% fewer'],
+        ['LLM calls (full with conversation)', '13', '10', '23% fewer'],
+        ['LLM calls (ablation — no conversation)', '5', '2', '60% fewer'],
         ['Average time per trip', '~230 seconds', '~33 seconds', '85% faster'],
         ['Parse errors', 'Common (ReAct loops)', 'None (direct calls)', 'More reliable'],
         ['A2A message flow', '6 messages', '6 messages', 'Same — protocol unchanged'],
         ['MCP Server', 'Used by all agents', 'Still exists, bypassed for speed', 'Available if needed'],
         ['Code complexity', 'Complex (agent reasoning)', 'Simple (function calls)', 'Easier to maintain'],
-        ['API cost per trip', '~$0.011', '~$0.006', '~45% cheaper'],
     ]
 )
 

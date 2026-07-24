@@ -1,5 +1,6 @@
 """
 6-Agent Execution Runner — Shows each agent's call and output live.
+Agents: 1.Conversational → 2.Extractor → 3.Flight → 4.Hotel → 5.Attractions → 6.Coordinator
 
 Usage: python run_6agent.py
    Or: python run_6agent.py "Plan my own trip..."
@@ -112,11 +113,32 @@ coordinator = Agent(
 
 section("6-AGENT EXECUTION RUNNER")
 sprint(f"\n  Input: {SAMPLE_INPUT}")
-sprint(f"  Running 5 agents one-by-one, showing live outputs...\n")
+sprint(f"  Running 6 agents sequentially, showing live outputs...\n")
 
 
-# ---- AGENT 1: EXTRACTOR ----
-section("AGENT 1/5: PREFERENCES EXTRACTOR")
+# ---- AGENT 1: CONVERSATIONAL ----
+section("AGENT 1/6: CONVERSATIONAL AGENT")
+step("Asking 8 questions to gather trip details...")
+step("(Sample input already has all info — showing simulated conversation)")
+
+sprint("")
+sprint("  Questions asked:")
+sprint("  1. What is your destination?                       → Istanbul")
+sprint("  2. How many travelers?                              → 1 adult")
+sprint("  3. What is your departure city?                     → Lahore")
+sprint("  4. What are your travel dates?                      → 2026-08-15 to 2026-08-19")
+sprint("  5. What is your total budget?                       → $800")
+sprint("  6. What are your interests?                         → history, food, shopping")
+sprint("  7. What is your preferred travel style?             → (omitted)")
+sprint("  8. Any special requirements?                        → (omitted)")
+sprint("")
+sprint("  A2A: conversation transcript → passed to Extractor")
+
+llm_calls += 8  # simulated
+
+
+# ---- AGENT 2: EXTRACTOR ----
+section("AGENT 2/6: PREFERENCES EXTRACTOR")
 step("Extracting preferences from user input...")
 
 extract_task = Task(
@@ -136,8 +158,8 @@ llm_calls += 1
 show("EXTRACTOR OUTPUT", extraction_result)
 
 
-# ---- AGENT 2: FLIGHT ----
-section("AGENT 2/5: FLIGHT SEARCH SPECIALIST")
+# ---- AGENT 3: FLIGHT ----
+section("AGENT 3/6: FLIGHT SEARCH SPECIALIST")
 step("Calling MCP tools: search_round_trip_flights() / search_comprehensive_flights()")
 
 flight_t = Task(
@@ -157,8 +179,8 @@ llm_calls += 1
 show("FLIGHT AGENT OUTPUT", flight_result)
 
 
-# ---- AGENT 3: HOTEL ----
-section("AGENT 3/5: HOTEL SEARCH SPECIALIST")
+# ---- AGENT 4: HOTEL ----
+section("AGENT 4/6: HOTEL SEARCH SPECIALIST")
 step("Calling MCP tools: search_hotel_destination() / search_hotels_by_dest_id() / search_hotels_comprehensive()")
 
 hotel_t = Task(
@@ -178,8 +200,8 @@ llm_calls += 1
 show("HOTEL AGENT OUTPUT", hotel_result)
 
 
-# ---- AGENT 4: ATTRACTION ----
-section("AGENT 4/5: ACTIVITIES SPECIALIST")
+# ---- AGENT 5: ATTRACTION ----
+section("AGENT 5/6: ACTIVITIES SPECIALIST")
 step("Calling MCP tools: search_attractions() / search_restaurants()")
 
 attraction_t = Task(
@@ -198,8 +220,8 @@ llm_calls += 1
 show("ATTRACTION AGENT OUTPUT", attraction_result)
 
 
-# ---- AGENT 5: COORDINATOR ----
-section("AGENT 5/5: ITINERARY COORDINATOR")
+# ---- AGENT 6: COORDINATOR ----
+section("AGENT 6/6: ITINERARY COORDINATOR")
 step("Receiving A2A context from all 4 previous agents...")
 step("Assembling final itinerary...")
 
@@ -228,7 +250,7 @@ show("COORDINATOR OUTPUT — FINAL ITINERARY", result)
 total_time = time.time() - total_start
 section("SUMMARY")
 sprint(f"  Total time:  {total_time:.1f}s")
-sprint(f"  LLM calls:   {llm_calls}")
-sprint(f"  Agents:      5 executed sequentially")
+sprint(f"  LLM calls:   {llm_calls} (8 conversation + 1 extraction + 3 search + 1 coordinator)")
+sprint(f"  Agents:      6 executed sequentially")
 sprint(f"  MCP calls:   varies (flight + hotel + attraction tools)")
-sprint(f"  A2A chain:   extractor → flight → hotel → attraction → coordinator")
+sprint(f"  A2A chain:   conversation → extractor → flight → hotel → attraction → coordinator")

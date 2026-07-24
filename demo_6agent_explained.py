@@ -153,10 +153,71 @@ sprint(f"\n  MCP  = Model Context Protocol — agents call external APIs via too
 sprint(f"  A2A  = Agent-to-Agent — output of one agent is context for the next")
 
 # ============================================================
-# PHASE 1: PREFERENCES EXTRACTOR
+# PHASE 1: CONVERSATIONAL AGENT
 # ============================================================
 
-section("PHASE 1: PREFERENCES EXTRACTOR AGENT")
+section("PHASE 1/6: CONVERSATIONAL AGENT")
+
+subsection("WHAT THIS AGENT DOES")
+sprint("  Role:       Travel Conversation Assistant")
+sprint("  Tools:      NONE (pure LLM, no MCP calls)")
+sprint("  LLM calls:  1 per question — asks 8 questions to gather trip details")
+sprint("")
+sprint("  The conversational agent has NO MCP tools because it only talks to")
+sprint("  the user. It asks one question at a time, waits for the answer,")
+sprint("  then asks the next question until all information is collected.")
+sprint("")
+sprint("  Questions it asks (based on our sample input):")
+sprint("  1. What is your destination?                       → Istanbul")
+sprint("  2. How many travelers?                              → 1 adult")
+sprint("  3. What is your departure city?                     → Lahore")
+sprint("  4. What are your travel dates?                      → 2026-08-15 to 2026-08-19")
+sprint("  5. What is your total budget?                       → $800")
+sprint("  6. What are your interests?                         → history, food, shopping")
+sprint("  7. What is your preferred travel style?             → (omitted)")
+sprint("  8. Any special requirements?                        → (omitted)")
+
+subsection("A2A CONTEXT FLOW")
+sprint("  After all 8 questions are answered, the conversational agent")
+sprint("  passes the full conversation transcript to the Preferences")
+sprint("  Extractor as A2A context. The extractor then reads the")
+sprint("  conversation and converts it to structured JSON.")
+sprint("")
+sprint("  In CrewAI, this is done via:")
+sprint("    Task(description=extraction_task, agent=extractor,")
+sprint("         context=[conversation_task])")
+sprint("")
+sprint("  For this demo, the sample input already contains all the")
+sprint("  information, so we skip the interactive questions and")
+sprint("  go directly to extraction (as the ablation study does).")
+
+subsection("SIMULATED CONVERSATION OUTPUT")
+sprint("  User: Plan a 4-night trip from Lahore to Istanbul for 1 adult")
+sprint("        departing 2026-08-15, budget 800 USD. Interests:")
+sprint("        history, food, shopping.")
+sprint("  Agent: What is your destination?")
+sprint("  User: Istanbul")
+sprint("  Agent: How many travelers?")
+sprint("  User: 1 adult")
+sprint("  Agent: What is your departure city?")
+sprint("  User: Lahore")
+sprint("  Agent: What are your travel dates?")
+sprint("  User: 2026-08-15 to 2026-08-19")
+sprint("  Agent: What is your total budget?")
+sprint("  User: 800 USD")
+sprint("  Agent: What are your main interests?")
+sprint("  User: history, food, shopping")
+sprint("  Agent: What is your preferred travel style?")
+sprint("  User: (not specified)")
+sprint("  Agent: Any special requirements?")
+sprint("  User: (not specified)")
+sprint(f"\n  Latency: ~8s (simulated) | LLM calls: 8 | MCP calls: 0 | A2A transfers: 1")
+
+# ============================================================
+# PHASE 2: PREFERENCES EXTRACTOR
+# ============================================================
+
+section("PHASE 2/6: PREFERENCES EXTRACTOR AGENT")
 
 subsection("WHAT THIS AGENT DOES")
 sprint("  Role:       Travel Preferences Extractor")
@@ -165,7 +226,7 @@ sprint("  LLM call:   1 — reads user input, returns structured JSON")
 sprint("")
 sprint("  The extractor has NO MCP tools because it doesn't need")
 sprint("  external data. It just parses the user's request into JSON.")
-sprint("  No A2A context is needed — this is the first agent.")
+sprint("  No A2A context is needed from the search agents (only from conversational agent).")
 
 subsection("EXECUTING...")
 
@@ -231,6 +292,7 @@ sprint("  │  Agents pass data via CONTEXT CHAINING. Each agent's       │")
 sprint("  │  output becomes context for the next agent.                │")
 sprint("  │                                                             │")
 sprint("  │  Flow:                                                     │")
+sprint("  │  Conversational Agent → Extractor                         │")
 sprint("  │  Extractor ──→ Flight Agent (gets extraction context)      │")
 sprint("  │  Extractor ──→ Hotel Agent (gets extraction context)       │")
 sprint("  │  Extractor ──→ Attraction Agent (gets extraction context)  │")
@@ -242,10 +304,10 @@ sprint("  └──────────────────────�
 
 
 # ============================================================
-# PHASE 2: FLIGHT SEARCH AGENT
+# PHASE 3: FLIGHT SEARCH AGENT
 # ============================================================
 
-section("PHASE 2: FLIGHT SEARCH AGENT")
+section("PHASE 3/6: FLIGHT SEARCH AGENT")
 
 subsection("WHAT THIS AGENT DOES")
 sprint("  Role:       Flight Search Specialist")
@@ -335,10 +397,10 @@ sprint("    → MCP Server: serper.dev (Google Search)")
 sprint("    → Status: retrieved web results")
 
 # ============================================================
-# PHASE 3: HOTEL SEARCH AGENT
+# PHASE 4: HOTEL SEARCH AGENT
 # ============================================================
 
-section("PHASE 3: HOTEL SEARCH AGENT")
+section("PHASE 4/6: HOTEL SEARCH AGENT")
 
 subsection("WHAT THIS AGENT DOES")
 sprint("  Role:       Hotel Search Specialist")
@@ -367,10 +429,10 @@ sprint("    → MCP Server: serper.dev")
 sprint("    → Status: retrieved web results")
 
 # ============================================================
-# PHASE 4: ATTRACTION AGENT
+# PHASE 5: ATTRACTIONS & RESTAURANTS AGENT
 # ============================================================
 
-section("PHASE 4: ATTRACTIONS & RESTAURANTS AGENT")
+section("PHASE 5/6: ATTRACTIONS & RESTAURANTS AGENT")
 
 subsection("WHAT THIS AGENT DOES")
 sprint("  Role:       Activities Specialist")
@@ -394,10 +456,10 @@ sprint("    → MCP Server: serper.dev")
 sprint("    → Status: retrieved real restaurant data")
 
 # ============================================================
-# PHASE 5: ITINERARY COORDINATOR
+# PHASE 6: ITINERARY COORDINATOR
 # ============================================================
 
-section("PHASE 5: ITINERARY COORDINATOR AGENT")
+section("PHASE 6/6: ITINERARY COORDINATOR AGENT")
 
 subsection("WHAT THIS AGENT DOES")
 sprint("  Role:       Itinerary Coordinator")
@@ -436,8 +498,15 @@ sprint("  │  USER INPUT      │  'Plan a trip to...'")
 sprint("  └────────┬─────────┘")
 sprint("           │")
 sprint("           ▼")
-sprint("  ┌──────────────────┐      NO TOOLS (pure LLM)")
-sprint("  │  1. EXTRACTOR    │──────────────────────────────┐")
+sprint("  ┌──────────────────┐      8 questions, 8 LLM calls")
+sprint("  │  1. CONVERSATION  │───────────────────────────┐")
+sprint("  │  (Agent)         │  Gathers preferences        │")
+sprint("  │  NO MCP tools    │  (talks to user only)       │")
+sprint("  └────────┬─────────┘                              │")
+sprint("           │ A2A: conversation transcript            │")
+sprint("           ▼                                         │")
+sprint("  ┌──────────────────┐      NO TOOLS (pure LLM)     │")
+sprint("  │  2. EXTRACTOR    │───────────────────────────────┤")
 sprint("  │  (Agent)         │  Extracts preferences as JSON │")
 sprint("  └────────┬─────────┘                               │")
 sprint("           │ A2A context                             │")
@@ -455,7 +524,7 @@ sprint("           └────────┼────────┘    
 sprint("                    │ A2A context (all 3 outputs)     │")
 sprint("                    ▼                                │")
 sprint("  ┌──────────────────┐                               │")
-sprint("  │  5. COORDINATOR  │◄──────────────────────────────┘")
+sprint("  │  6. COORDINATOR  │◄───────────────────────────────┘")
 sprint("  │  (Agent)         │  Synthesizes everything")
 sprint("  │  MCP (fallback)  │  May call Serper if data gaps")
 sprint("  └────────┬─────────┘")
@@ -469,7 +538,7 @@ sprint("")
 
 section("METRICS")
 sprint(f"  Total latency:      {total_time:.1f} seconds")
-sprint(f"  LLM calls:          {llm_calls}")
+sprint(f"  LLM calls:          {llm_calls} (8 conversation + 1 extraction + 3 search + 1 coordinator = 13 total)")
 sprint(f"  MCP tool calls:     ~{mcp_calls_est} (estimated)")
-sprint(f"  A2A transfers:      4 (extractor → 3 agents → coordinator)")
+sprint(f"  A2A transfers:      5 (conversation → extractor → 3 search agents → coordinator)")
 sprint(f"  Architecture:       6-Agent + MCP Tools + A2A Context Chaining")
