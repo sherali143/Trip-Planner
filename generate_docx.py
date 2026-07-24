@@ -180,7 +180,7 @@ add_para(
 
 add_bold_para('How MCP is Set Up in This Project')
 add_bullet('An MCP Server runs at src/server/mcp_server.py — it listens for tool requests over stdio (standard input/output)')
-add_bullet('Tools are registered: search flights, search hotels, search attractions, search restaurants, calculator, web search')
+add_bullet('12 tools are registered: search flights, search hotels, search accommodations, search car rentals, search web, search attractions, search restaurants, calculator, search hotel destination, search hotels by ID, get hotel reviews, get nearby attractions')
 add_bullet('The MCP server communicates using JSON-RPC format: a request comes in, the server does the work, and sends back the result')
 add_bullet('MCP Tool wrappers are at src/tools/mcp_tools.py — these wrap the MCP server calls into LangChain StructuredTool format that CrewAI agents can use')
 
@@ -303,7 +303,7 @@ add_table(
         ['demo_6agent_explained.py', 'EDUCATIONAL DEMO — Explains 6-agent architecture with MCP & A2A protocol details at each step. Auto-run.'],
         ['demo_3agent_explained.py', 'EDUCATIONAL DEMO — Explains 3-agent + Direct API architecture with MCP & A2A details. Auto-run.'],
         ['demo_comparison.py', 'COMPARISON — Runs both architectures back-to-back on same input. Shows side-by-side metrics table.'],
-        ['run_6agent.py', 'EXECUTION — Runs 5 agents one-by-one showing each agent call and raw output live.'],
+        ['run_6agent.py', 'EXECUTION — Runs 6 agents one-by-one (conversational → extractor → flight → hotel → attractions → coordinator) showing each agent call and raw output live.'],
         ['run_3agent.py', 'EXECUTION — Runs extraction, 4 direct API calls (showing each response), then coordinator.'],
         ['generate_docx.py', 'Generates this DOCX document. Run: python generate_docx.py'],
         ['src/agents.py', 'Defines the 3 AI agents: conversational_agent (asks questions), preferences_extractor (parses JSON), itinerary_coordinator (assembles itinerary).'],
@@ -324,7 +324,7 @@ add_table(
         ['comparison/run_comparison.py', 'Runs all 20 scenarios on both architectures, aggregates metrics, saves to JSON.'],
         ['.env', 'API keys file (GOOGLE_API_KEY, RAPIDAPI_KEY, SERPER_API_KEY, GEMINI_API_KEY). Not committed to git.'],
         ['AGENTS.md', 'Session tracking document — what was done, current state, next steps.'],
-        ['pyproject.toml', 'Project dependencies — CrewAI 0.86.0, LiteLLM, Streamlit, etc.'],
+        ['pyproject.toml', 'Project dependencies — CrewAI 0.86.0, LiteLLM, Streamlit, LangChain, MCP SDK, Pydantic, Requests, etc.'],
     ]
 )
 
