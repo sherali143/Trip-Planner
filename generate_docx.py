@@ -119,10 +119,11 @@ add_para('7. Itinerary Coordinator reads all outputs and writes the final itiner
 
 add_para('')
 add_bold_para('The Problem with This Approach')
-add_bullet('Each search agent wastes LLM calls just deciding which tool to use and reading the output')
+add_bullet('Each search agent wastes LLM calls just deciding which tool to use and reading the output — 5 LLM calls for extraction + 3 search agents + coordinator')
 add_bullet('The ReAct loops cause errors — LLMs often mis-parse tool outputs and retry')
 add_bullet('A simple task like "search for hotels" takes 30-60 seconds because the LLM is thinking instead of just calling the API')
-add_bullet('Total: 5+ LLM calls, 170-336 seconds per trip')
+add_bullet('Total: 5 LLM calls, 170-336 seconds per trip. With conversation included (8 more calls): 13 LLM calls')
+add_bullet('The ablation study skips the conversational agent for fair comparison — both architectures benchmark against the same extraction + data + coordinator flow')
 
 doc.add_page_break()
 
@@ -209,15 +210,17 @@ add_para(
     'and replaced them with direct Python function calls.'
 )
 
-add_bold_para('The 3 Agents')
+add_bold_para('The 3 Agents in the Optimized Demo')
 add_table(
     ['Agent Name', 'What It Does', 'LLM Calls'],
     [
         ['1. Preferences Extractor', 'Reads the user request and extracts structured JSON (origin, destination, dates, budget, interests)', '1 call'],
         ['2. Itinerary Coordinator', 'Takes all the data (flights, hotels, attractions, restaurants) and assembles a complete day-by-day itinerary', '1 call'],
-        ['3. (No conversational agent in this path — the optimized demo skips the 8-question loop and goes straight to extraction)', '-'],
     ]
 )
+
+add_para('')
+add_bold_para('Note: The production CLI (run_cli.py) also has a Conversational Agent that asks 8 questions before extraction — making it 3 agents in the full pipeline. The optimized demo skips conversation for direct extraction.')
 
 add_para('')
 add_bold_para('What Changed?')
@@ -295,15 +298,14 @@ add_para('')
 add_table(
     ['File', 'Purpose'],
     [
-        ['run_cli.py', 'ENTRY POINT — Terminal interface. Run with: python run_cli.py. Prompts user for trip request, calls orchestrator, prints itinerary.'],
-        ['run_web.py', 'ENTRY POINT — Web interface. Run with: python run_web.py. Opens Streamlit in browser.'],
+        ['run_cli.py', 'PRODUCTION CLI — Interactive Q&A. Prompts user for trip request, calls orchestrator, prints itinerary.'],
+        ['run_web.py', 'PRODUCTION WEB — Streamlit web interface for trip planning.'],
         ['demo_6agent_explained.py', 'EDUCATIONAL DEMO — Explains 6-agent architecture with MCP & A2A protocol details at each step. Auto-run.'],
         ['demo_3agent_explained.py', 'EDUCATIONAL DEMO — Explains 3-agent + Direct API architecture with MCP & A2A details. Auto-run.'],
         ['demo_comparison.py', 'COMPARISON — Runs both architectures back-to-back on same input. Shows side-by-side metrics table.'],
         ['run_6agent.py', 'EXECUTION — Runs 5 agents one-by-one showing each agent call and raw output live.'],
         ['run_3agent.py', 'EXECUTION — Runs extraction, 4 direct API calls (showing each response), then coordinator.'],
-        ['run_cli.py', 'PRODUCTION CLI — Interactive Q&A. Prompts user for trip request, calls orchestrator, prints itinerary.'],
-        ['run_web.py', 'PRODUCTION WEB — Streamlit web interface for trip planning.'],
+        ['generate_docx.py', 'Generates this DOCX document. Run: python generate_docx.py'],
         ['src/agents.py', 'Defines the 3 AI agents: conversational_agent (asks questions), preferences_extractor (parses JSON), itinerary_coordinator (assembles itinerary).'],
         ['src/tasks.py', 'Defines the 3 tasks that the agents perform. Each task has a description and expected output format.'],
         ['src/orchestrator.py', 'The main engine. Contains plan_trip() and plan_trip_from_transcript() which control the entire flow: conversation → extraction → API calls → coordination.'],
@@ -320,7 +322,7 @@ add_table(
         ['comparison/architecture_3agent.py', '3-agent optimized architecture wrapper for comparison. Uses direct API calls.'],
         ['comparison/scenarios.py', '20 test scenarios with different destinations, budgets, trip lengths.'],
         ['comparison/run_comparison.py', 'Runs all 20 scenarios on both architectures, aggregates metrics, saves to JSON.'],
-        ['.env', 'API keys file (GOOGLE_API_KEY, RAPIDAPI_KEY, SERPER_API_KEY). Not committed to git.'],
+        ['.env', 'API keys file (GOOGLE_API_KEY, RAPIDAPI_KEY, SERPER_API_KEY, GEMINI_API_KEY). Not committed to git.'],
         ['AGENTS.md', 'Session tracking document — what was done, current state, next steps.'],
         ['pyproject.toml', 'Project dependencies — CrewAI 0.86.0, LiteLLM, Streamlit, etc.'],
     ]
