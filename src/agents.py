@@ -11,7 +11,6 @@ from src.tools import (
     calculate
 )
 
-
 class TripPlannerAgents:
     """
     Trip Planner Agents with A2A Communication and MCP Tool Integration

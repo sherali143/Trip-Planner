@@ -1,0 +1,11 @@
+crewai[tools]
+litellm
+mcp
+python-dotenv
+requests
+pydantic
+pyyaml
+setuptools
+langchain
+streamlit
+pytest

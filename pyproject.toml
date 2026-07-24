@@ -7,18 +7,19 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.10,<=3.13"
-crewai = {version = "^0.86.0", extras = ["tools"]}
-litellm = "^1.58.0"
-mcp = "^1.0.0"
-python-dotenv = "^1.0.0"
-requests = "^2.32.0"
-pydantic = "^2.9.0"
-pyyaml = "^6.0.0"
-setuptools = "^80.9.0"
-langchain = "^0.3.0"
-langchain-openai = "^0.2.0"
-streamlit = "^1.28.0"
-pytest = "^9.1.1"
+crewai = {version = "*", extras = ["tools"]}
+litellm = "*"
+mcp = "*"
+python-dotenv = "*"
+requests = "*"
+pydantic = "*"
+pyyaml = "*"
+setuptools = "*"
+langchain = "*"
+streamlit = "*"
+pytest = "*"
+
+[tool.poetry.group.dev.dependencies]
 
 [tool.pyright]
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
