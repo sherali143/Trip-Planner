@@ -2,7 +2,7 @@
 Dissertation Demo: 3-Agent + Direct API Architecture (Optimized)
 Run this to show your supervisor the improved approach.
 
-Usage: python run_demo_optimized.py
+Usage: python demo_3agent_basic.py
 """
 
 import sys, time
@@ -27,7 +27,7 @@ print("  • Difference: NO conversational agent (skips 8-question loop)")
 print("-" * 70)
 input("  Press Enter to start Phase 1...")
 
-from comparison.optimized_3agent import plan_trip_optimized
+from comparison.architecture_3agent import plan_trip_optimized
 
 result = plan_trip_optimized(SAMPLE_INPUT)
 

@@ -135,7 +135,7 @@ def plan_trip_baseline(user_input: str) -> dict:
         llm_calls += 1
         t2 = time.time()
     except Exception as e:
-        return {"arch": "baseline_6agent", "success": False, "error": str(e),
+        return {"arch": "architecture_6agent", "success": False, "error": str(e),
                 "latency": time.time() - start, "llm_calls": 0}
 
     try:
@@ -198,13 +198,13 @@ def plan_trip_baseline(user_input: str) -> dict:
         llm_calls += 4
     except Exception as e:
         errors.append(str(e))
-        return {"arch": "baseline_6agent", "success": False,
+        return {"arch": "architecture_6agent", "success": False,
                 "extraction": extraction_result[:300], "error": str(e),
                 "latency": time.time() - start, "llm_calls": llm_calls}
 
     total = time.time() - start
     return {
-        "arch": "baseline_6agent",
+        "arch": "architecture_6agent",
         "success": True,
         "result": str(result),
         "extraction": extraction_result[:500],

@@ -2,7 +2,7 @@
 Dissertation Demo: 6-Agent Architecture (Original Proposal)
 Run this to show your supervisor the baseline approach.
 
-Usage: python run_demo_baseline.py
+Usage: python demo_6agent_basic.py
 """
 
 import sys, time
@@ -27,7 +27,7 @@ print("  • 1 LLM call — extracts origin, destination, dates, budget, interes
 print("-" * 70)
 input("  Press Enter to start Phase 1...")
 
-from comparison.baseline_6agent import plan_trip_baseline
+from comparison.architecture_6agent import plan_trip_baseline
 
 result = plan_trip_baseline(SAMPLE_INPUT)
 

@@ -17,8 +17,8 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"), override=True)
 
 from comparison.scenarios import SCENARIOS
-from comparison.baseline_6agent import plan_trip_baseline
-from comparison.optimized_3agent import plan_trip_optimized
+from comparison.architecture_6agent import plan_trip_baseline
+from comparison.architecture_3agent import plan_trip_optimized
 
 
 def run_scenario(scenario: dict, runner_fn, label: str) -> dict:

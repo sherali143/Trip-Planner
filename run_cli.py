@@ -18,7 +18,7 @@ logging.getLogger("opentelemetry").setLevel(logging.ERROR)
 logging.getLogger("crewai").setLevel(logging.ERROR)
 import litellm
 litellm.suppress_debug_info = True
-litellm.set_verbose(False)
+litellm.set_verbose = False
 
 from dotenv import load_dotenv
 from textwrap import dedent

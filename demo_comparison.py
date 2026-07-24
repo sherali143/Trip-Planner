@@ -2,7 +2,7 @@
 Dissertation Demo: Side-by-Side Comparison
 Runs both architectures on the same input, shows metrics side-by-side.
 
-Usage: python run_demo_comparison.py
+Usage: python demo_comparison.py
 """
 
 import sys, time
@@ -27,7 +27,7 @@ print("=" * 70)
 input("\n  Press Enter to start...")
 
 t0 = time.time()
-from comparison.baseline_6agent import plan_trip_baseline
+from comparison.architecture_6agent import plan_trip_baseline
 r1 = plan_trip_baseline(SAMPLE_INPUT)
 t1 = time.time()
 
@@ -40,7 +40,7 @@ print("  🟢 RUN 2: 3-AGENT + DIRECT API (optimized)")
 print("=" * 70)
 input("\n  Press Enter to start...")
 
-from comparison.optimized_3agent import plan_trip_optimized
+from comparison.architecture_3agent import plan_trip_optimized
 r2 = plan_trip_optimized(SAMPLE_INPUT)
 t2 = time.time()
 
