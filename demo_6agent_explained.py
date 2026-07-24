@@ -5,13 +5,20 @@ Shows step-by-step how agents execute, call MCP servers, and communicate via A2A
 Usage: python demo_6agent_explained.py
 """
 
-import sys, time, json, re, os
+import sys, time, json, re, os, logging, warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="opentelemetry")
+warnings.filterwarnings("ignore", category=UserWarning, module="crewai")
 sys.stdout.reconfigure(encoding="utf-8")
 from textwrap import dedent
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
+os.environ["OTEL_SDK_DISABLED"] = "true"
+os.environ["CREWAI_TRACING_ENABLED"] = "false"
+
 from crewai import Agent, Task, Crew, Process
+
+logging.getLogger("opentelemetry").setLevel(logging.ERROR)
 
 from src.tools import (
     search_round_trip_flights, search_comprehensive_flights,

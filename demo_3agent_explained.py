@@ -6,13 +6,20 @@ direct Python API calls while keeping the same MCP servers underneath.
 Usage: python demo_3agent_explained.py
 """
 
-import sys, time, json, re, os
+import sys, time, json, re, os, logging, warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="opentelemetry")
+warnings.filterwarnings("ignore", category=UserWarning, module="crewai")
 sys.stdout.reconfigure(encoding="utf-8")
 from textwrap import dedent
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
+os.environ["OTEL_SDK_DISABLED"] = "true"
+os.environ["CREWAI_TRACING_ENABLED"] = "false"
+
 from crewai import Agent, Task, Crew, Process
+
+logging.getLogger("opentelemetry").setLevel(logging.ERROR)
 from src.agents import TripPlannerAgents
 from src.tools.mcp_tools import _call_fly_scraper_api
 from src.server.mcp_server import search_hotels_comprehensive, search_attractions, search_restaurants
@@ -72,6 +79,7 @@ subsection("EXECUTING...")
 
 agents_class = TripPlannerAgents()
 t0 = time.time()
+extractor_agent = agents_class.preferences_extractor_agent()
 extract_task = Task(
     description=dedent(f"""
         Extract travel preferences from this user request into JSON format:
@@ -82,10 +90,10 @@ extract_task = Task(
         If trip_duration given but no return_date, calculate return_date.
     """),
     expected_output='{"origin":"","destination":"","departure_date":"","return_date":"","trip_duration":0,"total_budget":0,"num_adults":1,"num_children":0,"interests":[],"travel_style":"","budget_breakdown":{"flights":0,"accommodation":0,"activities":0,"meals":0}}',
-    agent=agents_class.preferences_extractor_agent()
+    agent=extractor_agent
 )
 extract_crew = Crew(
-    agents=[agents_class.preferences_extractor_agent()],
+    agents=[extractor_agent],
     tasks=[extract_task],
     process=Process.sequential, verbose=False
 )

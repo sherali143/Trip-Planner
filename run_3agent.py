@@ -5,7 +5,9 @@ Usage: python run_3agent.py
    Or: python run_3agent.py "Plan my own trip..."
 """
 
-import sys, time, json, re, os
+import sys, time, json, re, os, logging, warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="opentelemetry")
+warnings.filterwarnings("ignore", category=UserWarning, module="crewai")
 os.environ["CREWAI_TRACING_ENABLED"] = "false"
 os.environ["OTEL_SDK_DISABLED"] = "true"
 sys.stdout.reconfigure(encoding="utf-8")
@@ -14,6 +16,8 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 from crewai import Agent, Task, Crew, Process
+
+logging.getLogger("opentelemetry").setLevel(logging.ERROR)
 from src.tools.mcp_tools import _call_fly_scraper_api
 from src.server.mcp_server import search_hotels_comprehensive, search_attractions, search_restaurants
 
@@ -60,6 +64,8 @@ def show(name, content):
 
 
 
+extractor_agent = _make_extractor()
+
 section("3-AGENT EXECUTION RUNNER")
 sprint(f"\n  Input: {SAMPLE_INPUT}")
 sprint(f"  3 phases: Extractor → Direct APIs → Coordinator")
@@ -81,10 +87,10 @@ extract_task = Task(
         If trip_duration given but no return_date, calculate return_date.
     """),
     expected_output='{"origin":"","destination":"","departure_date":"","return_date":"","trip_duration":0,"total_budget":0,"num_adults":1,"num_children":0,"interests":[],"travel_style":"","budget_breakdown":{"flights":0,"accommodation":0,"activities":0,"meals":0}}',
-    agent=_make_extractor()
+    agent=extractor_agent
 )
 extract_crew = Crew(
-    agents=[_make_extractor()],
+    agents=[extractor_agent],
     tasks=[extract_task],
     process=Process.sequential, verbose=False
 )
