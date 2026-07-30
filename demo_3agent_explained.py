@@ -57,7 +57,7 @@ sprint(f"\n  Architecture Comparison:")
 sprint(f"  6-Agent:  Extractor → Flight Agent → Hotel Agent → Attr. Agent → Coordinator")
 sprint(f"  3-Agent:  Extractor → Direct APIs (flights, hotels, attractions, restaurants) → Coordinator")
 sprint(f"            ↓                      ↓                              ↓")
-sprint(f("   LLM calls:    1               0 (pure functions)              1"))
+sprint(f"   LLM calls:    1               0 (pure functions)              1")
 sprint(f"            Total: 2 LLM calls (vs 5 in 6-agent)")
 
 
