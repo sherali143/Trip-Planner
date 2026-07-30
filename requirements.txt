@@ -1,4 +1,4 @@
-crewai[tools]==0.51.0
+crewai[tools]
 litellm
 mcp
 python-dotenv

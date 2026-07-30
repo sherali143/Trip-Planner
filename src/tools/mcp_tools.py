@@ -17,9 +17,7 @@ import sys
 import os
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
-from langchain.tools import tool
-from langchain_core.tools import StructuredTool
-from pydantic import BaseModel, Field
+from crewai.tools import tool
 from dotenv import load_dotenv
 import logging
 
@@ -150,74 +148,7 @@ def run_async_tool(coro):
         return asyncio.run(coro)
 
 
-# ============================================
-# PYDANTIC INPUT SCHEMAS FOR STRUCTURED TOOLS
-# ============================================
 
-class FlightSearchInput(BaseModel):
-    """Input schema for flight search"""
-    source: str = Field(description="Origin city name (e.g., 'Islamabad', 'London', 'New York')")
-    destination: str = Field(description="Destination city name (e.g., 'Doha', 'Dubai', 'Paris')")
-    departure_date: str = Field(description="Departure date in YYYY-MM-DD format")
-    return_date: Optional[str] = Field(default=None, description="Return date in YYYY-MM-DD format (optional for one-way)")
-    adults: int = Field(description="Number of adult passengers")
-    cabin_class: str = Field(default="ECONOMY", description="Cabin class: ECONOMY, BUSINESS, or FIRST")
-
-
-class ComprehensiveFlightInput(BaseModel):
-    """Input schema for comprehensive flight search"""
-    origin: str = Field(description="Origin city name (e.g., 'Islamabad', 'London')")
-    destination: str = Field(description="Destination city name (e.g., 'Doha', 'Dubai')")
-    departure_date: str = Field(description="Departure date in YYYY-MM-DD format")
-    return_date: Optional[str] = Field(default=None, description="Return date in YYYY-MM-DD format")
-    budget: Optional[float] = Field(default=None, description="Maximum budget in USD (total for all passengers)")
-    adults: int = Field(description="Number of adult passengers")
-
-
-class HotelSearchInput(BaseModel):
-    """Input schema for hotel search"""
-    destination: str = Field(description="Destination city name")
-    checkin_date: str = Field(description="Check-in date in YYYY-MM-DD format")
-    checkout_date: str = Field(description="Check-out date in YYYY-MM-DD format")
-    budget_per_night: float = Field(description="Maximum budget per night in USD")
-    adults: int = Field(description="Number of guests")
-    rooms: int = Field(description="Number of rooms needed")
-    star_rating: Optional[int] = Field(default=None, description="Desired star rating 1-5 (optional)")
-
-
-class AccommodationSearchInput(BaseModel):
-    """Input schema for accommodation search with location"""
-    destination: str = Field(description="Destination city name")
-    checkin_date: str = Field(description="Check-in date in YYYY-MM-DD format")
-    checkout_date: str = Field(description="Check-out date in YYYY-MM-DD format")
-    budget_per_night: float = Field(description="Maximum budget per night in USD")
-    latitude: Optional[float] = Field(default=None, description="GPS latitude (optional)")
-    longitude: Optional[float] = Field(default=None, description="GPS longitude (optional)")
-
-
-class AttractionSearchInput(BaseModel):
-    """Input schema for attraction search"""
-    destination: str = Field(description="Destination city name")
-    interests: str = Field(description="Comma-separated interests like 'museums, food, nightlife'")
-    duration_days: int = Field(description="Number of days for the trip")
-
-
-class RestaurantSearchInput(BaseModel):
-    """Input schema for restaurant search"""
-    destination: str = Field(description="Destination city name")
-    cuisine_types: str = Field(description="Types of cuisine like 'French, Italian, local'")
-    budget_per_meal: float = Field(description="Maximum budget per meal in USD")
-
-
-class HotelsByDestIdInput(BaseModel):
-    """Input schema for hotels by destination ID search"""
-    dest_id: str = Field(description="Destination ID from search_hotel_destination")
-    search_type: str = Field(default="CITY", description="Search type: CITY or REGION")
-    arrival_date: str = Field(description="Check-in date in YYYY-MM-DD format")
-    departure_date: str = Field(description="Check-out date in YYYY-MM-DD format")
-    adults: int = Field(description="Number of guests")
-    room_qty: int = Field(description="Number of rooms")
-    currency_code: str = Field(default="USD", description="Currency code like USD, EUR")
 
 
 # ============================================
@@ -486,26 +417,44 @@ def _search_round_trip_flights(
         return json.dumps({"error": str(e), "success": False})
 
 
-search_round_trip_flights = StructuredTool.from_function(
-    func=_search_round_trip_flights,
-    name="Search round trip flights",
-    description="""Search for round-trip flights using Booking.com API.
+@tool("Search round trip flights")
+def search_round_trip_flights(source: str, destination: str, departure_date: str, adults: int, return_date: Optional[str] = None, cabin_class: str = "ECONOMY") -> str:
+    """Search for round-trip flights using Booking.com API.
     Returns flights on EXACT dates with multiple airlines.
-    
+
     REQUIRED parameters:
     - source: Origin city name (e.g., 'Islamabad', 'London', 'New York')
     - destination: Destination city name (e.g., 'Doha', 'Dubai', 'Paris')
     - departure_date: Date in YYYY-MM-DD format (flights will be on THIS date)
     - adults: Number of passengers
-    
+
     OPTIONAL parameters:
     - return_date: Return date in YYYY-MM-DD format
     - cabin_class: ECONOMY, BUSINESS, or FIRST (default: ECONOMY)
-    
+
     NOTE: Use CITY NAMES, not airport codes! The API will find the correct airport.
-    """,
-    args_schema=FlightSearchInput
-)
+    """
+    return _search_round_trip_flights(source, destination, departure_date, adults, return_date, cabin_class)
+
+
+@tool("Search comprehensive flights")
+def search_comprehensive_flights(origin: str, destination: str, departure_date: str, adults: int, return_date: Optional[str] = None, budget: Optional[float] = None) -> str:
+    """Comprehensive flight search with budget filtering.
+
+    REQUIRED parameters:
+    - origin: Origin airport IATA code (e.g., 'ISB' for Islamabad, 'LHR' for London)
+    - destination: Destination airport IATA code (e.g., 'DOH' for Doha, 'DXB' for Dubai)
+    - departure_date: Date in YYYY-MM-DD format
+    - adults: Number of passengers
+
+    OPTIONAL parameters:
+    - return_date: Return date in YYYY-MM-DD format
+    - budget: Maximum budget in USD (total for all passengers)
+
+    IMPORTANT: Use 3-letter IATA airport codes, NOT city names!
+    Common codes: ISB=Islamabad, LHE=Lahore, KHI=Karachi, DOH=Doha, DXB=Dubai, LHR=London, JFK=New York, CDG=Paris
+    """
+    return _search_comprehensive_flights(origin, destination, departure_date, adults, return_date, budget)
 
 
 def _search_comprehensive_flights(
@@ -535,27 +484,6 @@ def _search_comprehensive_flights(
         logger.error(f"Comprehensive flight search error: {e}")
         return json.dumps({"error": str(e), "success": False})
 
-
-search_comprehensive_flights = StructuredTool.from_function(
-    func=_search_comprehensive_flights,
-    name="Search comprehensive flights",
-    description="""Comprehensive flight search with budget filtering.
-    
-    REQUIRED parameters:
-    - origin: Origin airport IATA code (e.g., 'ISB' for Islamabad, 'LHR' for London)
-    - destination: Destination airport IATA code (e.g., 'DOH' for Doha, 'DXB' for Dubai)
-    - departure_date: Date in YYYY-MM-DD format
-    - adults: Number of passengers
-    
-    OPTIONAL parameters:
-    - return_date: Return date in YYYY-MM-DD format
-    - budget: Maximum budget in USD (total for all passengers)
-    
-    IMPORTANT: Use 3-letter IATA airport codes, NOT city names!
-    Common codes: ISB=Islamabad, LHE=Lahore, KHI=Karachi, DOH=Doha, DXB=Dubai, LHR=London, JFK=New York, CDG=Paris
-    """,
-    args_schema=ComprehensiveFlightInput
-)
 
 
 # ============================================
@@ -598,11 +526,10 @@ def _search_hotels_comprehensive(
         return json.dumps({"error": str(e), "success": False})
 
 
-search_hotels_comprehensive = StructuredTool.from_function(
-    func=_search_hotels_comprehensive,
-    name="Search hotels comprehensive",
-    description="""Comprehensive hotel search with reviews and budget filtering.
-    
+@tool("Search hotels comprehensive")
+def search_hotels_comprehensive(destination: str, checkin_date: str, checkout_date: str, budget_per_night: float, adults: int, rooms: int, star_rating: Optional[int] = None) -> str:
+    """Comprehensive hotel search with reviews and budget filtering.
+
     REQUIRED parameters:
     - destination: City name (e.g., 'Paris', 'Doha', 'London')
     - checkin_date: Check-in date in YYYY-MM-DD format
@@ -610,12 +537,11 @@ search_hotels_comprehensive = StructuredTool.from_function(
     - budget_per_night: Maximum budget per night in USD
     - adults: Number of guests
     - rooms: Number of rooms needed
-    
+
     OPTIONAL parameters:
     - star_rating: Desired star rating 1-5
-    """,
-    args_schema=HotelSearchInput
-)
+    """
+    return _search_hotels_comprehensive(destination, checkin_date, checkout_date, budget_per_night, adults, rooms, star_rating)
 
 
 def _search_accommodations_with_location(
@@ -650,23 +576,21 @@ def _search_accommodations_with_location(
         return json.dumps({"error": str(e), "success": False})
 
 
-search_accommodations_with_location = StructuredTool.from_function(
-    func=_search_accommodations_with_location,
-    name="Search accommodations with location",
-    description="""Search for accommodations with optional GPS coordinates.
-    
+@tool("Search accommodations with location")
+def search_accommodations_with_location(destination: str, checkin_date: str, checkout_date: str, budget_per_night: float, latitude: Optional[float] = None, longitude: Optional[float] = None) -> str:
+    """Search for accommodations with optional GPS coordinates.
+
     REQUIRED parameters:
     - destination: City name
     - checkin_date: Check-in date in YYYY-MM-DD format
     - checkout_date: Check-out date in YYYY-MM-DD format
     - budget_per_night: Maximum budget per night in USD
-    
+
     OPTIONAL parameters:
     - latitude: GPS latitude for location-based search
     - longitude: GPS longitude for location-based search
-    """,
-    args_schema=AccommodationSearchInput
-)
+    """
+    return _search_accommodations_with_location(destination, checkin_date, checkout_date, budget_per_night, latitude, longitude)
 
 
 # ============================================
@@ -730,18 +654,16 @@ def _search_attractions(
         return json.dumps({"error": str(e), "success": False})
 
 
-search_attractions = StructuredTool.from_function(
-    func=_search_attractions,
-    name="Search for attractions",
-    description="""Search for attractions and things to do at a destination.
-    
+@tool("Search for attractions")
+def search_attractions(destination: str, interests: str, duration_days: int) -> str:
+    """Search for attractions and things to do at a destination.
+
     REQUIRED parameters:
     - destination: City name (e.g., 'Doha', 'Paris')
     - interests: Comma-separated interests (e.g., 'museums, food, nightlife, beaches')
     - duration_days: Number of days for the trip
-    """,
-    args_schema=AttractionSearchInput
-)
+    """
+    return _search_attractions(destination, interests, duration_days)
 
 
 def _search_restaurants(
@@ -770,18 +692,16 @@ def _search_restaurants(
         return json.dumps({"error": str(e), "success": False})
 
 
-search_restaurants = StructuredTool.from_function(
-    func=_search_restaurants,
-    name="Search for restaurants",
-    description="""Search for restaurants at a destination.
-    
+@tool("Search for restaurants")
+def search_restaurants(destination: str, cuisine_types: str, budget_per_meal: float) -> str:
+    """Search for restaurants at a destination.
+
     REQUIRED parameters:
     - destination: City name (e.g., 'Doha', 'Paris')
     - cuisine_types: Types of cuisine (e.g., 'Arabic, Middle Eastern, Seafood')
     - budget_per_meal: Maximum budget per meal in USD
-    """,
-    args_schema=RestaurantSearchInput
-)
+    """
+    return _search_restaurants(destination, cuisine_types, budget_per_meal)
 
 
 # ============================================
@@ -882,24 +802,22 @@ def _search_hotels_by_dest_id(
         return json.dumps({"error": str(e), "success": False})
 
 
-search_hotels_by_dest_id = StructuredTool.from_function(
-    func=_search_hotels_by_dest_id,
-    name="Search hotels by destination ID",
-    description="""Search hotels using dest_id from search_hotel_destination (STEP 2).
-    
+@tool("Search hotels by destination ID")
+def search_hotels_by_dest_id(dest_id: str, arrival_date: str, departure_date: str, adults: int, room_qty: int, search_type: str = "CITY", currency_code: str = "USD") -> str:
+    """Search hotels using dest_id from search_hotel_destination (STEP 2).
+
     REQUIRED parameters:
     - dest_id: Destination ID from search_hotel_destination result
     - arrival_date: Check-in date in YYYY-MM-DD format
     - departure_date: Check-out date in YYYY-MM-DD format
     - adults: Number of guests
     - room_qty: Number of rooms
-    
+
     OPTIONAL parameters:
     - search_type: CITY or REGION (default: CITY)
     - currency_code: USD, EUR, etc. (default: USD)
-    """,
-    args_schema=HotelsByDestIdInput
-)
+    """
+    return _search_hotels_by_dest_id(dest_id, arrival_date, departure_date, adults, room_qty, search_type, currency_code)
 
 
 @tool("Get hotel reviews by ID")
