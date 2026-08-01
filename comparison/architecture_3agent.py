@@ -13,6 +13,8 @@ load_dotenv(override=True)
 from src.tools.mcp_tools import _call_fly_scraper_api
 from src.server.mcp_server import search_hotels_comprehensive, search_attractions, search_restaurants
 from src.agents import TripPlannerAgents
+from src.core.llm_metrics import recorder
+from src.core.resilience import kickoff_with_retry
 
 
 def _make_coordinator():
@@ -31,16 +33,17 @@ def _make_coordinator():
     )
 
 
-def plan_trip_optimized(user_input: str) -> dict:
+def plan_trip_optimized(user_input: str, scenario_id: str = "optimized") -> dict:
     """
     Run optimized 3-agent + direct API architecture.
-    Phase 1: Extraction (1 LLM call)
-    Phase 2: Direct API calls (flights, hotels, attractions, restaurants) — 0 LLM calls
-    Phase 3: Coordinator (1 LLM call)
-    Total: 2 LLM calls
+    Phase 1: Extraction (LLM)
+    Phase 2: Direct API calls (flights, hotels, attractions, restaurants) — no LLM
+    Phase 3: Coordinator (LLM)
+
+    Call counts are measured by the LiteLLM recorder, not asserted, so this arm
+    is counted on exactly the same basis as the 6-agent arm.
     """
     start = time.time()
-    llm_calls = 0
     errors = []
 
     agents_class = TripPlannerAgents()
@@ -49,6 +52,17 @@ def plan_trip_optimized(user_input: str) -> dict:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
 
+    with recorder.session(f"3agent/{scenario_id}") as llm:
+        result = _run_optimized(user_input, agents_class, coordinator, start, errors)
+
+    result["llm"] = llm.summary()
+    result["llm_calls"] = result["llm"]["llm_calls"]
+    result["total_tokens"] = result["llm"]["total_tokens"]
+    result["cost_usd"] = result["llm"]["cost_usd"]
+    return result
+
+
+def _run_optimized(user_input, agents_class, coordinator, start, errors) -> dict:
     try:
         # PHASE 1: Extraction (single task, no conversation loop)
         extract_task = Task(
@@ -73,13 +87,12 @@ def plan_trip_optimized(user_input: str) -> dict:
             tasks=[extract_task],
             process=Process.sequential, verbose=False
         )
-        extraction_result = str(extract_crew.kickoff())
-        llm_calls += 1
-        t1 = time.time() - start
+        extraction_result = str(kickoff_with_retry(extract_crew))
+        t1 = time.time()
 
     except Exception as e:
         return {"arch": "architecture_3agent", "success": False, "error": str(e),
-                "latency": time.time() - start, "llm_calls": llm_calls}
+                "latency": time.time() - start}
 
     # Parse extraction JSON
     try:
@@ -146,7 +159,7 @@ def plan_trip_optimized(user_input: str) -> dict:
             errors.append(f"restaurants:{e}")
             restaurants_data = json.dumps({"error": "Restaurant search failed", "success": False})
 
-    t2 = time.time() - start
+    t2 = time.time()
 
     data_block = f"""
 PREFERENCES:
@@ -192,23 +205,23 @@ RESTAURANTS:
             tasks=[coord_task],
             process=Process.sequential, verbose=False
         )
-        result = str(coord_crew.kickoff())
-        llm_calls += 1
+        result = str(kickoff_with_retry(coord_crew))
     except Exception as e:
         return {"arch": "architecture_3agent", "success": False,
                 "extraction": extraction_result[:300], "error": str(e),
-                "latency": time.time() - start, "llm_calls": llm_calls}
+                "latency": time.time() - start}
 
-    total = time.time() - start
+    end = time.time()
     return {
         "arch": "architecture_3agent",
         "success": True,
         "result": result,
         "extraction": extraction_result[:500],
-        "latency": total,
-        "llm_calls": llm_calls,
-        "phase1_s": round(t1 - start, 1),
-        "phase2_s": round(t2 - t1, 1),
-        "phase3_s": round(total - t2, 1),
+        "latency": end - start,
+        # t1/t2 are absolute timestamps; phase1_s previously subtracted `start`
+        # from an already-elapsed duration and reported a large negative number.
+        "phase1_extraction_s": round(t1 - start, 1),
+        "phase2_api_fetch_s": round(t2 - t1, 1),
+        "phase3_coordination_s": round(end - t2, 1),
         "errors": errors
     }

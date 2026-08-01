@@ -17,6 +17,8 @@ from src.tools import (
     search_internet, search_attractions, search_restaurants,
     calculate
 )
+from src.core.llm_metrics import recorder
+from src.core.resilience import kickoff_with_retry
 
 
 class BaselineAgents:
@@ -98,15 +100,34 @@ class BaselineAgents:
         )
 
 
-def plan_trip_baseline(user_input: str) -> dict:
-    """Run the 6-agent baseline. Returns metrics dict."""
+def plan_trip_baseline(user_input: str, scenario_id: str = "baseline") -> dict:
+    """
+    Run the 6-agent baseline. Returns metrics dict.
+
+    LLM usage is measured, not assumed: every request CrewAI issues — including
+    the ones inside each search agent's ReAct loop — is captured by the LiteLLM
+    callback recorder. The previous `llm_calls += 4` undercounted exactly the
+    cost this architecture is being evaluated on.
+    """
     start = time.time()
-    llm_calls = 0
     errors = []
 
     agents = BaselineAgents()
     cid = str(uuid.uuid4())
 
+    with recorder.session(f"6agent/{scenario_id}") as llm:
+        result = _run_baseline(user_input, agents, start, errors)
+
+    # Read the summary only after the session closes, so pending LiteLLM
+    # callbacks have been drained (see LLMSession.flush).
+    result["llm"] = llm.summary()
+    result["llm_calls"] = result["llm"]["llm_calls"]
+    result["total_tokens"] = result["llm"]["total_tokens"]
+    result["cost_usd"] = result["llm"]["cost_usd"]
+    return result
+
+
+def _run_baseline(user_input: str, agents, start, errors) -> dict:
     try:
         # PHASE 1: Extraction
         t1 = time.time()
@@ -131,12 +152,11 @@ def plan_trip_baseline(user_input: str) -> dict:
             tasks=[extract_task],
             process=Process.sequential, verbose=True
         )
-        extraction_result = str(extract_crew.kickoff())
-        llm_calls += 1
+        extraction_result = str(kickoff_with_retry(extract_crew))
         t2 = time.time()
     except Exception as e:
         return {"arch": "architecture_6agent", "success": False, "error": str(e),
-                "latency": time.time() - start, "llm_calls": 0}
+                "latency": time.time() - start}
 
     try:
         # PHASE 2: Flight + Hotel + Attraction + Coordinator (sequential)
@@ -194,13 +214,12 @@ def plan_trip_baseline(user_input: str) -> dict:
             tasks=[flight_t, hotel_t, attraction_t, coord_t],
             process=Process.sequential, verbose=True
         )
-        result = main_crew.kickoff()
-        llm_calls += 4
+        result = kickoff_with_retry(main_crew)
     except Exception as e:
         errors.append(str(e))
         return {"arch": "architecture_6agent", "success": False,
                 "extraction": extraction_result[:300], "error": str(e),
-                "latency": time.time() - start, "llm_calls": llm_calls}
+                "latency": time.time() - start}
 
     total = time.time() - start
     return {
@@ -209,8 +228,7 @@ def plan_trip_baseline(user_input: str) -> dict:
         "result": str(result),
         "extraction": extraction_result[:500],
         "latency": total,
-        "llm_calls": llm_calls,
-        "phase1_s": round(t2 - t1, 1),
-        "phase2_s": round(total - (t2 - t1), 1),
+        "phase1_extraction_s": round(t2 - t1, 1),
+        "phase2_search_and_coord_s": round(total - (t2 - t1), 1),
         "errors": errors
     }

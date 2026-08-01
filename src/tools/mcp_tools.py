@@ -156,6 +156,7 @@ def run_async_tool(coro):
 # ============================================
 
 import requests
+from src.core.http_cache import cached_get
 
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
 BOOKING_HOST = "booking-com15.p.rapidapi.com"
@@ -175,10 +176,10 @@ def _search_flight_destination_booking(query: str) -> dict:
     params = {"query": query}
     
     try:
-        response = requests.get(url, headers=headers, params=params, timeout=30)
+        response = cached_get(url, headers=headers, params=params, timeout=30)
         response.raise_for_status()
         data = response.json()
-        
+
         if data.get("status") and data.get("data"):
             # Find airport ID (prefer airport over city)
             for item in data["data"]:
@@ -288,7 +289,7 @@ def _call_fly_scraper_api(
     if return_date:
         params["return_date"] = return_date
 
-    r = requests.get(
+    r = cached_get(
         "https://fly-scraper.p.rapidapi.com/flights/search-roundtrip",
         params=params, headers=fly_headers, timeout=60
     )
@@ -383,7 +384,14 @@ def _call_booking_flights_api(
     try:
         return _call_fly_scraper_api(origin_code, dest_code, departure_date, return_date, adults, budget)
     except Exception as e:
-        return json.dumps({"success": True, "flights": []})
+        # Must report the failure honestly. This previously returned
+        # {"success": True, "flights": []}, which made a quota 429 look like a
+        # successful search with no results: the 6-agent arm's LLM would then
+        # invent flights while the 3-agent arm (calling _call_fly_scraper_api
+        # directly) recorded a real error — making the two arms' success rates
+        # non-comparable.
+        logger.error(f"Flight search failed for {origin_code}->{dest_code}: {e}")
+        return json.dumps({"success": False, "flights": [], "error": str(e)})
 
 
 # ============================================
@@ -547,6 +555,7 @@ def search_hotels_comprehensive(destination: str, checkin_date: str, checkout_da
 def _search_accommodations_with_location(
     destination: str,
     checkin_date: str,
+    
     checkout_date: str,
     budget_per_night: float,
     latitude: Optional[float] = None,

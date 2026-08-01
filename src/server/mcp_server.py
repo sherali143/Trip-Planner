@@ -12,6 +12,7 @@ import json
 import asyncio
 from typing import Any, Optional
 import requests
+from src.core.http_cache import cached_get, cached_post
 from mcp.server import Server
 from mcp.types import Tool, TextContent
 from mcp.server.stdio import stdio_server
@@ -51,7 +52,7 @@ def search_hotel_destination(query: str) -> dict:
     }
     
     try:
-        response = requests.get(url, headers=headers, params=params, timeout=30)
+        response = cached_get(url, headers=headers, params=params, timeout=30)
         response.raise_for_status()
         data = response.json()
         return {"success": True, "data": data}
@@ -113,7 +114,7 @@ def search_hotels_by_destination(
     }
     
     try:
-        response = requests.get(url, headers=headers, params=params, timeout=30)
+        response = cached_get(url, headers=headers, params=params, timeout=30)
         response.raise_for_status()
         data = response.json()
         return {"success": True, "data": data}
@@ -145,7 +146,7 @@ def get_hotel_reviews(hotel_id: str) -> dict:
     }
     
     try:
-        response = requests.get(url, headers=headers, params=params, timeout=30)
+        response = cached_get(url, headers=headers, params=params, timeout=30)
         response.raise_for_status()
         data = response.json()
         return {"success": True, "data": data}
@@ -177,7 +178,7 @@ def get_attractions_near_hotel(hotel_id: str) -> dict:
     }
     
     try:
-        response = requests.get(url, headers=headers, params=params, timeout=30)
+        response = cached_get(url, headers=headers, params=params, timeout=30)
         response.raise_for_status()
         data = response.json()
         return {"success": True, "data": data}
@@ -223,7 +224,7 @@ def search_car_rentals(
     }
     
     try:
-        response = requests.get(url, headers=headers, params=params, timeout=30)
+        response = cached_get(url, headers=headers, params=params, timeout=30)
         response.raise_for_status()
         return response.json()
     except Exception as e:
@@ -598,7 +599,7 @@ def _do_serper_search(query: str) -> str:
     }
     
     try:
-        response = requests.post(url, headers=headers, data=payload, timeout=30)
+        response = cached_post(url, headers=headers, data=payload, timeout=30)
         if 'organic' not in response.json():
             return "Sorry, I couldn't find anything about that. There could be an error with your Serper API key."
         else:
