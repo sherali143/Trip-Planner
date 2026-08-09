@@ -1,0 +1,56 @@
+"""
+Logging defaults — primarily to keep API keys out of the console.
+
+Why this exists
+---------------
+Gemini is called over a URL that carries the key as a query parameter, and
+httpx logs every request line at INFO. With INFO enabled (CrewAI/LiteLLM turn
+it on), a normal run prints:
+
+    INFO:httpx:HTTP Request: POST
+    https://generativelanguage.googleapis.com/v1beta/models/...:generateContent?key=AIzaSy... "HTTP/1.1 200 OK"
+
+— the live API key, in plaintext, in output that gets pasted into terminals,
+screenshots, CI logs and handover notes. RapidAPI keys travel in headers rather
+than URLs so they do not leak this way, but the Gemini one does.
+
+This raises the level of the third-party loggers responsible. It deliberately
+does not call basicConfig or touch this project's own loggers, so application
+logging is unaffected.
+"""
+
+import logging
+import os
+
+# Loggers that emit full request URLs or otherwise very chatty third-party noise.
+_NOISY = (
+    "httpx",           # logs the Gemini URL, key included
+    "httpcore",
+    "LiteLLM",
+    "litellm",
+    "openai",
+    "urllib3",
+)
+
+
+def configure_logging(level: int = logging.WARNING) -> None:
+    """
+    Quieten third-party loggers that would otherwise print secrets.
+
+    Set TRIP_PLANNER_VERBOSE=1 to skip this when genuinely debugging HTTP —
+    but be aware the console will then contain the Gemini API key.
+    """
+    if os.getenv("TRIP_PLANNER_VERBOSE", "").strip() in ("1", "true", "yes"):
+        return
+
+    for name in _NOISY:
+        logging.getLogger(name).setLevel(level)
+
+    try:
+        import litellm
+        litellm.suppress_debug_info = True
+        # LiteLLM re-enables INFO on its own logger during import in some
+        # versions; pin it back down after the module is loaded.
+        logging.getLogger("LiteLLM").setLevel(level)
+    except Exception:  # pragma: no cover - litellm always present in practice
+        pass

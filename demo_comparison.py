@@ -1,75 +1,135 @@
 """
-Dissertation Demo: Side-by-Side Comparison
-Runs both architectures on the same input, shows metrics side-by-side.
+Dissertation Demo: Side-by-Side Comparison of all four architectures.
 
-Usage: python demo_comparison.py
+Runs the same request through every arm and prints one metrics table. This is
+the viva demo: it shows the progression from no tools at all, through naive and
+then tuned multi-agent, to direct execution.
+
+Usage:
+    # free — replays recorded API responses, spends no monthly quota
+    TRIP_PLANNER_API_MODE=replay python demo_comparison.py
+
+    # skip the "press Enter" pauses
+    python demo_comparison.py --no-pause
+
+Set TRIP_PLANNER_MAX_LIVE_CALLS to cap live API usage if not replaying; the
+flight and hotel free tiers are 30 and 50 calls PER MONTH.
 """
 
-import sys, time
+import sys
+import time
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 from dotenv import load_dotenv
+
 load_dotenv(override=True)
 
-SAMPLE_INPUT = "Plan a 4-night trip from Lahore to Istanbul for 1 adult departing 2026-08-15, budget 800 USD. Interests: history, food, shopping."
+import src  # applies logging defaults so the Gemini key is not printed
+from src.core.http_cache import cache_summary, get_mode
 
-print("=" * 70)
+SAMPLE_INPUT = (
+    "Plan a 4-night trip from Lahore to Istanbul for 1 adult departing "
+    "2026-08-15, budget 800 USD. Interests: history, food, shopping."
+)
+
+PAUSE = "--no-pause" not in sys.argv
+
+
+def pause(message: str) -> None:
+    if PAUSE:
+        input(f"\n  {message}")
+
+
+print("=" * 78)
 print("  DISSERTATION DEMO: ARCHITECTURE COMPARISON")
-print("  Same input · Two architectures · Side-by-side metrics")
-print("=" * 70)
+print("  Same input · Four architectures · Side-by-side measured metrics")
+print("=" * 78)
+print(f"\n  INPUT: {SAMPLE_INPUT}")
+print(f"  API mode: {get_mode()}")
+if get_mode() != "replay":
+    print("  WARNING: not in replay mode — this run may spend monthly API quota.")
+    print("           Re-run with TRIP_PLANNER_API_MODE=replay to use recordings.")
 
-print(f"\n📝 INPUT:\n  {SAMPLE_INPUT}\n")
-
-# ====== RUN 6-AGENT BASELINE ======
-print("=" * 70)
-print("  🔴 RUN 1: 6-AGENT BASELINE (proposal)")
-print("=" * 70)
-input("\n  Press Enter to start...")
-
-t0 = time.time()
+# Imported lazily-ish but together, so an import error surfaces before any run.
+from comparison.architecture_single_llm import plan_trip_single_llm
 from comparison.architecture_6agent import plan_trip_baseline
-r1 = plan_trip_baseline(SAMPLE_INPUT)
-t1 = time.time()
-
-print(f"\n  ✅ Completed in {r1.get('latency', 0):.1f}s")
-print(f"     LLM calls: {r1.get('llm_calls', 0)}")
-
-# ====== RUN 3-AGENT OPTIMIZED ======
-print("\n" + "=" * 70)
-print("  🟢 RUN 2: 3-AGENT + DIRECT API (optimized)")
-print("=" * 70)
-input("\n  Press Enter to start...")
-
+from comparison.architecture_6agent_optimized import plan_trip_optimized_6agent
 from comparison.architecture_3agent import plan_trip_optimized
-r2 = plan_trip_optimized(SAMPLE_INPUT)
-t2 = time.time()
+from comparison.metrics import score_groundedness
 
-print(f"\n  ✅ Completed in {r2.get('latency', 0):.1f}s")
-print(f"     LLM calls: {r2.get('llm_calls', 0)}")
+ARMS = [
+    ("A", "SINGLE LLM (no agents, no tools)", plan_trip_single_llm),
+    ("B", "6 AGENTS — naive", plan_trip_baseline),
+    ("C", "6 AGENTS — tuned", plan_trip_optimized_6agent),
+    ("D", "3 AGENTS + direct API", plan_trip_optimized),
+]
 
-# ====== COMPARISON TABLE ======
-print("\n" + "=" * 70)
-print("  📊 FINAL COMPARISON TABLE")
-print("=" * 70)
-print(f"  {'Metric':<35} {'6-Agent':<18} {'3-Agent':<18}")
-print(f"  {'-'*35} {'-'*18} {'-'*18}")
-print(f"  {'Architecture':<35} {'6 LLM Agents':<18} {'3 LLM + Direct API':<18}")
-print(f"  {'LLM calls per trip':<35} {str(r1.get('llm_calls', '?')):<18} {str(r2.get('llm_calls', '?')):<18}")
-print(f"  {'Total latency (s)':<35} {str(round(r1.get('latency', 0), 1)):<18} {str(round(r2.get('latency', 0), 1)):<18}")
-print(f"  {'Success':<35} {str(r1.get('success')):<18} {str(r2.get('success')):<18}")
-print(f"  {'Result length (chars)':<35} {str(len(r1.get('result', ''))):<18} {str(len(r2.get('result', ''))):<18}")
+results = {}
+for code, name, runner in ARMS:
+    print("\n" + "=" * 78)
+    print(f"  RUN {code}: {name}")
+    print("=" * 78)
+    pause("Press Enter to start...")
 
-# Calculate improvements
-if r1.get('latency') and r2.get('latency'):
-    lat_imp = (1 - r2['latency'] / r1['latency']) * 100
-    llm_imp = (1 - r2['llm_calls'] / r1['llm_calls']) * 100
-    print(f"\n  🏆 IMPROVEMENTS:")
-    print(f"     Latency:   {lat_imp:.0f}% faster ({r1.get('latency',0):.0f}s → {r2.get('latency',0):.0f}s)")
-    print(f"     LLM calls: {llm_imp:.0f}% fewer ({r1.get('llm_calls',0)} → {r2.get('llm_calls',0)})")
+    started = time.time()
+    try:
+        results[code] = runner(SAMPLE_INPUT, "demo")
+    except Exception as exc:
+        print(f"  FAILED: {type(exc).__name__}: {exc}")
+        results[code] = {"success": False, "error": str(exc), "latency": time.time() - started}
+        continue
 
-print("=" * 70)
-print("  💡 KEY INSIGHT FOR YOUR DISSERTATION:")
-print("  The A2A protocol is IDENTICAL in both architectures.")
-print("  Only the data-fetching layer changed: LLM agents → direct functions.")
-print("  This proves the multi-agent protocol is decoupled from execution.")
-print("=" * 70)
+    r = results[code]
+    print(f"\n  Completed in {r.get('latency', 0):.1f}s | "
+          f"{r.get('llm_calls', 0)} LLM calls | {r.get('total_tokens', 0):,} tokens")
+
+# Score every arm against what arm D actually retrieved.
+truth = (results.get("D") or {}).get("ground_truth") or {}
+if truth.get("hotels") or truth.get("airlines"):
+    for code in results:
+        results[code]["groundedness"] = score_groundedness(results[code].get("result", ""), truth)
+
+print("\n" + "=" * 78)
+print("  FINAL COMPARISON")
+print("=" * 78)
+head = f"  {'Arm':<34}{'LLM':>5}{'Tokens':>10}{'Cost $':>10}{'Secs':>8}{'Real $':>8}"
+print(head)
+print("  " + "-" * (len(head) - 2))
+for code, name, _ in ARMS:
+    r = results.get(code) or {}
+    grounded = (r.get("groundedness") or {}).get("prices_grounded_pct")
+    print(f"  {code + ' — ' + name:<34}"
+          f"{r.get('llm_calls', 0):>5}"
+          f"{r.get('total_tokens', 0):>10,}"
+          f"{r.get('cost_usd', 0):>10.5f}"
+          f"{r.get('latency', 0):>8.1f}"
+          f"{(f'{grounded:.0f}%' if grounded is not None else 'n/a'):>8}")
+
+print("\n  'Real $' = share of prices quoted in the itinerary that match a fare or")
+print("  nightly rate the APIs actually returned. The tool-less arm scores 0%:")
+print("  every figure it printed was invented.")
+
+d, c = results.get("D") or {}, results.get("C") or {}
+if d.get("llm_calls") and c.get("llm_calls"):
+    print("\n  HEADLINE — D vs C (direct execution vs TUNED multi-agent):")
+    print(f"    LLM calls {(1 - d['llm_calls']/c['llm_calls'])*100:.0f}% fewer   "
+          f"({c['llm_calls']} -> {d['llm_calls']})")
+    if c.get("latency"):
+        print(f"    Latency   {(1 - d['latency']/c['latency'])*100:.0f}% faster  "
+              f"({c['latency']:.0f}s -> {d['latency']:.0f}s)")
+
+print("\n" + "=" * 78)
+print("  KEY POINTS FOR THE VIVA")
+print("=" * 78)
+print("  1. The A2A protocol and MCP layer are IDENTICAL across all arms.")
+print("     Only the data-fetching layer changes. The protocol design is")
+print("     therefore independent of how data is retrieved — that is the")
+print("     contribution, not the agent count.")
+print("  2. Tuning the multi-agent arm (C vs B) removes most of its cost. The")
+print("     naive penalty was implementation, not architecture — so the")
+print("     comparison is against a fair baseline, not a straw man.")
+print("  3. Cost alone is not the deciding metric. Arm A is cheap because it")
+print("     calls nothing and invents its data.")
+print(f"\n  API calls spent by this run: {cache_summary()['live_calls']}")
+print("=" * 78)
