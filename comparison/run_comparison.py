@@ -239,9 +239,12 @@ def main():
         print(f"    LLM calls {g['llm_calls_pct']:>6}% fewer | tokens {g['tokens_pct']:>6}% fewer | "
               f"cost {g['cost_pct']:>6}% cheaper | latency {g['latency_pct']:>6}% faster")
     print(f"{'='*70}")
+    cache_info = comparison["provenance"]["api_cache"]
+    budget = cache_info.get("live_call_budget")
     print(f"  API mode: {comparison['provenance']['api_mode']} | "
-          f"live calls: {comparison['provenance']['api_cache']['live_calls']} | "
-          f"cache hits: {comparison['provenance']['api_cache']['cache_hits']}")
+          f"live calls: {cache_info['live_calls']}"
+          f"{'/' + str(budget) if budget is not None else ' (NO BUDGET GUARD SET)'} | "
+          f"cache hits: {cache_info['cache_hits']}")
     print(f"{'='*70}")
 
     return comparison

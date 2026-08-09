@@ -58,6 +58,29 @@ class CacheMiss(RuntimeError):
     """Raised when running in replay mode and no recording exists for a request."""
 
 
+class QuotaGuardTripped(RuntimeError):
+    """Raised when a run has spent its allowed number of live API calls."""
+
+
+def get_live_call_budget() -> Optional[int]:
+    """
+    Hard ceiling on live API calls for this process, or None for unlimited.
+
+    The paid-for-by-the-month free tiers are tiny (fly-scraper 30/month,
+    booking-com15 50/month) and a single accidental full run can consume a
+    whole month's allowance in minutes — with no way to buy it back. Set
+    TRIP_PLANNER_MAX_LIVE_CALLS to fail loudly instead.
+    """
+    raw = os.getenv("TRIP_PLANNER_MAX_LIVE_CALLS", "").strip()
+    if not raw:
+        return None
+    try:
+        return max(0, int(raw))
+    except ValueError:
+        logger.warning("Ignoring non-numeric TRIP_PLANNER_MAX_LIVE_CALLS=%r", raw)
+        return None
+
+
 def get_mode() -> str:
     """Current record/replay mode, read fresh so tests can flip it at runtime."""
     mode = os.getenv("TRIP_PLANNER_API_MODE", MODE_RECORD).strip().lower()
@@ -222,6 +245,15 @@ def _request(
                 f"to populate the cache."
             )
 
+    budget = get_live_call_budget()
+    if budget is not None and STATS.live_calls >= budget:
+        raise QuotaGuardTripped(
+            f"Live API call budget exhausted ({budget} calls used this run). "
+            f"Refusing to call {url}. Raise TRIP_PLANNER_MAX_LIVE_CALLS to allow "
+            f"more, or run with TRIP_PLANNER_API_MODE=replay to use only "
+            f"recorded responses."
+        )
+
     logger.debug("[http_cache] LIVE %s", url)
     STATS.live_calls += 1
     response = requests.request(
@@ -264,9 +296,12 @@ def cached_post(
 def cache_summary() -> Dict[str, Any]:
     """Snapshot for inclusion in evaluation result files."""
     entries = list(_cache_dir().glob("*.json"))
+    budget = get_live_call_budget()
     return {
         "mode": get_mode(),
         "cache_dir": str(_cache_dir()),
         "recorded_entries": len(entries),
+        "live_call_budget": budget,
+        "live_calls_remaining": (None if budget is None else max(0, budget - STATS.live_calls)),
         **STATS.as_dict(),
     }
