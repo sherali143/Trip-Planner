@@ -1,0 +1,12 @@
+{
+  "recorded_at": 1786269093.2373965,
+  "recorded_at_iso": "2026-08-09T14:51:33",
+  "method": "GET",
+  "url": "https://booking-com15.p.rapidapi.com/api/v1/hotels/getPopularAttractionNearBy",
+  "params": {
+    "hotel_id": "237630",
+    "languagecode": "en-us"
+  },
+  "status_code": 200,
+  "body": "{\"status\":true,\"message\":\"Success\",\"timestamp\":1786269094577,\"data\":{\"popular_landmarks\":[],\"closest_landmarks\":[{\"distance\":6.27907380066588,\"total_votes\":14,\"latitude\":40.9584791863044,\"average_out_of_10\":8.7,\"longitude\":29.4117736816406,\"tag\":\"Intercity \u0130stanbul Park\"},{\"tag\":\"Yeditepe University\",\"longitude\":29.1513955593109,\"average_out_of_10\":8.9,\"latitude\":40.972470042749,\"distance\":9.58616809301211,\"total_votes\":16},{\"average_out_of_10\":9.3,\"tag\":\"Eskihisar Tower\",\"longitude\":29.4258499145508,\"distance\":10.9508014220042,\"total_votes\":18,\"latitude\":40.7731318793512},{\"total_votes\":9,\"distance\":10.8878049855594,\"latitude\":40.848815,\"average_out_of_10\":9.6,\"tag\":\"St. George Monastery\",\"longitude\":29.118959},{\"latitude\":40.769347,\"total_votes\":17,\"distance\":11.1967141858387,\"longitude\":29.4267300000001,\"tag\":\"Osman Hamdi Bey Museum\",\"average_out_of_10\":8.4},{\"latitude\":40.769587,\"distance\":9.93446445757081,\"total_votes\":18,\"tag\":\"Bayramoglu Bird Park\",\"longitude\":29.370031,\"average_out_of_10\":9.1}]}}"
+}

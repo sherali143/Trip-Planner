@@ -155,10 +155,17 @@ def run_async_tool(coro):
 # DIRECT API CALLS (Bypass MCP for large responses)
 # ============================================
 
+import time
+
 import requests
 from src.core.http_cache import cached_get
 
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
+
+# fly-scraper search is asynchronous; see _call_fly_scraper_api for the flow.
+_FLY_SCRAPER_BASE = "https://fly-scraper.p.rapidapi.com"
+_FLY_SCRAPER_MAX_POLLS = 3
+_FLY_SCRAPER_POLL_DELAY_S = 2.0
 BOOKING_HOST = "booking-com15.p.rapidapi.com"
 
 
@@ -258,6 +265,57 @@ def _resolve_sky_id(location: str) -> str:
     return location
 
 
+def _parse_price(price: dict) -> float:
+    """
+    Convert a fly-scraper price object to whole USD.
+
+    The API reports price.raw as a STRING in thousandths
+    (price.unit == "PRICE_UNIT_MILLI"), so "1074000" means $1,074. Reading raw
+    directly — as the previous parser did — inflated every fare by 1000x.
+    """
+    raw = price.get("raw", 0)
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return 0.0
+    if price.get("unit") == "PRICE_UNIT_MILLI":
+        value /= 1000.0
+    return round(value, 2)
+
+
+def _leg_airline(leg: dict) -> str:
+    """Marketing carrier name for a leg."""
+    marketing = ((leg.get("carriers") or {}).get("marketing") or [{}])
+    return (marketing[0] or {}).get("name", "") if marketing else ""
+
+
+def _parse_leg(leg: dict) -> dict:
+    """
+    Flatten one leg of a fly-scraper itinerary.
+
+    Segment fields differ from the shape the old parser expected: airports live
+    under leg.origin/destination as `iata` (not segment.origin.code), times are
+    `departure`/`arrival` on the leg, and the carrier name is on
+    carriers.marketing[0]. Reading the old paths yielded empty strings for every
+    airline, airport and time.
+    """
+    if not leg:
+        return {}
+    origin = leg.get("origin") or {}
+    destination = leg.get("destination") or {}
+    return {
+        "airline": _leg_airline(leg),
+        "from": origin.get("iata", ""),
+        "from_name": origin.get("name", ""),
+        "to": destination.get("iata", ""),
+        "to_name": destination.get("name", ""),
+        "departure": leg.get("departure", ""),
+        "arrival": leg.get("arrival", ""),
+        "duration_mins": leg.get("durationInMinutes", 0),
+        "stops": leg.get("stopCount", 0),
+    }
+
+
 def _call_fly_scraper_api(
     origin_code: str,
     dest_code: str,
@@ -289,60 +347,78 @@ def _call_fly_scraper_api(
     if return_date:
         params["return_date"] = return_date
 
+    # fly-scraper is a two-phase (Skyscanner-style) API: the search endpoint only
+    # STARTS the search and returns a sessionId with context.status == "incomplete"
+    # and an empty itineraries list. Results must then be collected from the
+    # search-incomplete endpoint using that sessionId.
+    #
+    # The previous implementation read the first response as final, so it returned
+    # zero flights on every single search. That failure was masked for months
+    # because the exhausted free-tier key returned 429 before this code was reached.
+    #
+    # Note the v2 path and the plural "/flights/" segment: the RapidAPI console
+    # lists these as "flight/..." but only the plural form resolves.
     r = cached_get(
-        "https://fly-scraper.p.rapidapi.com/flights/search-roundtrip",
+        f"{_FLY_SCRAPER_BASE}/v2/flights/search-roundtrip",
         params=params, headers=fly_headers, timeout=60
     )
     r.raise_for_status()
     data = r.json()
-    
+
     if not data.get("status"):
         return json.dumps({"success": False, "error": data.get("message", "API error")})
-    
-    itineraries = data.get("data", {}).get("itineraries", [])
+
+    payload = data.get("data") or {}
+    context = payload.get("context") or {}
+    itineraries = payload.get("itineraries") or []
+
+    session_id = context.get("sessionId")
+    attempts = 0
+    while (
+        not itineraries
+        and context.get("status") == "incomplete"
+        and session_id
+        and attempts < _FLY_SCRAPER_MAX_POLLS
+    ):
+        attempts += 1
+        if attempts > 1:
+            time.sleep(_FLY_SCRAPER_POLL_DELAY_S)
+        poll = cached_get(
+            f"{_FLY_SCRAPER_BASE}/v2/flights/search-incomplete",
+            params={"sessionId": session_id}, headers=fly_headers, timeout=90
+        )
+        poll.raise_for_status()
+        poll_payload = (poll.json() or {}).get("data") or {}
+        context = poll_payload.get("context") or {}
+        itineraries = poll_payload.get("itineraries") or []
+        print(f"  Flight search poll {attempts}: status={context.get('status')}, "
+              f"results={len(itineraries)}")
+
     if not itineraries:
         return json.dumps({"success": True, "flights": []})
-    
+
     formatted = []
     for i, it in enumerate(itineraries[:5], 1):
-        price_raw = it.get("price", {}).get("raw", 0)
-        legs = it.get("legs", [])
+        price = it.get("price") or {}
+        price_usd = _parse_price(price)
+        legs = it.get("legs") or []
         outbound = legs[0] if legs else {}
-        out_legs = []
-        for seg in outbound.get("segments", []):
-            out_legs.append({
-                "airline": (seg.get("marketingCarrier", {}) or {}).get("name", ""),
-                "flight_code": seg.get("flightNumber", ""),
-                "from": (seg.get("origin", {}) or {}).get("code", ""),
-                "to": (seg.get("destination", {}) or {}).get("code", ""),
-                "departure": seg.get("departure", ""),
-                "arrival": seg.get("arrival", ""),
-                "duration_mins": seg.get("durationInMinutes", 0)
-            })
-        
+
         flight = {
             "option": i,
-            "total_price": float(price_raw),
+            "total_price": price_usd,
+            "price_formatted": price.get("formatted", ""),
             "currency": "USD",
             "passengers": adults,
-            "within_budget": budget is None or float(price_raw) <= budget,
-            "outbound": out_legs,
-            "airline": (outbound.get("carriers", {}) or {}).get("marketing", [{}])[0].get("name", "") if outbound.get("carriers") else "",
+            "within_budget": budget is None or price_usd <= budget,
+            "outbound": _parse_leg(outbound),
+            "airline": _leg_airline(outbound),
             "duration_mins": outbound.get("durationInMinutes", 0),
-            "stops": outbound.get("stopCount", 0)
+            "stops": outbound.get("stopCount", 0),
         }
-        if len(legs) > 1 and return_date:
-            inbound = legs[1]
-            in_legs = []
-            for seg in inbound.get("segments", []):
-                in_legs.append({
-                    "airline": (seg.get("marketingCarrier", {}) or {}).get("name", ""),
-                    "from": (seg.get("origin", {}) or {}).get("code", ""),
-                    "to": (seg.get("destination", {}) or {}).get("code", ""),
-                    "departure": seg.get("departure", ""),
-                    "arrival": seg.get("arrival", "")
-                })
-            flight["inbound"] = in_legs
+        if len(legs) > 1:
+            flight["inbound"] = _parse_leg(legs[1])
+            flight["return_airline"] = _leg_airline(legs[1])
         formatted.append(flight)
     
     result = {

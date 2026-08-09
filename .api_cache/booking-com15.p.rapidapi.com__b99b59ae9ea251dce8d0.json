@@ -1,0 +1,12 @@
+{
+  "recorded_at": 1786269087.8537788,
+  "recorded_at_iso": "2026-08-09T14:51:27",
+  "method": "GET",
+  "url": "https://booking-com15.p.rapidapi.com/api/v1/hotels/getPopularAttractionNearBy",
+  "params": {
+    "hotel_id": "4637618",
+    "languagecode": "en-us"
+  },
+  "status_code": 200,
+  "body": "{\"status\":true,\"message\":\"Success\",\"timestamp\":1786269089196,\"data\":{\"popular_landmarks\":[],\"closest_landmarks\":[]}}"
+}

@@ -1,0 +1,18 @@
+{
+  "recorded_at": 1786268941.6216948,
+  "recorded_at_iso": "2026-08-09T14:49:01",
+  "method": "GET",
+  "url": "https://fly-scraper.p.rapidapi.com/flights/search-roundtrip",
+  "params": {
+    "originSkyId": "LHE",
+    "destinationSkyId": "IST",
+    "outbound_date": "2026-08-15",
+    "adults": 1,
+    "currency": "USD",
+    "cabinClass": "economy",
+    "sortBy": "best",
+    "return_date": "2026-08-19"
+  },
+  "status_code": 200,
+  "body": "{\"status\":true,\"data\":{\"context\":{\"status\":\"incomplete\",\"sessionId\":\"KLUv_SCL1QMAsogdH7C5Adg8DBNyGKayuMjeMYgVyrnI7s2VrNIcZI8ICA5MExyQ0fqNylf-Wf59nq82Rzudr71N3R2KIikp3DVRVkXYyWis7EXYzS6-yY3dZijf-bL3cj6GGAHhrDn7OuV1yjL25G62uaNzdlJed5AiwzI4BSA8QwA=\",\"totalResults\":0},\"itineraries\":[],\"messages\":[],\"filterStats\":{\"duration\":{\"min\":0,\"max\":0,\"multiCityMin\":0,\"multiCityMax\":0},\"airports\":[],\"carriers\":[],\"stopPrices\":{\"direct\":{\"isPresent\":false},\"one\":{\"isPresent\":false},\"twoOrMore\":{\"isPresent\":false}},\"alliances\":[]},\"flightsSessionId\":\"c63af883-a374-4e24-9478-caf89db0a20a\",\"destinationImageUrl\":\"https://content.skyscnr.com/m/3719e8f4a5daf43d/original/Flights-Placeholder.jpg\"},\"message\":\"Success\"}"
+}
