@@ -128,6 +128,7 @@ class LLMRecorder:
 
     def __init__(self) -> None:
         self._active: Optional[LLMSession] = None
+        self._previous_stack: List[Optional[LLMSession]] = []
         self._installed = False
         self._lock = threading.Lock()
 
@@ -230,6 +231,29 @@ class LLMRecorder:
             return 0.0
 
     # -- public API --------------------------------------------------------
+
+    def start(self, label: str) -> LLMSession:
+        """
+        Begin recording without a `with` block — for top-level demo scripts.
+
+        Pair with stop(). Prefer session() anywhere a context manager fits.
+        """
+        self._install()
+        with self._lock:
+            current = LLMSession(label)
+            self._previous_stack.append(self._active)
+            self._active = current
+        return current
+
+    def stop(self) -> Optional[LLMSession]:
+        """End the session opened by start(), drained and ready to summarise."""
+        with self._lock:
+            current = self._active
+            self._active = self._previous_stack.pop() if self._previous_stack else None
+        if current is not None:
+            current.ended_at = time.time()
+            current.flush()
+        return current
 
     @contextmanager
     def session(self, label: str):

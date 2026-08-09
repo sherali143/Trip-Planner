@@ -21,10 +21,15 @@ logging.getLogger("opentelemetry").setLevel(logging.ERROR)
 from src.tools.mcp_tools import _call_fly_scraper_api
 from src.server.mcp_server import search_hotels_comprehensive, search_attractions, search_restaurants
 
+from src.core.llm_metrics import recorder
+
 SAMPLE_INPUT = sys.argv[1] if len(sys.argv) > 1 else "Plan a 4-night trip from Lahore to Istanbul for 1 adult departing 2026-08-15, budget 800 USD. Interests: history, food, shopping."
 
 model = os.getenv("GEMINI_MODEL", "gemini/gemini-2.5-flash")
-llm_calls = 0
+# LLM usage is measured by LiteLLM callbacks, not counted by hand: the
+# previous "llm_calls += 8  # simulated" style printed numbers that
+# contradicted the measured results in comparison/results/.
+_llm_session = recorder.start("run_3agent.py")
 total_start = time.time()
 
 
@@ -95,7 +100,6 @@ extract_crew = Crew(
     process=Process.sequential, verbose=False
 )
 extraction_result = str(extract_crew.kickoff())
-llm_calls += 1
 show("EXTRACTOR OUTPUT", extraction_result)
 
 # Parse
@@ -231,7 +235,6 @@ coord_crew = Crew(
     process=Process.sequential, verbose=False
 )
 result = str(coord_crew.kickoff())
-llm_calls += 1
 show("COORDINATOR OUTPUT — FINAL ITINERARY", result)
 
 
@@ -241,6 +244,9 @@ show("COORDINATOR OUTPUT — FINAL ITINERARY", result)
 total_time = time.time() - total_start
 section("SUMMARY")
 sprint(f"  Total time:  {total_time:.1f}s")
-sprint(f"  LLM calls:   {llm_calls}")
+_m = recorder.stop().summary()
+sprint(f"  LLM calls:   {_m['llm_calls']}  (measured, not estimated)")
+sprint(f"  Tokens:      {_m['total_tokens']:,} (prompt {_m['prompt_tokens']:,} + output {_m['completion_tokens']:,})")
+sprint(f"  Cost:        ${_m['cost_usd']:.5f}")
 sprint(f"  API calls:   4 (flights, hotels, attractions, restaurants)")
 sprint(f"  A2A chain:   extractor → coordinator (data fed as context block)")

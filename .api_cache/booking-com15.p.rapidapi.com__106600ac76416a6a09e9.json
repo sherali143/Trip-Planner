@@ -1,0 +1,11 @@
+{
+  "recorded_at": 1786275397.5846925,
+  "recorded_at_iso": "2026-08-09T16:36:37",
+  "method": "GET",
+  "url": "https://booking-com15.p.rapidapi.com/api/v1/flights/searchDestination",
+  "params": {
+    "query": "ISB"
+  },
+  "status_code": 200,
+  "body": "{\"status\":true,\"message\":\"Success\",\"timestamp\":1786275399064,\"data\":[{\"id\":\"ISB.AIRPORT\",\"type\":\"AIRPORT\",\"name\":\"Islamabad International Airport\",\"code\":\"ISB\",\"city\":\"ISB\",\"cityName\":\"Islamabad\",\"regionName\":\"Islamabad Capital Territory\",\"country\":\"PK\",\"countryName\":\"Pakistan\",\"countryNameShort\":\"Pakistan\",\"photoUri\":\"https://q-xx.bstatic.com/xdata/images/city/square150/1008538.jpg?k=896f6287535a4ef4a483b292a4cb46f3addcb059b25d1fb2feaa64427add2eee&o=\",\"distanceToCity\":{\"value\":30.685287392415457,\"unit\":\"km\"},\"parent\":\"ISB\"}]}"
+}

@@ -33,6 +33,84 @@ def add_bullet(text):
     p = doc.add_paragraph(text, style='List Bullet')
     return p
 
+RESULTS_PATH = os.path.join('comparison', 'results', 'comparison_results.json')
+
+
+def _load_results():
+    """
+    Read the measured comparison results.
+
+    This document previously hardcoded its headline numbers ("5 LLM calls",
+    "~230 seconds", "85% faster"). They were estimates, and once the LLM calls
+    were actually instrumented they proved wrong — the 6-agent arm makes ~19-23
+    calls, not 5. Numbers typed into a document drift away from the code that
+    produced them, so they are now read from the results file and the document
+    refuses to invent them if the file is missing.
+    """
+    import json
+    if not os.path.exists(RESULTS_PATH):
+        return None
+    with open(RESULTS_PATH, encoding='utf-8') as fh:
+        return json.load(fh)
+
+
+
+def _arm_line(code):
+    """One-line measured summary for an arm, or an honest placeholder."""
+    data = _load_results()
+    arm = (data or {}).get('arms', {}).get(code)
+    if not arm:
+        return f'arm {code}: not yet measured'
+    return (f"{arm['avg_llm_calls']:.0f} LLM calls, "
+            f"{arm['avg_total_tokens']:,.0f} tokens, "
+            f"${arm['avg_cost_usd']:.4f}, {arm['avg_latency']:.0f}s per trip")
+
+
+def _results_table():
+    """Build the comparison table from measured data."""
+    data = _load_results()
+    if not data or 'arms' not in data:
+        return (
+            ['Metric', 'Status'],
+            [['Comparison results', 'NOT YET GENERATED — run: python -m comparison.run_comparison']],
+        )
+
+    rows = []
+    for code in ('A', 'B', 'C', 'D'):
+        arm = data['arms'].get(code)
+        if not arm:
+            continue
+        rows.append([
+            f"{code} — {arm['name']}",
+            f"{arm['avg_llm_calls']:.0f}",
+            f"{arm['avg_total_tokens']:,.0f}",
+            f"${arm['avg_cost_usd']:.4f}",
+            f"{arm['avg_latency']:.0f}s",
+            f"{arm['avg_prices_grounded_pct']:.0f}%",
+        ])
+    return (
+        ['Architecture', 'LLM calls', 'Tokens', 'Cost', 'Time', 'Prices that are real'],
+        rows,
+    )
+
+
+def _results_provenance():
+    """A one-line statement of where the numbers came from."""
+    data = _load_results()
+    if not data:
+        return 'No measured results available — run the comparison to populate this section.'
+    prov = data.get('provenance', {})
+    ids = data.get('scenario_ids') or []
+    return (
+        f"Measured on {len(ids)} scenario(s) ({', '.join(ids)}) using "
+        f"{prov.get('model', 'unknown model')}, API mode '{prov.get('api_mode', '?')}'. "
+        f"Every LLM request was counted via LiteLLM callbacks rather than estimated. "
+        f"'Prices that are real' is the share of prices quoted in the itinerary that "
+        f"match a fare or nightly rate actually returned by the APIs — the tool-less "
+        f"baseline scores 0%, having invented every figure it printed."
+    )
+
+
 def add_table(headers, rows):
     table = doc.add_table(rows=1+len(rows), cols=len(headers))
     table.style = 'Light Grid Accent 1'
@@ -119,10 +197,10 @@ add_para('7. Itinerary Coordinator reads all outputs and writes the final itiner
 
 add_para('')
 add_bold_para('The Problem with This Approach')
-add_bullet('Each search agent wastes LLM calls just deciding which tool to use and reading the output — 5 LLM calls for extraction + 3 search agents + coordinator')
+add_bullet('Each search agent spends LLM calls deciding which tool to use and reading the output. Measurement showed 83% of this arm’s tokens are PROMPT tokens — context and tool schemas re-sent on every ReAct iteration.')
 add_bullet('The ReAct loops cause errors — LLMs often mis-parse tool outputs and retry')
 add_bullet('A simple task like "search for hotels" takes 30-60 seconds because the LLM is thinking instead of just calling the API')
-add_bullet('Total: 5 LLM calls, 170-336 seconds per trip. With conversation included (8 more calls): 13 LLM calls')
+add_bullet(f'Measured cost per trip: {_arm_line("B")} (see the comparison table for all four architectures)')
 add_bullet('The ablation study skips the conversational agent for fair comparison — both architectures benchmark against the same extraction + data + coordinator flow')
 
 doc.add_page_break()
@@ -232,8 +310,7 @@ add_table(
         ['Hotel Search Agent (LLM decides tool, calls API, parses result)', 'search_hotels_comprehensive() — direct Python function (no LLM)'],
         ['Attractions Agent (LLM decides tool, calls API, parses result)', 'search_attractions() — direct Python function (no LLM)'],
         ['Conversational Agent (8 questions, 8 LLM calls)', 'Removed in optimized demo — goes straight to extraction'],
-        ['5+ LLM calls per trip', '2 LLM calls per trip'],
-        ['170-336 seconds per trip', '~33 seconds per trip'],
+        [_arm_line('B'), _arm_line('D')],
         ['Frequent parse errors in ReAct loops', 'No parse errors — Python handles data directly'],
     ]
 )
@@ -257,18 +334,9 @@ doc.add_page_break()
 add_heading('Comparison — Why the 3-Agent Approach is Better', level=0)
 add_para('')
 
-add_table(
-    ['Metric', '6-Agent (Proposal)', '3-Agent (Optimized)', 'Improvement'],
-    [
-        ['LLM calls (full with conversation)', '13', '10', '23% fewer'],
-        ['LLM calls (ablation — no conversation)', '5', '2', '60% fewer'],
-        ['Average time per trip', '~230 seconds', '~33 seconds', '85% faster'],
-        ['Parse errors', 'Common (ReAct loops)', 'None (direct calls)', 'More reliable'],
-        ['A2A message flow', '6 messages', '6 messages', 'Same — protocol unchanged'],
-        ['MCP Server', 'Used by all agents', 'Still exists, bypassed for speed', 'Available if needed'],
-        ['Code complexity', 'Complex (agent reasoning)', 'Simple (function calls)', 'Easier to maintain'],
-    ]
-)
+add_table(*_results_table())
+add_para('')
+add_para(_results_provenance())
 
 add_para('')
 add_bold_para('The Research Insight')

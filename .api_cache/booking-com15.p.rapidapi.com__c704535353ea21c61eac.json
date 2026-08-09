@@ -1,0 +1,11 @@
+{
+  "recorded_at": 1786275404.0351381,
+  "recorded_at_iso": "2026-08-09T16:36:44",
+  "method": "GET",
+  "url": "https://booking-com15.p.rapidapi.com/api/v1/flights/searchDestination",
+  "params": {
+    "query": "DOH"
+  },
+  "status_code": 200,
+  "body": "{\"status\":true,\"message\":\"Success\",\"timestamp\":1786275405513,\"data\":[{\"id\":\"DOH.AIRPORT\",\"type\":\"AIRPORT\",\"name\":\"Hamad International Airport\",\"code\":\"DOH\",\"city\":\"DOH\",\"cityName\":\"Doha\",\"country\":\"QA\",\"countryName\":\"Qatar\",\"countryNameShort\":\"Qatar\",\"photoUri\":\"https://q-xx.bstatic.com/xdata/images/city/square150/654893.jpg?k=1800a7b2dbba2acdbf63bb64f7ff78628a12ada70f9702c929766ef384985d24&o=\",\"distanceToCity\":{\"value\":8.619708178992624,\"unit\":\"km\"},\"parent\":\"DOH\"}]}"
+}

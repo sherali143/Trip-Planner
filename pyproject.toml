@@ -21,6 +21,14 @@ pytest = "*"
 
 [tool.poetry.group.dev.dependencies]
 
+[tool.pytest.ini_options]
+# `testing/manual/` holds ad-hoc API probe scripts, not tests. They are named
+# test_*.py so pytest collects them by default, and importing them fails (they
+# call live endpoints and exit() at module scope) — which aborted the entire
+# session and left `pytest testing/` collecting zero tests.
+testpaths = ["testing"]
+norecursedirs = ["manual", ".venv", "__pycache__", ".api_cache", ".git"]
+
 [tool.pyright]
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
 useLibraryCodeForTypes = true

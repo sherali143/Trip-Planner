@@ -29,10 +29,15 @@ from src.tools import (
     calculate
 )
 
+from src.core.llm_metrics import recorder
+
 SAMPLE_INPUT = "Plan a 4-night trip from Lahore to Istanbul for 1 adult departing 2026-08-15, budget 800 USD. Interests: history, food, shopping."
 
 # Track metrics
-llm_calls = 0
+# LLM usage is measured by LiteLLM callbacks, not counted by hand: the
+# previous "llm_calls += 8  # simulated" style printed numbers that
+# contradicted the measured results in comparison/results/.
+_llm_session = recorder.start("demo_6agent_explained.py")
 mcp_calls = 0
 a2a_transfers = 0
 start_time = time.time()
@@ -211,7 +216,9 @@ sprint("  Agent: What is your preferred travel style?")
 sprint("  User: (not specified)")
 sprint("  Agent: Any special requirements?")
 sprint("  User: (not specified)")
-sprint(f"\n  Latency: ~8s (simulated) | LLM calls: 8 | MCP calls: 0 | A2A transfers: 1")
+sprint("\n  NOTE: this conversation phase is scripted for the walkthrough — the")
+sprint("  sample input already contains every answer, so no LLM call is made here.")
+sprint("  Real per-phase figures appear in the SUMMARY at the end.")
 
 # ============================================================
 # PHASE 2: PREFERENCES EXTRACTOR
@@ -250,7 +257,6 @@ extract_crew = Crew(
     process=Process.sequential, verbose=False
 )
 extraction_result = str(extract_crew.kickoff())
-llm_calls += 1
 t1 = time.time()
 
 subsection("EXTRACTION OUTPUT")
@@ -383,7 +389,6 @@ main_crew = Crew(
     process=Process.sequential, verbose=False
 )
 result = main_crew.kickoff()
-llm_calls += 4
 
 t2 = time.time()
 
@@ -538,7 +543,10 @@ sprint("")
 
 section("METRICS")
 sprint(f"  Total latency:      {total_time:.1f} seconds")
-sprint(f"  LLM calls:          {llm_calls} (8 conversation + 1 extraction + 3 search + 1 coordinator = 13 total)")
+_m = recorder.stop().summary()
+sprint(f"  LLM calls:   {_m['llm_calls']}  (measured, not estimated)")
+sprint(f"  Tokens:      {_m['total_tokens']:,} (prompt {_m['prompt_tokens']:,} + output {_m['completion_tokens']:,})")
+sprint(f"  Cost:        ${_m['cost_usd']:.5f}")
 sprint(f"  MCP tool calls:     ~{mcp_calls_est} (estimated)")
 sprint(f"  A2A transfers:      5 (conversation → extractor → 3 search agents → coordinator)")
 sprint(f"  Architecture:       6-Agent + MCP Tools + A2A Context Chaining")

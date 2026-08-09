@@ -32,11 +32,16 @@ def run_tests(num_iterations: int = 3):
             "tests": {}
         }
         
-        # Run each test file separately for better tracking
+        # Run each test file separately for better tracking.
+        # These pointed at "tests/", but the directory is "testing/" — so every
+        # subprocess exited "file or directory not found" and the runner
+        # reported zeros while looking like it had run.
         test_files = [
-            "tests/test_calculator.py",
-            "tests/test_itinerary_validator.py", 
-            "tests/test_budget_validation.py"
+            "testing/test_calculator.py",
+            "testing/test_itinerary_validator.py",
+            "testing/test_budget_validation.py",
+            "testing/test_mcp_servers.py",
+            "testing/test_mcp_integration.py",
         ]
         
         for test_file in test_files:

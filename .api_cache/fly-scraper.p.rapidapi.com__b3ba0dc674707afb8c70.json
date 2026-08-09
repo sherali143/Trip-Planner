@@ -1,0 +1,18 @@
+{
+  "recorded_at": 1786275382.96351,
+  "recorded_at_iso": "2026-08-09T16:36:22",
+  "method": "GET",
+  "url": "https://fly-scraper.p.rapidapi.com/v2/flights/search-roundtrip",
+  "params": {
+    "originSkyId": "ISB",
+    "destinationSkyId": "DOH",
+    "departureDate": "2025-12-15",
+    "adults": 2,
+    "currency": "USD",
+    "cabinClass": "economy",
+    "sortBy": "best",
+    "returnDate": "2025-12-20"
+  },
+  "status_code": 200,
+  "body": "{\"status\":false,\"data\":null,\"message\":[\"\u26a0\ufe0f checkin date (2025-12-15) must be later than today.\"]}"
+}

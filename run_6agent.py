@@ -29,10 +29,15 @@ from src.tools import (
     calculate
 )
 
+from src.core.llm_metrics import recorder
+
 SAMPLE_INPUT = sys.argv[1] if len(sys.argv) > 1 else "Plan a 4-night trip from Lahore to Istanbul for 1 adult departing 2026-08-15, budget 800 USD. Interests: history, food, shopping."
 
 model = os.getenv("GEMINI_MODEL", "gemini/gemini-2.5-flash")
-llm_calls = 0
+# LLM usage is measured by LiteLLM callbacks, not counted by hand: the
+# previous "llm_calls += 8  # simulated" style printed numbers that
+# contradicted the measured results in comparison/results/.
+_llm_session = recorder.start("run_6agent.py")
 total_start = time.time()
 
 
@@ -134,7 +139,6 @@ sprint("  8. Any special requirements?                        → (omitted)")
 sprint("")
 sprint("  A2A: conversation transcript → passed to Extractor")
 
-llm_calls += 8  # simulated
 
 
 # ---- AGENT 2: EXTRACTOR ----
@@ -154,7 +158,6 @@ extract_task = Task(
 )
 extract_crew = Crew(agents=[extractor], tasks=[extract_task], process=Process.sequential, verbose=False)
 extraction_result = str(extract_crew.kickoff())
-llm_calls += 1
 show("EXTRACTOR OUTPUT", extraction_result)
 
 
@@ -175,7 +178,6 @@ flight_t = Task(
 )
 flight_crew = Crew(agents=[flight_agent], tasks=[flight_t], process=Process.sequential, verbose=False)
 flight_result = str(flight_crew.kickoff())
-llm_calls += 1
 show("FLIGHT AGENT OUTPUT", flight_result)
 
 
@@ -196,7 +198,6 @@ hotel_t = Task(
 )
 hotel_crew = Crew(agents=[hotel_agent], tasks=[hotel_t], process=Process.sequential, verbose=False)
 hotel_result = str(hotel_crew.kickoff())
-llm_calls += 1
 show("HOTEL AGENT OUTPUT", hotel_result)
 
 
@@ -216,7 +217,6 @@ attraction_t = Task(
 )
 attraction_crew = Crew(agents=[attraction_agent], tasks=[attraction_t], process=Process.sequential, verbose=False)
 attraction_result = str(attraction_crew.kickoff())
-llm_calls += 1
 show("ATTRACTION AGENT OUTPUT", attraction_result)
 
 
@@ -242,7 +242,6 @@ coord_crew = Crew(
     process=Process.sequential, verbose=False
 )
 result = str(coord_crew.kickoff())
-llm_calls += 1
 show("COORDINATOR OUTPUT — FINAL ITINERARY", result)
 
 
@@ -250,7 +249,10 @@ show("COORDINATOR OUTPUT — FINAL ITINERARY", result)
 total_time = time.time() - total_start
 section("SUMMARY")
 sprint(f"  Total time:  {total_time:.1f}s")
-sprint(f"  LLM calls:   {llm_calls} (8 conversation + 1 extraction + 3 search + 1 coordinator)")
+_m = recorder.stop().summary()
+sprint(f"  LLM calls:   {_m['llm_calls']}  (measured, not estimated)")
+sprint(f"  Tokens:      {_m['total_tokens']:,} (prompt {_m['prompt_tokens']:,} + output {_m['completion_tokens']:,})")
+sprint(f"  Cost:        ${_m['cost_usd']:.5f}")
 sprint(f"  Agents:      6 executed sequentially")
 sprint(f"  MCP calls:   varies (flight + hotel + attraction tools)")
 sprint(f"  A2A chain:   conversation → extractor → flight → hotel → attraction → coordinator")

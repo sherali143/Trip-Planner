@@ -24,9 +24,14 @@ from src.agents import TripPlannerAgents
 from src.tools.mcp_tools import _call_fly_scraper_api
 from src.server.mcp_server import search_hotels_comprehensive, search_attractions, search_restaurants
 
+from src.core.llm_metrics import recorder
+
 SAMPLE_INPUT = "Plan a 4-night trip from Lahore to Istanbul for 1 adult departing 2026-08-15, budget 800 USD. Interests: history, food, shopping."
 
-llm_calls = 0
+# LLM usage is measured by LiteLLM callbacks, not counted by hand: the
+# previous "llm_calls += 8  # simulated" style printed numbers that
+# contradicted the measured results in comparison/results/.
+_llm_session = recorder.start("demo_3agent_explained.py")
 total_start = time.time()
 model = os.getenv("GEMINI_MODEL", "gemini/gemini-2.5-flash")
 
@@ -98,7 +103,6 @@ extract_crew = Crew(
     process=Process.sequential, verbose=False
 )
 extraction_result = str(extract_crew.kickoff())
-llm_calls += 1
 t1 = time.time()
 
 subsection("EXTRACTION OUTPUT")
@@ -319,7 +323,6 @@ coord_crew = Crew(
     process=Process.sequential, verbose=False
 )
 result = str(coord_crew.kickoff())
-llm_calls += 1
 t3 = time.time()
 
 subsection("FINAL ITINERARY OUTPUT")
@@ -373,7 +376,10 @@ sprint("")
 
 section("METRICS")
 sprint(f"  Total latency:      {total_time:.1f} seconds")
-sprint(f"  LLM calls:          {llm_calls}")
+_m = recorder.stop().summary()
+sprint(f"  LLM calls:   {_m['llm_calls']}  (measured, not estimated)")
+sprint(f"  Tokens:      {_m['total_tokens']:,} (prompt {_m['prompt_tokens']:,} + output {_m['completion_tokens']:,})")
+sprint(f"  Cost:        ${_m['cost_usd']:.5f}")
 sprint(f"  API calls:          4 (flights, hotels, attractions, restaurants)")
 sprint(f"  A2A transfers:      1 (extractor → coordinator)")
 sprint(f"  Architecture:       3-Agent + Direct API (Python calls)")

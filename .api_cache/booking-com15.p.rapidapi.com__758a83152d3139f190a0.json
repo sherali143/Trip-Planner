@@ -1,0 +1,21 @@
+{
+  "recorded_at": 1786275455.1219149,
+  "recorded_at_iso": "2026-08-09T16:37:35",
+  "method": "GET",
+  "url": "https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels",
+  "params": {
+    "dest_id": "2280",
+    "search_type": "DISTRICT",
+    "arrival_date": "2025-06-16",
+    "departure_date": "2025-06-20",
+    "adults": 1,
+    "room_qty": 1,
+    "page_number": 1,
+    "units": "metric",
+    "temperature_unit": "c",
+    "languagecode": "en-us",
+    "currency_code": "USD"
+  },
+  "status_code": 200,
+  "body": "{\"status\":false,\"timestamp\":1786275456604,\"message\":{\"message\":\"arrival date must be today or after today.\",\"code\":\"500\"}}"
+}

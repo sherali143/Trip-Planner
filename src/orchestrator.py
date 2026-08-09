@@ -21,14 +21,15 @@ from src.tasks import TripPlannerTasks
 from src.comms import A2AProtocol, A2AMessage, MessageType, create_message
 from src.comms.registry import AGENT_REGISTRY
 
-# Import utility modules for enhanced functionality
+# Import utility modules for enhanced functionality.
+# `regenerate_if_incomplete` and `src.core.cache.get_cache` were imported here
+# but never called. API response caching is now handled at the HTTP layer by
+# src.core.http_cache, which every API call actually goes through.
 from src.core.validators import (
-    validate_day_count, 
-    regenerate_if_incomplete,
+    validate_day_count,
     extract_trip_duration_from_extraction,
     add_completion_notice
 )
-from src.core.cache import get_cache
 
 # Load environment variables from .env file
 load_dotenv(override=True)

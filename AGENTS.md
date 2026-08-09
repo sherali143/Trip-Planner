@@ -1,48 +1,141 @@
-## Objective
-- Remove dead API code; switch to a zero-cost, reliable free-tier architecture by replacing LLM-driven search agents with direct Python API calls
+# AI Trip Planner — working notes
 
-## Important Details
-- Repository: `https://github.com/sherali143/Trip-Planner.git`, branch `sherali-dev`
-- Dead APIs removed: Kiwi.com, Booking.com Flights (both broken/unreachable)
-- Live APIs: Fly-scraper (flights), Booking.com (hotels), Serper (web search)
-- Fly-scraper endpoint: `/flights/search-roundtrip` with `originSkyId`, `destinationSkyId`, `outbound_date`, `return_date`
-- Flight search code path: `_call_fly_scraper_api()` in `src/tools/mcp_tools.py`
-- **LLM provider:** Groq (via LiteLLM model string `groq/llama-3.3-70b-versatile`, 12K TPM) — higher limit accommodates long itinerary output from coordinator
-- CrewAI's `ChatGoogleGenerativeAI` object cannot be converted to LiteLLM string; pass plain LiteLLM model string instead
-- `.env`: uses `GROQ_API_KEY` and `GEMINI_MODEL=groq/llama-3.1-8b-instant`
-- `load_dotenv(override=True)` in `run_cli.py` and `orchestrator.py` prevents stale env vars
+MSc dissertation project (BCU, CMP7200). A multi-agent travel planner built on a
+custom MCP server and a typed Agent-to-Agent (A2A) protocol, evaluated as four
+competing architectures.
 
-## Architecture
-- **Phase 1:** Conversational agent gathers trip preferences (1 Crew with 1 agent)
-- **Phase 2:** Preferences extractor parses conversation into structured JSON (1 Crew with 1 agent)
-- **Phase 3:** Direct Python API calls fetch real data — no LLM calls, no CrewAI agents (zero rate limit impact)
-- **Phase 4:** Coordinator agent assembles itinerary from real data (1 Crew with 1 agent)
-- **Total: ~3 LLM calls per trip** (vs ~13 before)
+## The research question
 
-## Work State
-### Completed (this session)
-- Rewrote `orchestrator.py::plan_trip()` — replaces CrewAI search agents with direct calls to `_call_fly_scraper_api()`, `search_hotels_comprehensive()`, `search_attractions()`, `search_restaurants()`; feeds results as strings to coordinator
-- Rewrote `orchestrator.py::plan_trip_from_transcript()` — same pattern for Streamlit UI
-- Removed `_run_search_crew_parallel()` from orchestrator (dead code)
-- Removed `self.flight_agent`, `self.hotel_agent`, `self.attraction_agent` from orchestrator `__init__`
-- Cleaned imports: removed `ThreadPoolExecutor`, `as_completed`, `Tuple`, `Any` from orchestrator
-- Cleaned `src/comms/registry.py` — removed `FLIGHT_SEARCH_AGENT_CARD`, `HOTEL_AGENT_CARD`, `ATTRACTION_AGENT_CARD` and their `AgentCapability` enum values; updated `can_send_to`/`can_receive_from` references; trimmed `AGENT_REGISTRY` to only 3 agents
-- All 36 source files compile cleanly (verified via AST parse + module import)
+The proposal specified a 6-agent architecture. Measurement showed most of its
+LLM calls were spent on deterministic data retrieval rather than reasoning, so a
+3-agent design was built that keeps the same protocols but fetches data in plain
+Python. The dissertation compares them — with the 6-agent arm tuned first, so
+the comparison is not against a straw man.
 
-### Previously Completed
-- Removed `_call_kiwi_api_direct()` from `src/tools/mcp_tools.py`
-- Removed `search_flights_kiwi()`, `search_cheap_flights()`, `search_flight_destination()`, `search_booking_flights()`, `search_flights_comprehensive_booking()` from `src/server/mcp_server.py`
-- Removed `FLY_SCRAPER_HOST`, `KIWI_HOST` constants from `mcp_server.py`
-- Added new unified `search_flights` MCP tool pointing to fly-scraper API
-- Rewrote `src/agents.py` — removed flight_search_agent, hotel_agent, attraction_agent
-- Rewrote `src/tasks.py` — removed flight_search_task, hotel_search_task, attraction_search_task methods; updated `coordination_task()` to accept raw data strings
-- Updated all test files (`test_flight_tools.py`, `test_mcp_servers.py`, `test_mcp_integration.py`, `test_direct_flight.py`) to remove dead API references
+## The four arms
 
-## Relevant Files
-- `src/orchestrator.py`: Main orchestration — `plan_trip()` and `plan_trip_from_transcript()` now call APIs directly after extraction, feed results to single-agent coordinator Crew
-- `src/agents.py`: Only 3 agents remain (conversational, extractor, coordinator)
-- `src/tasks.py`: Only 3 tasks remain (conversation, extraction, coordination)
-- `src/comms/registry.py`: Only 3 agent cards remain (conversational, extractor, coordinator)
-- `src/tools/mcp_tools.py`: `_call_fly_scraper_api()` (flight), `_search_hotels_comprehensive()`, `_search_attractions()`, `_search_restaurants()` — underlying HTTP functions
-- `src/server/mcp_server.py`: `search_hotels_comprehensive()`, `search_attractions()`, `search_restaurants()`, `_do_serper_search()` — API implementations
-- `.env`: `GROQ_API_KEY`, `GEMINI_MODEL=groq/llama-3.1-8b-instant`, `SERPER_API_KEY`, `RAPIDAPI_KEY`
+| Arm | File | What it is |
+|---|---|---|
+| A | `comparison/architecture_single_llm.py` | One LLM call, no agents, no tools |
+| B | `comparison/architecture_6agent.py` | 6 agents, naive config (as first built) |
+| C | `comparison/architecture_6agent_optimized.py` | 6 agents, tuned — the proposal as designed |
+| D | `comparison/architecture_3agent.py` | 3 agents + direct API calls |
+
+Run them: `python -m comparison.run_comparison` (add `SC-01 SC-04` to filter).
+Results land in `comparison/results/comparison_results.json`.
+
+## Measured so far (SC-01, all four arms)
+
+| Arm | LLM calls | Tokens | Cost | Secs | Prices that are real |
+|---|---|---|---|---|---|
+| A single LLM | 1 | 11,392 | $0.028 | 92.6 | **0%** |
+| B 6-agent naive | 19 | 63,926 | $0.053 | 85.5 | 13% |
+| C 6-agent tuned | 9 | 10,808 | $0.015 | 66.1 | 59% |
+| D 3-agent direct | 2 | 7,813 | $0.011 | 17.9 | 57% |
+
+Two findings worth keeping straight:
+
+- Tuning the multi-agent arm cut its tokens ~83%. Most of the naive penalty was
+  implementation, not architecture. Against the *tuned* arm, D still wins clearly
+  on call count and latency, but only modestly on cost.
+- The tool-less arm quoted 57 prices and matched **none** of them to a real fare.
+  Cheapness there is worthless — it is the hallucination failure the literature
+  describes (Xie et al., 2024).
+
+## ⚠️ API quota — read before running anything
+
+Free tiers are **monthly** and small:
+
+| API | Limit |
+|---|---|
+| fly-scraper (flights) | **30 / month** |
+| booking-com15 (hotels) | **50 / month** |
+| Serper | large |
+| Gemini | free tier, rate-limited per minute |
+
+Always set a cap:
+
+```bash
+export TRIP_PLANNER_MAX_LIVE_CALLS=10   # hard stop; raises QuotaGuardTripped
+```
+
+### Record / replay
+
+Every HTTP call goes through `src/core/http_cache.py`.
+
+| Mode | Behaviour |
+|---|---|
+| `record` (default) | Use cache; call live only on a miss, then store it |
+| `replay` | Cache only — **never** touches the network |
+| `live` | Always call live, refresh the cache |
+
+```bash
+export TRIP_PLANNER_API_MODE=replay     # re-run the whole evaluation for free
+```
+
+Recorded responses live in `.api_cache/` and are committed, so results reproduce
+**with no API keys at all**. Only 2xx responses are cached, so a quota 429 is
+never baked in. Request headers are excluded, so no key material is written.
+
+Because recordings are permanent, the evaluation can be built up in batches
+across months — record some scenarios now, the rest after the quota resets, then
+replay all 20 for free.
+
+## Configuration
+
+`.env`:
+
+| Key | Purpose |
+|---|---|
+| `GOOGLE_API_KEY` / `GEMINI_API_KEY` | Gemini (the LLM) |
+| `GEMINI_MODEL` | LiteLLM model string, e.g. `gemini/gemini-2.5-flash` |
+| `RAPIDAPI_KEY` | Both flights and hotels |
+| `SERPER_API_KEY` | Attractions, restaurants, web search |
+
+Model is **Gemini 2.5 Flash** via LiteLLM. (Earlier notes said Groq — that is no
+longer true and there is no `GROQ_API_KEY`.)
+
+## Architecture notes
+
+- **MCP server** — `src/server/mcp_server.py`, 12 tools over JSON-RPC/stdio. It
+  runs as a *subprocess*, so it bootstraps `sys.path` before importing `src.*`;
+  without that every tool call fails as "Connection lost".
+- **A2A protocol** — `src/comms/`, 8 agent cards, 6 message types, permission
+  validation. **Identical in every arm** — that is the point: the protocol layer
+  is independent of how data is fetched.
+- **Tool layer** — `src/tools/mcp_tools.py`. Note the CrewAI `@tool` decorator
+  makes these `Tool` objects, not functions: call `.run(...)`, not `f(...)`.
+  Runtime code imports the plain functions from `src/server/mcp_server.py`.
+- **Metrics** — `src/core/llm_metrics.py` hooks LiteLLM callbacks to count real
+  requests, tokens and cost. Callbacks fire off-thread, so sessions drain before
+  reporting. Never hand-count LLM calls.
+- **Groundedness** — `comparison/metrics.py`. Lead with `prices_grounded_pct`;
+  name matching is weak evidence (a tool-less model can guess "Turkish Airlines"
+  for Istanbul).
+
+## Gotchas that cost real time
+
+- fly-scraper is a **two-phase** API: the search endpoint only starts the search
+  and returns a `sessionId`; results come from `/v2/flights/search-incomplete`.
+  Reading the first response as final returns zero flights, always.
+- Its date parameters are **camelCase** (`departureDate`, `returnDate`). The
+  snake_case forms are silently ignored — HTTP 200, wrong dates, no error.
+- Endpoint paths are **plural** (`/flights/...`); the console lists them as
+  `flight/...`, which 404s.
+- Hotel enrichment (review breakdown, nearby POIs) costs 2 extra calls per hotel
+  and reaches no itinerary. Off by default via `HOTEL_ENRICHMENT_TOP_N`.
+
+## Tests
+
+```bash
+python -m pytest -q          # 67 passed, 1 skipped
+```
+
+`testing/manual/` holds ad-hoc API probe scripts, excluded from collection —
+they hit live endpoints and one calls `exit()` at import.
+
+## Still to do
+
+1. Record the remaining 19 scenarios (batch across quota resets)
+2. Regenerate `Dissertation_Project_Explanation.docx` from the results JSON
+3. Consider running each scenario 3x — arm B varied 19-23 calls between runs

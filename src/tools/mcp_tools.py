@@ -12,11 +12,9 @@ All tools communicate with the unified trip_planner_mcp_server.py via JSON-RPC o
 
 import json
 import asyncio
-import subprocess
 import sys
 import os
-from typing import Dict, Any, List, Optional, Union
-from datetime import datetime
+from typing import Optional
 from crewai.tools import tool
 from dotenv import load_dotenv
 import logging

@@ -1,0 +1,21 @@
+{
+  "recorded_at": 1786275461.5232658,
+  "recorded_at_iso": "2026-08-09T16:37:41",
+  "method": "GET",
+  "url": "https://booking-com15.p.rapidapi.com/api/v1/cars/searchCarRentals",
+  "params": {
+    "pick_up_latitude": 40.6397,
+    "pick_up_longitude": -73.7791,
+    "drop_off_latitude": 40.6397,
+    "drop_off_longitude": -73.7791,
+    "pick_up_date": "2025-06-16",
+    "drop_off_date": "2025-06-20",
+    "pick_up_time": "10:00",
+    "drop_off_time": "10:00",
+    "driver_age": 30,
+    "currency_code": "USD",
+    "location": "US"
+  },
+  "status_code": 200,
+  "body": "{\"status\":false,\"timestamp\":1786275463001,\"message\":\"Something went wrong. We have logged the error and will get the resolution.\"}"
+}
