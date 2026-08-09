@@ -335,17 +335,22 @@ def _call_fly_scraper_api(
         "x-rapidapi-key": RAPIDAPI_KEY,
         "x-rapidapi-host": "fly-scraper.p.rapidapi.com"
     }
+    # Date parameters are camelCase, matching originSkyId/destinationSkyId.
+    # The snake_case forms ("outbound_date", "departure_date") are silently
+    # IGNORED rather than rejected: the API accepts the request, returns 200,
+    # and searches a default date roughly a week out. That is why every result
+    # previously carried the wrong outbound date while looking successful.
     params = {
         "originSkyId": origin_sky,
         "destinationSkyId": dest_sky,
-        "outbound_date": departure_date,
+        "departureDate": departure_date,
         "adults": adults,
         "currency": "USD",
         "cabinClass": "economy",
         "sortBy": "best"
     }
     if return_date:
-        params["return_date"] = return_date
+        params["returnDate"] = return_date
 
     # fly-scraper is a two-phase (Skyscanner-style) API: the search endpoint only
     # STARTS the search and returns a sessionId with context.status == "incomplete"
