@@ -21,6 +21,7 @@ from comparison.architecture_6agent import plan_trip_baseline
 from comparison.architecture_3agent import plan_trip_optimized
 from comparison.architecture_6agent_optimized import plan_trip_optimized_6agent
 from comparison.architecture_single_llm import plan_trip_single_llm
+from comparison.metrics import score_groundedness
 from src.core.http_cache import cache_summary, get_mode
 
 # Ordered least-to-most engineered so the results table reads as a progression:
@@ -92,6 +93,17 @@ def main():
         for code, name, runner in ARMS:
             results_by_arm[code].append(run_scenario(scenario, runner, f"{code} — {name}"))
 
+        # Groundedness: score every arm's itinerary against the data arm D
+        # actually retrieved for this scenario. Arms with no tool access have
+        # nothing real to cite, which is exactly what this exposes.
+        truth = (results_by_arm["D"][-1] or {}).get("ground_truth") or {}
+        if truth.get("hotels") or truth.get("airlines"):
+            for code, _, _ in ARMS:
+                result = results_by_arm[code][-1]
+                result["groundedness"] = score_groundedness(result.get("result", ""), truth)
+        else:
+            print("  ! no ground truth retrieved for this scenario — groundedness skipped")
+
     total_time = time.time() - overall_start
 
     # Aggregate metrics
@@ -117,6 +129,20 @@ def main():
             "avg_latency_all_scenarios": sum(r.get("latency", 0) for r in results) / all_n,
             "avg_llm_calls_all_scenarios": sum(r.get("llm_calls", 0) for r in results) / all_n,
             "llm_failures": sum(r.get("llm", {}).get("llm_failures", 0) for r in results),
+            # Bookability pillar: cheapness means nothing if the itinerary
+            # refers to venues and fares that were never retrieved.
+            "grounded_itineraries": sum(
+                1 for r in results if (r.get("groundedness") or {}).get("uses_real_data")
+            ),
+            "avg_hotels_grounded": round(sum(
+                (r.get("groundedness") or {}).get("hotels_grounded", 0) for r in successes
+            ) / n, 2),
+            "avg_airlines_grounded": round(sum(
+                (r.get("groundedness") or {}).get("airlines_grounded", 0) for r in successes
+            ) / n, 2),
+            "avg_prices_grounded_pct": round(sum(
+                (r.get("groundedness") or {}).get("prices_grounded_pct", 0) for r in successes
+            ) / n, 1),
         }
 
     agg_by_arm = {code: aggregate(results_by_arm[code]) for code, _, _ in ARMS}
@@ -180,14 +206,19 @@ def main():
     print(f"\n{'='*70}")
     print(f"  SUMMARY")
     print(f"{'='*70}")
-    header = f"  {'Arm':<26}{'OK':>6}{'LLM':>8}{'Tokens':>10}{'Cost $':>10}{'Secs':>9}"
+    header = (f"  {'Arm':<26}{'OK':>6}{'LLM':>6}{'Tokens':>9}{'Cost $':>9}"
+              f"{'Secs':>7}{'Real':>7}{'$ ok':>7}")
     print(header)
     print("  " + "─" * (len(header) - 2))
     for code, name, _ in ARMS:
         a = agg_by_arm[code]
         print(f"  {code + ' — ' + name:<26}{a['success']}/{a['total']:<4}"
-              f"{a['avg_llm_calls']:>8.1f}{a['avg_total_tokens']:>10.0f}"
-              f"{a['avg_cost_usd']:>10.5f}{a['avg_latency']:>9.1f}")
+              f"{a['avg_llm_calls']:>6.1f}{a['avg_total_tokens']:>9.0f}"
+              f"{a['avg_cost_usd']:>9.5f}{a['avg_latency']:>7.1f}"
+              f"{str(a['grounded_itineraries']) + '/' + str(a['total']):>7}"
+              f"{a['avg_prices_grounded_pct']:>6.0f}%")
+    print("  Real = itineraries citing data actually retrieved from the APIs")
+    print("  $ ok = quoted prices matching a real fare or nightly rate")
     print(f"{'='*70}")
     for key, caption in [
         ("D_vs_C", "D (3-agent) vs C (6-agent TUNED)  <- headline claim"),

@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-08-09T16:17:57.125077",
+  "timestamp": "2026-08-09T16:27:13.669905",
   "total_scenarios": 1,
   "scenario_ids": [
     "SC-01"
   ],
-  "total_time_s": 354.3,
+  "total_time_s": 266.2,
   "provenance": {
     "model": "gemini/gemini-2.5-flash",
     "api_mode": "replay",
@@ -12,7 +12,7 @@
       "mode": "replay",
       "cache_dir": ".api_cache",
       "recorded_entries": 15,
-      "cache_hits": 22,
+      "cache_hits": 10,
       "cache_misses": 1,
       "live_calls": 0,
       "live_errors": 0,
@@ -26,17 +26,21 @@
       "success": 1,
       "fail": 0,
       "success_rate_pct": 100.0,
-      "avg_latency": 60.01693511009216,
+      "avg_latency": 92.62916827201843,
       "avg_llm_calls": 1.0,
-      "avg_total_tokens": 7419.0,
-      "avg_cost_usd": 0.01827,
-      "total_latency": 60.01693511009216,
+      "avg_total_tokens": 11392.0,
+      "avg_cost_usd": 0.028203,
+      "total_latency": 92.62916827201843,
       "total_llm_calls": 1,
-      "total_tokens": 7419,
-      "total_cost_usd": 0.01827,
-      "avg_latency_all_scenarios": 60.01693511009216,
+      "total_tokens": 11392,
+      "total_cost_usd": 0.028203,
+      "avg_latency_all_scenarios": 92.62916827201843,
       "avg_llm_calls_all_scenarios": 1.0,
-      "llm_failures": 0
+      "llm_failures": 0,
+      "grounded_itineraries": 1,
+      "avg_hotels_grounded": 1.0,
+      "avg_airlines_grounded": 1.0,
+      "avg_prices_grounded_pct": 0.0
     },
     "B": {
       "name": "6 AGENTS (naive)",
@@ -44,17 +48,21 @@
       "success": 1,
       "fail": 0,
       "success_rate_pct": 100.0,
-      "avg_latency": 178.8003625869751,
-      "avg_llm_calls": 23.0,
-      "avg_total_tokens": 109558.0,
-      "avg_cost_usd": 0.068604,
-      "total_latency": 178.8003625869751,
-      "total_llm_calls": 23,
-      "total_tokens": 109558,
-      "total_cost_usd": 0.068604,
-      "avg_latency_all_scenarios": 178.8003625869751,
-      "avg_llm_calls_all_scenarios": 23.0,
-      "llm_failures": 0
+      "avg_latency": 85.54549026489258,
+      "avg_llm_calls": 19.0,
+      "avg_total_tokens": 63926.0,
+      "avg_cost_usd": 0.052749,
+      "total_latency": 85.54549026489258,
+      "total_llm_calls": 19,
+      "total_tokens": 63926,
+      "total_cost_usd": 0.052749,
+      "avg_latency_all_scenarios": 85.54549026489258,
+      "avg_llm_calls_all_scenarios": 19.0,
+      "llm_failures": 0,
+      "grounded_itineraries": 1,
+      "avg_hotels_grounded": 1.0,
+      "avg_airlines_grounded": 2.0,
+      "avg_prices_grounded_pct": 13.3
     },
     "C": {
       "name": "6 AGENTS (optimised)",
@@ -62,17 +70,21 @@
       "success": 1,
       "fail": 0,
       "success_rate_pct": 100.0,
-      "avg_latency": 88.2031819820404,
+      "avg_latency": 66.07189512252808,
       "avg_llm_calls": 9.0,
-      "avg_total_tokens": 10919.0,
-      "avg_cost_usd": 0.015506,
-      "total_latency": 88.2031819820404,
+      "avg_total_tokens": 10808.0,
+      "avg_cost_usd": 0.015094,
+      "total_latency": 66.07189512252808,
       "total_llm_calls": 9,
-      "total_tokens": 10919,
-      "total_cost_usd": 0.015506,
-      "avg_latency_all_scenarios": 88.2031819820404,
+      "total_tokens": 10808,
+      "total_cost_usd": 0.015094,
+      "avg_latency_all_scenarios": 66.07189512252808,
       "avg_llm_calls_all_scenarios": 9.0,
-      "llm_failures": 0
+      "llm_failures": 0,
+      "grounded_itineraries": 1,
+      "avg_hotels_grounded": 1.0,
+      "avg_airlines_grounded": 2.0,
+      "avg_prices_grounded_pct": 59.1
     },
     "D": {
       "name": "3 AGENTS (direct API)",
@@ -80,42 +92,46 @@
       "success": 1,
       "fail": 0,
       "success_rate_pct": 100.0,
-      "avg_latency": 23.233219623565674,
+      "avg_latency": 17.8711040019989,
       "avg_llm_calls": 2.0,
-      "avg_total_tokens": 8749.0,
-      "avg_cost_usd": 0.013367,
-      "total_latency": 23.233219623565674,
+      "avg_total_tokens": 7813.0,
+      "avg_cost_usd": 0.011186,
+      "total_latency": 17.8711040019989,
       "total_llm_calls": 2,
-      "total_tokens": 8749,
-      "total_cost_usd": 0.013367,
-      "avg_latency_all_scenarios": 23.233219623565674,
+      "total_tokens": 7813,
+      "total_cost_usd": 0.011186,
+      "avg_latency_all_scenarios": 17.8711040019989,
       "avg_llm_calls_all_scenarios": 2.0,
-      "llm_failures": 0
+      "llm_failures": 0,
+      "grounded_itineraries": 1,
+      "avg_hotels_grounded": 1.0,
+      "avg_airlines_grounded": 2.0,
+      "avg_prices_grounded_pct": 57.1
     }
   },
   "improvements": {
     "D_vs_C": {
       "vs": "C",
-      "latency_pct": 73.7,
+      "latency_pct": 73.0,
       "llm_calls_pct": 77.8,
-      "tokens_pct": 19.9,
-      "cost_pct": 13.8,
+      "tokens_pct": 27.7,
+      "cost_pct": 25.9,
       "success_rate_diff": 0.0
     },
     "D_vs_B": {
       "vs": "B",
-      "latency_pct": 87.0,
-      "llm_calls_pct": 91.3,
-      "tokens_pct": 92.0,
-      "cost_pct": 80.5,
+      "latency_pct": 79.1,
+      "llm_calls_pct": 89.5,
+      "tokens_pct": 87.8,
+      "cost_pct": 78.8,
       "success_rate_diff": 0.0
     },
     "C_vs_B": {
       "vs": "B",
-      "latency_pct": 50.7,
-      "llm_calls_pct": 60.9,
-      "tokens_pct": 90.0,
-      "cost_pct": 77.4,
+      "latency_pct": 22.8,
+      "llm_calls_pct": 52.6,
+      "tokens_pct": 83.1,
+      "cost_pct": 71.4,
       "success_rate_diff": 0.0
     }
   },
@@ -124,41 +140,49 @@
     "success": 1,
     "fail": 0,
     "success_rate_pct": 100.0,
-    "avg_latency": 178.8003625869751,
-    "avg_llm_calls": 23.0,
-    "avg_total_tokens": 109558.0,
-    "avg_cost_usd": 0.068604,
-    "total_latency": 178.8003625869751,
-    "total_llm_calls": 23,
-    "total_tokens": 109558,
-    "total_cost_usd": 0.068604,
-    "avg_latency_all_scenarios": 178.8003625869751,
-    "avg_llm_calls_all_scenarios": 23.0,
-    "llm_failures": 0
+    "avg_latency": 85.54549026489258,
+    "avg_llm_calls": 19.0,
+    "avg_total_tokens": 63926.0,
+    "avg_cost_usd": 0.052749,
+    "total_latency": 85.54549026489258,
+    "total_llm_calls": 19,
+    "total_tokens": 63926,
+    "total_cost_usd": 0.052749,
+    "avg_latency_all_scenarios": 85.54549026489258,
+    "avg_llm_calls_all_scenarios": 19.0,
+    "llm_failures": 0,
+    "grounded_itineraries": 1,
+    "avg_hotels_grounded": 1.0,
+    "avg_airlines_grounded": 2.0,
+    "avg_prices_grounded_pct": 13.3
   },
   "optimized": {
     "total": 1,
     "success": 1,
     "fail": 0,
     "success_rate_pct": 100.0,
-    "avg_latency": 23.233219623565674,
+    "avg_latency": 17.8711040019989,
     "avg_llm_calls": 2.0,
-    "avg_total_tokens": 8749.0,
-    "avg_cost_usd": 0.013367,
-    "total_latency": 23.233219623565674,
+    "avg_total_tokens": 7813.0,
+    "avg_cost_usd": 0.011186,
+    "total_latency": 17.8711040019989,
     "total_llm_calls": 2,
-    "total_tokens": 8749,
-    "total_cost_usd": 0.013367,
-    "avg_latency_all_scenarios": 23.233219623565674,
+    "total_tokens": 7813,
+    "total_cost_usd": 0.011186,
+    "avg_latency_all_scenarios": 17.8711040019989,
     "avg_llm_calls_all_scenarios": 2.0,
-    "llm_failures": 0
+    "llm_failures": 0,
+    "grounded_itineraries": 1,
+    "avg_hotels_grounded": 1.0,
+    "avg_airlines_grounded": 2.0,
+    "avg_prices_grounded_pct": 57.1
   },
   "improvement": {
     "vs": "B",
-    "latency_pct": 87.0,
-    "llm_calls_pct": 91.3,
-    "tokens_pct": 92.0,
-    "cost_pct": 80.5,
+    "latency_pct": 79.1,
+    "llm_calls_pct": 89.5,
+    "tokens_pct": 87.8,
+    "cost_pct": 78.8,
     "success_rate_diff": 0.0
   },
   "details_by_arm": {
@@ -166,132 +190,244 @@
       {
         "arch": "architecture_single_llm",
         "success": true,
-        "result": "This is an ambitious request for an international trip to Istanbul for 4 nights on a $800 budget, including flights. While challenging, it's possible with careful planning, focusing on budget airlines, basic accommodation, street food, and free or low-cost activities. This itinerary is designed to maximize your experience within these tight constraints, prioritizing history, food, and browsing for shopping opportunities.\n\n**Important Note on Budget:** The $800 budget for a round-trip flight from Lahore to Istanbul, 4 nights accommodation, food, local transport, and activities is extremely challenging. The flight alone can often consume a significant portion of this. This itinerary assumes you can secure highly promotional flight fares and are willing to embrace a very frugal travel style (hostel accommodation, street food, mostly free activities). Prices for 2026 are estimates and subject to change.\n\n---\n\n## Istanbul on a Budget: History, Food & Shopping for $800\n\n**Trip Duration:** 4 Nights\n**Departure Date:** August 15, 2026\n**Budget:** $800 per person\n\n---\n\n### Recommended Flights\n\nFinding a round-trip flight from Lahore (LHE) to Istanbul (IST) for around $400 is *extremely* optimistic and would require booking *immediately* when 2026 flights become available, being flexible with dates around August 15, and hunting for promotional fares. Pegasus Airlines often offers the cheapest options but typically involves a layover.\n\n*   **Airline:** Pegasus Airlines\n*   **Price Estimate:** **$400** (Highly optimistic promotional fare, requires booking *very* far in advance and flexibility)\n*   **Outbound Flight:**\n    *   **Departure:** Friday, August 15, 2026\n    *   **Route:** Lahore (LHE) to Istanbul (IST) - often with a layover (e.g., in Sharjah or Istanbul Sabiha G\u00f6k\u00e7en).\n    *   **Example Flight (Pegasus, hypothetical):** PC 1860 LHE-SHJ (1:00 AM - 3:00 AM) + PC 1005 SHJ-IST (5:00 AM - 9:00 AM)\n    *   **Arrival:** Saturday, August 16, 2026, around 9:00 AM - 10:00 AM (at IST or SAW)\n*   **Return Flight:**\n    *   **Departure:** Wednesday, August 20, 2026 (likely late evening or overnight)\n    *   **Route:** Istanbul (IST) to Lahore (LHE) - with a layover.\n    *   **Example Flight (Pegasus, hypothetical):** PC 1006 IST-SHJ (10:00 PM - 3:00 AM +1) + PC 1861 SHJ-LHE (5:00 AM - 9:00 AM +1)\n    *   **Arrival:** Thursday, August 21, 2026, around 9:00 AM\n\n---\n\n### Recommended Hotel\n\nTo stay within budget, a highly-rated hostel with private rooms or a very basic guesthouse in a central location is essential. These are popular choices for budget travelers in Istanbul.\n\n*   **Hotel:** Agora Guesthouse (Sultanahmet) or Stay Inn Taksim Hostel (Taksim - offers private rooms)\n*   **Rating:** Typically 8.0 - 9.0+ on booking platforms\n*   **Nightly Price Estimate:** **$30 per night** (for a single room or highly-rated dorm bed, booking well in advance)\n*   **Total for 4 Nights:** **$120**\n\n**Note:** For $30/night in August, you are likely looking at a dorm bed in a good hostel or a very basic, small single room in a guesthouse slightly off the main tourist path. Booking *as early as possible* for 2026 is crucial to secure these rates.\n\n---\n\n## Day-by-Day Itinerary\n\n**Key for Meals:**\n*   **B:** Breakfast (Often included in hostels, otherwise street food)\n*   **L:** Lunch (Street food, local eateries)\n*   **D:** Dinner (Street food, local eateries)\n\n---\n\n### Day 1: Saturday, August 16, 2026 - Sultanahmet's Grandeur (Exteriors)\n\n*   **Morning (9:00 AM - 1:00 PM): Arrival & Sultanahmet Core**\n    *   **9:00 AM - 10:30 AM:** Arrive at Istanbul Airport (IST or SAW). Navigate to your accommodation (e.g., Sultanahmet for Agora Guesthouse) via public transport (Havaist bus from IST, Havabus from SAW to Taksim, then metro/tram; or direct metro from IST to Sultanahmet area). Purchase an **Istanbulkart** upon arrival (costs \u20ba50-70 for the card itself, then load money).\n    *   **10:30 AM - 11:30 AM:** Check into your hostel/guesthouse, drop off luggage.\n    *   **11:30 AM - 1:00 PM:** Head straight to the **Blue Mosque (Sultan Ahmed Mosque)**. Admire its stunning exterior and six minarets. Entry is free, but check prayer times and dress appropriately (headscarf for women, modest clothing).\n*   **Lunch (1:00 PM - 2:00 PM):**\n    *   **L:** Grab a cheap and delicious **Lahmacun** (Turkish pizza) or **D\u00f6ner Kebab** from a street vendor or a small eatery near Sultanahmet Square. (Est. $3-5)\n*   **Afternoon (2:00 PM - 6:00 PM): Historical Heart**\n    *   **2:00 PM - 3:30 PM:** Walk to **Hagia Sophia Grand Mosque**. Marvel at its immense architecture from the outside. Entry is free for visitors (check tourist entry times/sections).\n    *   **3:30 PM - 5:00 PM:** Explore the **Hippodrome of Constantinople**, seeing the Obelisk of Theodosius, the Serpentine Column, and the German Fountain (all free).\n    *   **5:00 PM - 6:00 PM:** Stroll through **G\u00fclhane Park**, the former outer garden of Topkapi Palace, offering serene green spaces and Bosphorus views (free).\n*   **Dinner (7:00 PM - 8:00 PM):**\n    *   **D:** Enjoy a budget-friendly meal at a local \"esnaf lokantas\u0131\" (tradesmen's restaurant) in Sirkeci or near your accommodation, offering traditional home-style Turkish dishes. (Est. $7-10)\n*   **Evening:** Relax at your hostel or take a quiet walk around Sultanahmet Square.\n\n---\n\n### Day 2: Sunday, August 17, 2026 - Bazaars & Bosphorus Views\n\n*   **Morning (9:00 AM - 1:00 PM): Grand Bazaar Exploration**\n    *   **B:** Grab a fresh **Simit** (Turkish bagel) and a cup of tea from a street vendor (Est. $1-2).\n    *   **9:30 AM - 1:00 PM:** Immerse yourself in the bustling **Grand Bazaar**. While major shopping might be out of budget, it's a fantastic experience for history, atmosphere, and window shopping. Practice your haggling skills, even if just for fun (free entry).\n*   **Lunch (1:00 PM - 2:00 PM):**\n    *   **L:** Find a quick bite inside or around the Grand Bazaar, perhaps a **B\u00f6rek** (savory pastry) from a local bakery. (Est. $3-5)\n*   **Afternoon (2:00 PM - 6:00 PM): Spice & Seaside**\n    *   **2:00 PM - 3:30 PM:** Head to the nearby **Spice Bazaar (Egyptian Bazaar)**. Enjoy the vibrant colors, aromas of spices, teas, and Turkish delights. Sample a few free treats from vendors (free entry).\n    *   **3:30 PM - 5:00 PM:** Walk down to **Emin\u00f6n\u00fc Square** and cross the **Galata Bridge**. Enjoy the lively atmosphere with fishermen, street vendors, and stunning views of the Golden Horn, Galata Tower, and Sultanahmet skyline (free).\n    *   **5:00 PM - 6:00 PM:** Walk towards **Galata Tower**. Admire its exterior and the charming streets of Galata (free). Going up the tower has an entry fee, so view from outside to save budget.\n*   **Dinner (7:00 PM - 8:00 PM):**\n    *   **D:** Indulge in a classic **Bal\u0131k Ekmek** (fish sandwich) from a boat or stand near Emin\u00f6n\u00fc or Karak\u00f6y. It's delicious and very budget-friendly. (Est. $5-7)\n*   **Evening:** Take a leisurely stroll along the Karak\u00f6y waterfront.\n\n---\n\n### Day 3: Monday, August 18, 2026 - Asian Side & Local Charm\n\n*   **Morning (9:00 AM - 1:00 PM): Ferry to Kad\u0131k\u00f6y**\n    *   **B:** Enjoy a traditional Turkish breakfast at your hostel, or find a local cafe for **Menemen** (scrambled eggs with vegetables) and tea (Est. $5-7 if not included).\n    *   **10:00 AM - 10:30 AM:** Take a scenic ferry ride from Emin\u00f6n\u00fc or Karak\u00f6y to **Kad\u0131k\u00f6y** on the Asian side using your Istanbulkart (Est. $1-2).\n    *   **10:30 AM - 1:00 PM:** Explore the vibrant **Kad\u0131k\u00f6y Market**. Wander through its fresh produce, fish, and specialty food stalls. Check out the trendy **Moda district** with its cool cafes, vintage shops, and street art (great for window shopping).\n*   **Lunch (1:00 PM - 2:00 PM):**\n    *   **L:** Sample a **G\u00f6zleme** (savory Turkish flatbread) or explore the various affordable eateries in Kad\u0131k\u00f6y. (Est. $4-6)\n*   **Afternoon (2:00 PM - 6:00 PM): \u00dcsk\u00fcdar & Bosphorus Beauty**\n    *   **2:00 PM - 2:30 PM:** Take a short metro or dolmu\u015f ride from Kad\u0131k\u00f6y to **\u00dcsk\u00fcdar** (Est. $1).\n    *   **2:30 PM - 4:00 PM:** Discover \u00dcsk\u00fcdar's historic mosques (e.g., Mihrimah Sultan Mosque) and stroll along the beautiful waterfront promenade.\n    *   **4:00 PM - 5:30 PM:** Find a spot near the shore to admire the iconic **Maiden's Tower (K\u0131z Kulesi)** from a distance (free). Enjoy the tranquility and stunning views of the European side.\n*   **Dinner (7:00 PM - 8:00 PM):**\n    *   **D:** Head back to the European side. For dinner, try a local place in Karak\u00f6y for some Turkish k\u00f6fte (meatballs) or explore the variety of cheap eats around Taksim (if your hostel is there) or Sirkeci. (Est. $7-10)\n*   **Evening:** Consider a budget-friendly walk along \u0130stiklal Avenue in Taksim to see the historic tram and lively atmosphere.\n\n---\n\n### Day 4: Tuesday, August 19, 2026 - Imperial Gardens & Farewell Shopping\n\n*   **Morning (9:00 AM - 1:00 PM): Topkapi Palace Gardens & Arasta Bazaar**\n    *   **B:** Grab a pastry like **Po\u011fa\u00e7a** from a local bakery (Est. $1-2).\n    *   **9:30 AM - 12:00 PM:** Visit **Topkapi Palace**. To save money, focus on exploring the First and Second Courtyards (which are sometimes free or have minimal entry fees) and the beautiful gardens, rather than paying for the full museum and Harem (full ticket can be $35-45). Check current entry policies for specific sections.\n    *   **12:00 PM - 1:00 PM:** Browse the **Arasta Bazaar**, a smaller, less crowded market behind the Blue Mosque, known for its ceramics and carpets. You might find a small, affordable souvenir here.\n*   **Lunch (1:00 PM - 2:00 PM):**\n    *   **L:** Enjoy a final affordable Turkish meal, perhaps a **Pide** (flatbread with toppings) or a simple lentil soup (Mercimek \u00c7orbas\u0131) at a local cafe. (Est. $5-7)\n*   **Afternoon (2:00 PM - 5:00 PM): Last-Minute Souvenirs & Relaxation**\n    *   **2:00 PM - 4:00 PM:** Depending on your flight schedule, use this time for any last-minute souvenir hunting around the bazaars, revisit a favorite spot, or simply relax at a park.\n    *   **4:00 PM - 5:00 PM:** Head back to your accommodation to collect luggage and prepare for departure.\n*   **Dinner (6:00 PM - 7:00 PM):**\n    *   **D:** Enjoy a final quick and cheap meal near your accommodation or grab some snacks from a supermarket for your journey to the airport. (Est. $5)\n*   **Evening:**\n    *   **7:00 PM onwards:** Depart for Istanbul Airport (IST or SAW) via public transport. Ensure you leave ample time for travel and check-in (at least 3 hours before an international flight).\n\n---\n\n## Budget Breakdown (Estimate for 1 Person)\n\n**Total Budget: $800**\n\n*   **Flights (LHE-IST-LHE with Pegasus Airlines):** $400 (Highly optimistic promotional fare)\n*   **Accommodation (4 Nights @ $30/night):** $120\n    *   (Hostel private room or budget guesthouse / good quality dorm)\n*   **Food (5 days @ ~$15/day):** $75\n    *   (Mix of street food, supermarket purchases, and cheap local eateries)\n*   **Local Transport (Istanbulkart, multiple rides):** $25\n    *   (Ferry, Tram, Metro, Funicular)\n*   **Activities & Minimal Entry Fees / Small Souvenirs:** $100\n    *   (Allows for one mid-priced entry, e.g., Basilica Cistern ~ $20-25, and some small souvenirs, or saving on entries for more shopping. Emphasizes free/exterior views).\n*   **Buffer / Contingency:** $80\n    *   (For unexpected costs, a slightly better meal, or a small treat)\n\n**Total Estimated Cost: $800**\n\n---\n\n## Travel Tips for Istanbul on a Budget\n\n1.  **Book Flights EARLY:** For a budget this tight, securing that $400 flight deal is paramount. Start looking for 2026 fares as soon as they are released (typically 10-11 months in advance) and be flexible with dates.\n2.  **Istanbulkart:** This is a must for public transport. Buy one at the airport or any metro/tram station and load it with Turkish Lira. It's cheaper than single-use tickets.\n3.  **Accommodation:** Read reviews carefully. Prioritize location (Sultanahmet or near a major transport hub) for efficiency and to save on transport costs. A highly-rated hostel dorm bed will offer the best value for money.\n4.  **Food is Your Friend (Street Food):**\n    *   **Simit:** Perfect for breakfast or a snack.\n    *   **D\u00f6ner/Lahmacun/Pide:** Filling and affordable lunch/dinner options.\n    *   **Bal\u0131k Ekmek:** A must-try fish sandwich by the Bosphorus.\n    *   **B\u00f6rek/Po\u011fa\u00e7a:** Savory pastries for any time of day.\n    *   **Mercimek \u00c7orbas\u0131 (Lentil Soup):** Hearty and cheap.\n    *   **Supermarkets:** Buy water, snacks, and some breakfast items (yogurt, fruit) to save money.\n5.  **Free Activities:** Istanbul offers an incredible number of free attractions:\n    *   Exteriors of Hagia Sophia, Blue Mosque, Topkapi Palace, Galata Tower.\n    *   Hippodrome, G\u00fclhane Park.\n    *   Grand Bazaar, Spice Bazaar (browsing is free!).\n    *   Walking across Galata Bridge, along the Bosphorus, exploring local neighborhoods.\n    *   Ferry rides (part of public transport, but offers scenic views).\n6.  **Haggling:** If you do decide to shop, especially in the Grand Bazaar or Spice Bazaar, always haggle! Start at 50% of the asking price and work your way up.\n7.  **Water:** Always carry a water bottle, especially in August. Refill at safe sources or buy large bottles from supermarkets.\n8.  **Dress Code:** When visiting mosques, women should cover their heads, shoulders, and knees. Men should also wear modest attire. Carry a scarf for convenience.\n9.  **Visa:** Check the visa requirements for Pakistani citizens traveling to Turkey. An e-Visa is often available online and is generally hassle-free.\n10. **Safety:** Istanbul is generally safe, but be aware of pickpockets in crowded tourist areas. Keep your valuables secure.\n11. **Language:** Basic Turkish phrases like \"Merhaba\" (Hello), \"Te\u015fekk\u00fcr ederim\" (Thank you), \"Ka\u00e7 para?\" (How much?) will be appreciated. Most people in tourist areas speak some English.\n\nEnjoy your incredibly budget-conscious adventure in the historical and vibrant city of Istanbul!",
+        "result": "This is an exciting trip idea! Istanbul is a fantastic city for history, food, and shopping. However, it's crucial to address the budget upfront: **$800 for flights from Lahore to Istanbul, 4 nights of accommodation, food, activities, and local transport is an extremely challenging and largely unrealistic budget for a solo traveler.**\n\nFlights alone between Lahore and Istanbul, especially for August (peak season), typically range from $500 to $700+ even for budget airlines with layovers. This leaves very little, if anything, for everything else.\n\nTo make this itinerary work, we will assume you are able to find *exceptionally* good flight deals by booking very far in advance (e.g., today for August 2026) and are willing to take flights with long layovers. The itinerary below is designed with **extreme budget consciousness**, focusing on free activities, street food, and public transport. Any deviation will likely push the total cost beyond $800.\n\n---\n\n## Istanbul Trip Itinerary: Lahore to Istanbul (4 Nights)\n\n**Traveler:** 1 person\n**Departure Date:** August 15, 2026\n**Duration:** 4 Nights (5 full days in transit/Istanbul)\n**Interests:** History, Food, Shopping\n**Budget Goal:** $800 (Extremely tight, detailed breakdown below)\n\n---\n\n### **Budget Reality Check & What to Expect**\n\nAchieving this trip for $800 is a \"bare bones\" scenario. Here's what that implies:\n\n*   **Flights:** You must secure a deal likely below current market prices. This means booking *immediately* for August 2026, accepting long layovers, and flying with budget airlines.\n*   **Accommodation:** Expect a dorm bed in a well-rated hostel, not a private room.\n*   **Food:** Your diet will consist almost entirely of cheap street food (simit, borek, doner, lahmacun), groceries, and very basic local eateries (esnaf lokantas\u0131). No fancy restaurants.\n*   **Activities:** Focus on free attractions (mosques, bazaars, walking tours, panoramic views). Most major paid historical sites (Topkapi Palace, Basilica Cistern, Galata Tower) will be out of budget, unless you choose *one* and sacrifice elsewhere.\n*   **Shopping:** Limited to browsing or very small, inexpensive souvenirs.\n\n**A more realistic budget for a comfortable budget trip to Istanbul for 4 nights, including flights from Lahore, would be closer to $1000 - $1200.**\n\n---\n\n### **Recommended Flights**\n\n*   **Airline Recommendation:** Look for flights with budget carriers like **Pegasus Airlines**, **Air Arabia**, or **Flydubai**, often involving layovers in Dubai (DXB), Sharjah (SHJ), or Sabiha G\u00f6k\u00e7en (SAW) if connecting to Pegasus. Booking 8-12 months in advance is critical for the best prices.\n*   **Estimated Price:** **$500 USD** (This is an extremely optimistic estimate for August 2026, assuming you find a rare deal booked very early. Realistically, expect higher.)\n\n**Example Flight Schedule (Fictional, based on typical budget routes and prices):**\n\n*   **Departure:** Saturday, August 15, 2026\n    *   **Lahore (LHE) to Sharjah (SHJ):** Air Arabia G9 541, Depart 04:00 AM, Arrive 06:10 AM\n    *   **Sharjah (SHJ) to Istanbul Sabiha G\u00f6k\u00e7en (SAW):** Air Arabia G9 119, Depart 09:00 AM, Arrive 13:00 PM (Total Journey: ~12 hours)\n\n*   **Return:** Thursday, August 20, 2026\n    *   **Istanbul Sabiha G\u00f6k\u00e7en (SAW) to Sharjah (SHJ):** Air Arabia G9 118, Depart 14:00 PM, Arrive 19:00 PM\n    *   **Sharjah (SHJ) to Lahore (LHE):** Air Arabia G9 544, Depart 22:00 PM, Arrive 02:00 AM (+1 day, Aug 21)\n\n---\n\n### **Recommended Accommodation**\n\nGiven the tight budget, a well-rated hostel in a central location is the best option.\n\n*   **Cheers Hostel Istanbul (Sultanahmet)**\n    *   **Rating:** 8.5/10+ on Hostelworld/Booking.com (consistently good reviews for cleanliness, staff, and location)\n    *   **Nightly Price:** $30 USD (for a dorm bed in a mixed or female-only dormitory)\n    *   **Total for 4 Nights:** $120 USD\n    *   **Why it's good:** Excellent location right in Sultanahmet, walking distance to major historical sites like Hagia Sophia and Blue Mosque. Offers a great way to meet other travelers and has basic amenities.\n\n---\n\n### **Day-by-Day Travel Itinerary**\n\n**Currency Note:** Prices are given in Turkish Lira (TL) first, then converted to USD (approx. 1 USD = 30 TL for calculations, but actual rates will vary).\n\n---\n\n#### **Day 0: Saturday, August 15, 2026 - Travel Day**\n\n*   **Morning (01:00 AM):** Arrive at Allama Iqbal International Airport (LHE), Lahore, at least 3 hours before your flight.\n*   **Morning (04:00 AM):** Depart from Lahore.\n*   **Day:** In transit, flying from Lahore to Istanbul with a layover (e.g., Sharjah).\n*   **Meals:** Pack some snacks for the journey. Airport food will be expensive.\n*   **Accommodation:** Onboard flight.\n\n---\n\n#### **Day 1: Sunday, August 16, 2026 - Arrival & Sultanahmet Wonders**\n\n*   **Morning (13:00 PM):** Arrive at Istanbul Sabiha G\u00f6k\u00e7en Airport (SAW).\n*   **Afternoon (13:00 - 14:30 PM):** Clear immigration. Take the **Havaist shuttle bus (HV\u0130ST-12)** directly from SAW to Sultanahmet Square. (Cost: ~TL 100 / $3.5).\n*   **Afternoon (14:30 - 15:00 PM):** Walk to **Cheers Hostel Istanbul**, check in, and drop off your bags.\n*   **Lunch (15:00 - 16:00 PM):** Grab a quick, budget-friendly **Doner Kebab** from a local street vendor or small eatery near Sultanahmet. (Cost: ~TL 120 / $4).\n*   **Afternoon (16:00 - 18:00 PM):** Visit the magnificent **Blue Mosque (Sultan Ahmed Mosque)**. Entry is free, but check for ongoing renovations beforehand. Afterwards, explore the ancient **Hippodrome of Constantinople**.\n*   **Evening (18:00 - 20:00 PM):** Head to the iconic **Hagia Sophia Grand Mosque**. Entry is free for visitors. Marvel at its history and architecture.\n*   **Dinner (20:00 - 21:00 PM):** Enjoy a traditional Turkish meal at a cheap local eatery in Sultanahmet. Look for 'esnaf lokantas\u0131' (tradesmen's restaurants) for authentic, affordable home-style cooking like lentil soup (Mercimek \u00c7orbas\u0131) and a vegetable or meat stew. (Cost: ~TL 250 / $8).\n*   **Night:** Stroll around Sultanahmet Square, enjoying the illuminated mosques.\n*   **Daily Estimated Cost:** Transport $3.5, Food $12. Total ~$15.5.\n\n---\n\n#### **Day 2: Monday, August 17, 2026 - Bosphorus & Asian Side Charm**\n\n*   **Morning (08:30 - 09:30 AM):** Breakfast at a local bakery near your hostel. Enjoy a freshly baked **Simit** (Turkish bagel) with cheese and a glass of Turkish tea (**\u00c7ay**). (Cost: ~TL 50 / $1.7).\n*   **Morning (09:30 - 10:00 AM):** Take the T1 tram from Sultanahmet to Emin\u00f6n\u00fc. (Cost: ~TL 18 / $0.6, use Istanbulkart).\n*   **Morning (10:00 - 13:00 PM):** From Emin\u00f6n\u00fc pier, take a **public ferry to Kad\u0131k\u00f6y** on the Asian side. This is a budget-friendly way to experience the Bosphorus and get great views. (Cost: ~TL 30 / $1.0, use Istanbulkart). Explore the vibrant **Kad\u0131k\u00f6y Market**, wander through its charming streets, and soak in the local atmosphere.\n*   **Lunch (13:00 - 14:00 PM):** In Kad\u0131k\u00f6y, try some local street food or a 'lahmacun' (Turkish pizza) for an affordable and delicious meal. (Cost: ~TL 150 / $5).\n*   **Afternoon (14:00 - 15:00 PM):** Take the public ferry back to Karak\u00f6y. (Cost: ~TL 30 / $1.0, use Istanbulkart).\n*   **Afternoon (15:00 - 18:00 PM):** Walk across the **Galata Bridge**, observing the fishermen. Walk up towards the **Galata Tower** (admire from outside, as the entrance fee is too high for the budget). Continue up to **Istiklal Street**, a bustling pedestrian shopping avenue. Stroll along, enjoying the historical trams and architecture, towards **Taksim Square**.\n*   **Dinner (18:00 - 20:00 PM):** Find a budget-friendly eatery off Istiklal Street or near Taksim Square. Try 'kokore\u00e7' (grilled lamb intestine sandwich, a street food specialty) or 'midye dolma' (stuffed mussels). (Cost: ~TL 250 / $8).\n*   **Night:** Enjoy the lively atmosphere of Istiklal Street and Taksim Square before heading back to Sultanahmet via public transport.\n*   **Daily Estimated Cost:** Transport $2.6, Food $14.7. Total ~$17.3.\n\n---\n\n#### **Day 3: Tuesday, August 18, 2026 - Imperial Mosques & Colourful Quarters**\n\n*   **Morning (08:30 - 09:30 AM):** Breakfast at the hostel or a nearby bakery. (Cost: ~TL 50 / $1.7).\n*   **Morning (09:30 - 12:30 PM):** Walk or take a short tram ride to the magnificent **S\u00fcleymaniye Mosque Complex** (free entry). It offers breathtaking panoramic views of the Golden Horn and the city, and is less crowded than the Blue Mosque.\n*   **Lunch (12:30 - 13:30 PM):** Have lunch at an 'esnaf lokantas\u0131' near S\u00fcleymaniye or in the Fatih district, known for its traditional, affordable Turkish food. (Cost: ~TL 150 / $5).\n*   **Afternoon (13:30 - 17:30 PM):** Take a bus or metro to the historic neighbourhoods of **Fener and Balat**. These areas are famous for their colourful Ottoman-era houses, narrow cobblestone streets, and unique blend of Greek, Jewish, and Armenian heritage. It's perfect for a free walking tour and photography. Visit the exterior of the **Greek Orthodox Ecumenical Patriarchate**.\n*   **Evening (17:30 - 19:00 PM):** Make your way back to Sultanahmet or find a cheap local dinner in the Fatih area. (Cost: ~TL 250 / $8).\n*   **Night:** Relax at the hostel or enjoy a final evening stroll through Sultanahmet.\n*   **Daily Estimated Cost:** Transport $2, Food $14.7. Total ~$16.7.\n\n---\n\n#### **Day 4: Wednesday, August 19, 2026 - Golden Horn Views & Souvenir Hunt**\n\n*   **Morning (08:30 - 09:30 AM):** Breakfast. (Cost: ~TL 50 / $1.7).\n*   **Morning (09:30 - 12:30 PM):** Take public transport to Ey\u00fcp. Visit the revered **Ey\u00fcp Sultan Mosque Complex** (free entry), a significant pilgrimage site. Afterwards, take the **Pierre Loti Cable Car** up to **Pierre Loti Hill** (~TL 45 one way / $1.5) for spectacular panoramic views of the Golden Horn. Enjoy a traditional Turkish tea with the view.\n*   **Lunch (12:30 - 13:30 PM):** Have lunch at a local spot in Ey\u00fcp or near Emin\u00f6n\u00fc upon your return. (Cost: ~TL 150 / $5).\n*   **Afternoon (13:30 - 17:30 PM):** Head to the vibrant **Spice Bazaar (Egyptian Bazaar)**. It's a feast for the senses, with spices, Turkish delight, nuts, and teas. Entrance is free, and it's a great place for browsing or picking up small, affordable souvenirs.\n*   **Shopping (17:30 - 19:00 PM):** Allocate some time for any last-minute budget shopping around the Emin\u00f6n\u00fc area or explore some of the side streets leading to the Grand Bazaar (entrance is free, but many items inside are pricier). Focus on small, lightweight items.\n*   **Dinner (19:00 - 20:30 PM):** Enjoy a farewell dinner at a budget-friendly local eatery, perhaps trying a different Turkish dish you haven't had yet. (Cost: ~TL 250 / $8).\n*   **Night:** Final packing and prepare for departure.\n*   **Daily Estimated Cost:** Transport $3.5, Food $14.7. Total ~$18.2.\n\n---\n\n#### **Day 5: Thursday, August 20, 2026 - Departure**\n\n*   **Morning (08:00 - 09:00 AM):** Enjoy a final Turkish breakfast at the hostel or a local cafe. (Cost: ~TL 50 / $1.7).\n*   **Morning (09:00 - 10:00 AM):** Check out from Cheers Hostel.\n*   **Morning (10:00 - 11:30 AM):** Take the **Havaist shuttle bus (HV\u0130ST-12)** back to Istanbul Sabiha G\u00f6k\u00e7en Airport (SAW). (Cost: ~TL 100 / $3.5).\n*   **Afternoon (14:00 PM):** Depart from Istanbul (SAW) for Lahore.\n*   **Daily Estimated Cost:** Transport $3.5, Food $1.7. Total ~$5.2.\n*   **Meals:** Onboard flight or pack snacks.\n*   **Accommodation:** Onboard flight.\n\n---\n\n### **Budget Breakdown (Estimated)**\n\nThis budget is exceptionally tight and requires strict adherence to the cheapest options.\n\n| Category               | Estimated Cost (USD) | Notes                                                                                                                                                                                                                                                                                                 |\n| :--------------------- | :------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| **Flights**            | $500                 | Round-trip Lahore (LHE) to Istanbul (SAW) with budget airlines and layovers. **This is an optimistic estimate; actual costs may be higher.** Booking very far in advance (now for 2026) is crucial.                                                                                                        |\n| **Accommodation**      | $120                 | 4 nights in a well-rated hostel dormitory ($30/night).                                                                                                                                                                                                                                              |\n| **Food & Drink**       | $150                 | 5 days @ $30/day. This requires strict adherence to street food, local bakeries, simple local eateries, and water. No restaurant meals or fancy drinks.                                                                                                                                              |\n| **Local Transport**    | $20                  | Istanbulkart purchase (~TL 50 / $1.7) + ~TL 550 ($18) for top-ups (includes 2 airport bus trips and daily tram/bus/ferry rides). This is for public transport only; no taxis.                                                                                                                            |\n| **Activities/Entrance** | $0                   | **Strictly free activities.** This itinerary avoids all major paid attractions like Topkapi Palace, Basilica Cistern, Galata Tower (interior), Dolmabah\u00e7e Palace, etc. If you wish to visit even one paid site, you'll need to increase your budget or cut costs elsewhere (e.g., less food). |\n| **Buffer/Shopping**    | $10                  | **Extremely minimal.** For emergencies or small, very cheap souvenirs. No significant shopping is possible.                                                                                                                                                                                            |\n| **TOTAL**              | **$800 USD**         | **This is the absolute bare minimum and highly susceptible to exceeding if any costs are higher than estimated or if you indulge in any extras.**                                                                                                                                               |\n\n---\n\n### **Travel Tips**\n\n1.  **Visa Requirements:** As a Pakistani citizen, you will likely need a **Turkish E-Visa** or a regular visa. Check the official Turkish government visa portal well in advance (at least 2-3 months before departure) for the latest requirements and application procedures. Visa costs are not included in the $800 budget.\n2.  **Istanbulkart:** This is essential for public transport (tram, metro, bus, ferry, cable car). Purchase one at the airport or any major transport hub for a small fee (~TL 50), then load it with credits. It's cheaper than single-use tickets.\n3.  **Haggling in Bazaars:** When shopping in the Grand Bazaar or Spice Bazaar, remember that haggling is expected and part of the culture, especially for larger purchases.\n4.  **Footwear:** You will be doing a lot of walking. Wear comfortable shoes.\n5.  **Dress Code for Mosques:** When visiting mosques, women should cover their heads, shoulders, and knees. Men should wear long trousers. Modest attire is generally recommended for both sexes out of respect. Some mosques provide head coverings at the entrance.\n6.  **Food Safety:** Stick to busy street food stalls and local eateries that have a high turnover of customers to ensure freshness. Doner kebab, simit, borek, lahmacun, and Turkish tea are generally safe and delicious budget options.\n7.  **Water:** Always carry bottled water, especially in August which can be hot.\n8.  **Safety:** Istanbul is generally safe for tourists, but be aware of your surroundings, especially in crowded areas like bazaars and on public transport, to guard against pickpocketing.\n9.  **Language:** Turkish is the official language. Learning a few basic phrases like \"Merhaba\" (Hello), \"Te\u015fekk\u00fcr ederim\" (Thank you), \"L\u00fctfen\" (Please), and \"Ne kadar?\" (How much?) can go a long way. English is understood in major tourist areas.\n10. **Offline Maps:** Download offline maps (e.g., Google Maps) for Istanbul to navigate without relying on mobile data.\n11. **Sim Card:** Consider buying a local SIM card upon arrival for internet access. Turkcell, Vodafone, and T\u00fcrk Telekom are major providers. This cost is not included in the $800 budget.\n12. **ATM Usage:** Inform your bank about your travel dates to avoid card blocking. Use ATMs from reputable banks (e.g., Ziraat Bankas\u0131, \u0130\u015f Bankas\u0131, Garanti BBVA) to avoid excessive fees.\n13. **Be Flexible:** With such a tight budget, be prepared to adjust your plans if unexpected costs arise or if you find more affordable alternatives on the ground.\n\nEnjoy your incredibly budget-conscious, history-rich, food-filled, and bustling trip to Istanbul!",
         "extraction": "(no extraction step \u2014 single prompt)",
-        "latency": 60.01693511009216,
+        "latency": 92.62916827201843,
         "errors": [],
         "llm": {
           "label": "single-llm/SC-01",
           "llm_calls": 1,
           "llm_failures": 0,
           "prompt_tokens": 126,
-          "completion_tokens": 7293,
-          "total_tokens": 7419,
-          "cost_usd": 0.01827,
-          "llm_time_s": 60.0,
-          "wall_time_s": 60.02,
+          "completion_tokens": 11266,
+          "total_tokens": 11392,
+          "cost_usd": 0.028203,
+          "llm_time_s": 92.62,
+          "wall_time_s": 92.63,
           "models_used": [
             "gemini-2.5-flash"
           ],
           "failure_details": []
         },
         "llm_calls": 1,
-        "total_tokens": 7419,
-        "cost_usd": 0.01827,
+        "total_tokens": 11392,
+        "cost_usd": 0.028203,
         "scenario_id": "SC-01",
         "scenario_name": "Short city break - Lahore to Istanbul",
-        "runner": "A \u2014 SINGLE LLM"
+        "runner": "A \u2014 SINGLE LLM",
+        "groundedness": {
+          "scored": true,
+          "hotels_grounded": 1,
+          "hotels_available": 10,
+          "hotels_grounded_pct": 10.0,
+          "airlines_grounded": 1,
+          "airlines_available": 2,
+          "airlines_grounded_pct": 50.0,
+          "prices_quoted": 57,
+          "prices_grounded": 0,
+          "prices_grounded_pct": 0.0,
+          "uses_real_data": true,
+          "matched_hotels": [
+            "ISG Sabiha G\u00f6k\u00e7en Airport Hotel"
+          ],
+          "matched_airlines": [
+            "Turkish Airlines"
+          ]
+        }
       }
     ],
     "B": [
       {
         "arch": "architecture_6agent",
         "success": true,
-        "result": "## Istanbul 4-Day Itinerary: History, Food, and Shopping Adventure\n\n**Travel Dates:** August 15, 2026 - August 19, 2026\n**Destination:** Istanbul, Turkey\n**Traveler:** 1 Adult\n**Interests:** History, Food, Shopping\n\n---\n\n### Flight Analysis\n\n**Chosen Flight Option (Option 2):**\n*   **Price:** $937 USD\n*   **Outbound:**\n    *   **Airline:** Azerbaijan Airlines\n    *   **From:** Lahore (LHE) to Istanbul (IST)\n    *   **Departure:** 2026-08-15T03:05:00\n    *   **Arrival:** 2026-08-15T10:45:00\n    *   **Duration:** 9 hours 40 minutes (1 stop)\n*   **Inbound:**\n    *   **Airline:** PIA\n    *   **From:** Istanbul (IST) to Lahore (LHE)\n    *   **Departure:** 2026-08-19T00:50:00\n    *   **Arrival:** 2026-08-19T08:05:00\n    *   **Duration:** 5 hours 15 minutes (0 stops)\n\n**Analysis:**\nThe flight budget allocated was $280. All available flight options were significantly over this budget. The chosen flight, priced at $937, was the cheapest available and aligns with the specified return date. This results in a substantial flight budget overrun of $657 ($937 - $280). The outbound journey includes one stop, while the inbound is direct. The early morning departure on August 19th means the traveler will have limited time for activities on the last day of the trip in Istanbul.\n\n---\n\n### Hotel Analysis\n\n**Chosen Hotel:** Theodora Pension Old Town\n*   **Price/night**: $33.09 USD\n*   **Total for 4 nights (including taxes/charges)**: $145.57 USD ($132.34 base + $13.23 taxes/charges)\n*   **Rating**: 10 Exceptional (based on 1 review)\n*   **Amenities**: 1 bed, free cancellation, no prepayment needed.\n*   **Location**: 0.6 km from downtown, convenient for sightseeing.\n\n**Analysis:**\nThe accommodation budget allocated was $280 for 4 nights (or $70 per night). Theodora Pension Old Town was selected as it is the most budget-friendly option, costing $145.57 for the entire stay. This is well within the allocated budget, providing a saving of $134.43 ($280 - $145.57). Its exceptional rating and central location make it an excellent choice for a budget traveler interested in history and exploring the old town.\n\n---\n\n### Budget Breakdown\n\n**Initial Total Budget:** $800 USD\n\n**Initial Budget Allocation:**\n*   Flights: $280\n*   Accommodation: $280\n*   Activities: $160\n*   Meals: $80\n*   **Total:** $800\n\n**Actual Costs & Revised Budget:**\n*   **Flights:** $937 USD (Over budget by $657)\n*   **Accommodation:** $145.57 USD (Under budget by $134.43)\n*   **Activities:** $160 USD (Original allocation - *please note this is an estimation, and actual costs may vary greatly depending on ticket prices for attractions. This budget is already fully consumed by flight overruns.*)\n*   **Meals:** $80 USD (Original allocation for 4 days / 12 meals = ~$6.67 per meal - *This budget is extremely tight for Istanbul and is already fully consumed by flight overruns.*)\n\n**Total Estimated Trip Cost (Flights & Accommodation Only):** $1082.57 USD\n**Total Estimated Trip Cost (Including original Activities & Meals):** $1082.57 + $160 + $80 = $1322.57 USD\n\n**Budget Summary:**\nThe trip is significantly over the initial total budget of $800. The cost for flights alone ($937) exceeds the total budget. After accounting for the chosen flight and accommodation, the total minimum cost for just these two categories is $1082.57, representing an overrun of $282.57 even before considering any activity admissions or meals. The original budgets for activities and meals are effectively negative, meaning the traveler will need to significantly increase their overall budget to cover these expenses. Strict budgeting for meals (e.g., street food, local markets) and careful selection of free or low-cost activities will be essential.\n\n---\n\n### Day-by-Day Itinerary\n\n**Day 0: Friday, August 14, 2026 (Departure)**\n*   **Evening:** Depart from Lahore (LHE) on Azerbaijan Airlines flight at 03:05 AM on August 15th. Ensure to arrive at the airport well in advance for check-in and security procedures.\n\n**Day 1: Saturday, August 15, 2026 (Arrival & Sultanahmet Exploration)**\n*   **Morning (10:45 AM):** Arrive at Istanbul (IST) airport. Clear immigration and customs. Take public transport (e.g., Metro + Tram) or an airport shuttle to Theodora Pension Old Town. Check in and drop off luggage.\n*   **Lunch:** Find a local eatery near Sultanahmet Square for a quick, budget-friendly meal. Look for doner kebabs, simit, or street food vendors.\n*   **Afternoon Activity:** Begin your exploration at the historic **Sultanahmet Square**. Visit the magnificent **Hagia Sophia Mosque**, a marvel of Byzantine architecture and Ottoman conversion. Afterwards, marvel at the stunning blue tiles of the **Blue Mosque (Sultan Ahmed Mosque)**.\n*   **Late Afternoon:** Explore the ancient underground **Basilica Cistern**.\n*   **Dinner:** Explore the side streets around your hotel for budget-friendly local restaurants offering traditional Turkish cuisine.\n*   **Evening:** Relax at the hotel or take a leisurely stroll around the illuminated Sultanahmet area.\n\n**Day 2: Sunday, August 16, 2026 (Ottoman Grandeur & Grand Bazaar)**\n*   **Morning Activity:** Head to **Topkapi Palace**, the grand residence of Ottoman sultans. Allow ample time to explore its courtyards, treasuries, and Harem, gaining insight into Ottoman history and enjoying stunning views of the Bosphorus.\n*   **Lunch:** Grab a bite at one of the cafes within the palace grounds or find a local restaurant outside the palace walls.\n*   **Afternoon Activity:** Immerse yourself in the bustling atmosphere of the **Grand Bazaar**, one of the world's oldest and largest covered markets. This is perfect for shopping (souvenirs, carpets, jewelry) and experiencing local culture. Practice your bargaining skills!\n*   **Dinner:** Enjoy dinner in the vibrant areas near the Grand Bazaar. Look for small lokantas (local eateries) for authentic and affordable Turkish dishes.\n*   **Evening:** Consider attending a Whirling Dervish show if interested in Sufi culture (check schedules and prices in advance).\n\n**Day 3: Monday, August 17, 2026 (Spice, S\u00fcleymaniye & Bosphorus Views)**\n*   **Morning Activity:** Visit the vibrant **Spice Market (Egyptian Bazaar)** for an aromatic experience. Explore the stalls selling spices, sweets, Turkish delights, and dried fruits.\n*   **Late Morning:** Walk to the impressive **S\u00fcleymaniye Mosque**, an Ottoman imperial mosque and one of Istanbul's largest. Admire its architecture and enjoy panoramic city views from its terrace.\n*   **Lunch:** Find a restaurant with a view near the Spice Market or S\u00fcleymaniye Mosque, or grab some snacks from the market.\n*   **Afternoon Activity:** Take a relaxing **Bosphorus Cruise**. This offers scenic views of both the European and Asian sides of Istanbul, showcasing palaces, historic sites, and modern villas from the water. Opt for a public ferry for a more budget-friendly experience.\n*   **Dinner:** Enjoy fresh seafood near the Galata Bridge or explore the Beyo\u011flu district for diverse dining options.\n*   **Evening:** Consider walking across the Galata Bridge and exploring the lively Karak\u00f6y neighborhood.\n\n**Day 4: Tuesday, August 18, 2026 (Last-Minute Exploration & Departure Preparation)**\n*   **Morning Activity:** Depending on your interests and energy levels, you could revisit a favorite area for last-minute shopping at the Grand Bazaar or Spice Market. Alternatively, explore the colorful historic houses of the Balat neighborhood, known for its bohemian charm and street art.\n*   **Lunch:** Enjoy a final authentic Turkish meal at a local cafe or restaurant.\n*   **Afternoon:** Pick up any last-minute souvenirs. Head back to the hotel to pack and organize your belongings.\n*   **Late Afternoon:** Check out from Theodora Pension Old Town. If your flight is very early on August 19th, you might consider arriving at the airport later in the evening to rest before check-in or booking a late check-out if available and affordable.\n*   **Evening:** Make your way to Istanbul (IST) airport for your flight back to Lahore. Your flight departs at 00:50 AM on August 19th, so plan to arrive at the airport by approximately 10:00 PM - 10:30 PM on August 18th.\n\n---\n\n### Travel Tips\n\n1.  **Budget Management:** Your trip significantly exceeds the initial $800 budget. Be prepared to spend considerably more. For meals, prioritize street food (e.g., simit, b\u00f6rek, doner, lahmacun, balik ekmek) and local eateries (lokantas) over tourist traps to save money. Carry a water bottle and refill it.\n2.  **Transportation:** Istanbul has an excellent public transportation system (Metro, Tram, Bus, Ferry). Purchase an Istanbulkart upon arrival for discounted fares. Taxis can be expensive; agree on a price or ensure the meter is used.\n3.  **Accommodation:** Theodora Pension Old Town is centrally located in Sultanahmet, making it easy to walk to many major attractions.\n4.  **Bargaining:** When shopping in the Grand Bazaar or Spice Market, bargaining is expected and a key part of the experience. Start by offering around 50% of the asking price and negotiate from there.\n5.  **Dress Code:** When visiting mosques, women should cover their heads, shoulders, and knees. Men should wear long pants. Scarves are often provided at mosque entrances, but it's advisable to carry your own.\n6.  **Safety:** Istanbul is generally safe for tourists. Be aware of your surroundings, especially in crowded areas, and keep an eye on your belongings to prevent pickpocketing.\n7.  **Currency:** The local currency is the Turkish Lira (TRY). Exchange money at reputable exchange offices or withdraw from ATMs.\n8.  **Connectivity:** Consider purchasing a local SIM card or an e-SIM for affordable data to help with navigation and communication.\n9.  **Footwear:** You will be doing a lot of walking, so comfortable shoes are essential.\n10. **Hydration:** Stay hydrated, especially during August which can be quite warm in Istanbul.\n11. **Language:** While many people in tourist areas speak English, learning a few basic Turkish phrases like \"Merhaba\" (Hello), \"Te\u015fekk\u00fcr ederim\" (Thank you), and \"Nas\u0131ls\u0131n?\" (How are you?) will be appreciated.",
-        "extraction": "{\"origin\":\"Lahore\",\"destination\":\"Istanbul\",\"departure_date\":\"2026-08-15\",\"return_date\":\"2026-08-19\",\"trip_duration\":4,\"total_budget\":800,\"num_adults\":1,\"num_children\":0,\"interests\":[\"history\",\"food\",\"shopping\"],\"travel_style\":\"\",\"budget_breakdown\":{\"flights\":280,\"accommodation\":280,\"activities\":160,\"meals\":80}}",
-        "latency": 178.8003625869751,
-        "phase1_extraction_s": 2.8,
-        "phase2_search_and_coord_s": 176.0,
+        "result": "**Istanbul Adventure: History, Food, and Shopping (August 15 - August 19, 2026)**\n\nThis itinerary is designed for one adult interested in history, food, and shopping in Istanbul. Please note the significant budget adjustments required, primarily due to flight costs exceeding the initial allocation.\n\n---\n\n**Flight Analysis:**\n\nThe initial flight budget was $280. However, the cheapest available flight option for your dates is **$937.10 USD**, which is considerably higher than budgeted. This means the overall trip budget will need to be significantly increased.\n\n**Selected Flight Option (Option 1 - Cheapest):**\n*   **Total Price:** $937.10 USD\n*   **Outbound Flight:**\n    *   **Airline:** Azerbaijan Airlines\n    *   **Departure:** 2026-08-15, 03:05 (Lahore - LHE)\n    *   **Arrival:** 2026-08-15, 10:45 (Istanbul - IST)\n    *   **Duration:** 9 hours 40 minutes (1 stop)\n*   **Inbound Flight:**\n    *   **Airline:** PIA\n    *   **Departure:** 2026-08-19, 00:50 (Istanbul - IST)\n    *   **Arrival:** 2026-08-19, 08:05 (Lahore - LHE)\n    *   **Duration:** 5 hours 15 minutes (non-stop)\n\n**Key Considerations:**\n*   The outbound flight involves a stop, increasing travel time.\n*   The inbound flight is a red-eye, departing early morning on August 19th, effectively ending your last full day in Istanbul on August 18th. You will need to check out of your accommodation on August 18th or arrange a late checkout/luggage storage.\n\n---\n\n**Hotel Analysis:**\n\nUnfortunately, due to limitations with the hotel search tools, I was unable to provide a list of real hotel options within your specified budget of $70 per night ($280 for 4 nights).\n\n**Accommodation Assumption:**\nFor this itinerary, we will proceed with the assumption that a budget-friendly hostel (private room) or a very basic guesthouse can be secured for approximately **$70 per night** in a central area, totaling **$280** for the 4 nights (August 15-18). It is strongly recommended to book accommodation well in advance, verifying actual prices and reviews to ensure it meets your expectations and budget.\n\n---\n\n**Daily Schedule:**\n\n**Day 1: Saturday, August 15, 2026 - Arrival and Imperial Wonders**\n\n*   **Morning (10:45 AM onwards):** Arrive at Istanbul Airport (IST). Clear immigration, collect luggage, and transfer to your accommodation. Check in, drop off your bags, and freshen up.\n*   **Lunch (1:00 PM):** Enjoy local street food or a budget-friendly eatery near Sultanahmet. Look for places selling *simit*, *d\u00f6ner kebab*, or *\u00e7i\u011f k\u00f6fte* for an authentic and quick meal (approx. $5-8).\n*   **Afternoon (2:30 PM - 6:30 PM):** Explore **Sultanahmet Square**. Begin with the magnificent **Hagia Sophia** (check entry requirements and potential costs) and then visit the iconic **Blue Mosque (Sultan Ahmet Camii)**. Afterwards, discover the ancient **Basilica Cistern (Yerebatan Sarayi)**.\n*   **Evening (7:00 PM):** Dinner at a local, inexpensive restaurant offering traditional Turkish cuisine in the Sultanahmet or Emin\u00f6n\u00fc area (approx. $10-15).\n*   **Night:** Stroll around Sultanahmet Square, enjoy the illuminated monuments, and head back to your accommodation.\n\n**Day 2: Sunday, August 16, 2026 - Grand Bazaars and Palatial Splendor**\n\n*   **Morning (9:00 AM - 1:00 PM):** Head to **Topkapi Palace (Topkapi Sarayi)**, the former residence of Ottoman sultans. Allow ample time to explore its courtyards, treasury, and Harem section (if interested, often separate ticket).\n*   **Lunch (1:30 PM):** Grab a quick and affordable meal from a food stall or small restaurant near Topkapi Palace or on your way to the Grand Bazaar (approx. $5-8).\n*   **Afternoon (2:30 PM - 6:30 PM):** Immerse yourself in the bustling **Grand Bazaar** for a unique shopping and cultural experience. Even if not buying, the atmosphere is incredible.\n*   **Dinner (7:00 PM):** Try another local eatery known for its simple, delicious, and budget-friendly Turkish dishes near the Grand Bazaar or your accommodation (approx. $10-15).\n*   **Night:** Relax or enjoy a traditional Turkish tea/coffee at a local cafe.\n\n**Day 3: Monday, August 17, 2026 - Bosphorus Views and Spice Aromas**\n\n*   **Morning (9:30 AM - 1:00 PM):** Take a scenic **Bosphorus Cruise** to see Istanbul from the water, enjoying panoramic views of palaces, mosques, and bridges spanning two continents. Many public ferries offer affordable tours.\n*   **Lunch (1:30 PM):** Have lunch at a casual restaurant on the waterfront near the Spice Bazaar or Emin\u00f6n\u00fc, or grab a fish sandwich (*bal\u0131k ekmek*) from a boat near Galata Bridge (approx. $8-12).\n*   **Afternoon (2:30 PM - 5:30 PM):** Visit the vibrant **Spice Bazaar (Egyptian Bazaar)** for an aromatic experience and more shopping opportunities for spices, sweets, and souvenirs.\n*   **Evening (6:00 PM - 9:00 PM):** Explore the **Asian Side of Istanbul**. Take a ferry to Kad\u0131k\u00f6y, known for its lively markets, food scene, and charming streets. Wander through Moda neighborhood.\n*   **Dinner (7:30 PM):** Find a local \"lokanta\" (traditional Turkish restaurant) in Kad\u0131k\u00f6y for an authentic and affordable dinner experience (approx. $10-15).\n*   **Night:** Enjoy the atmosphere of Kad\u0131k\u00f6y before taking a ferry back to the European side.\n\n**Day 4: Tuesday, August 18, 2026 - Architectural Gems and Historic Neighborhoods**\n\n*   **Morning (9:30 AM - 12:30 PM):** Visit **S\u00fcleymaniye Mosque**, an architectural masterpiece by Mimar Sinan, offering stunning views of the Golden Horn and Bosphorus.\n*   **Lunch (1:00 PM):** Enjoy a meal at a nearby cafe or a local \"esnaf lokantas\u0131\" (tradesmen's restaurant) for home-style, hearty Turkish food near S\u00fcleymaniye (approx. $8-12).\n*   **Afternoon (2:00 PM - 5:30 PM):** Wander through the charming and colorful historic streets of **Balat and Fener**. These UNESCO World Heritage sites are known for their well-preserved Ottoman houses, churches, and synagogues.\n*   **Late Afternoon (5:30 PM - 7:00 PM):** Head back to your accommodation to pick up luggage or arrange for late checkout. Have some free time for last-minute souvenir shopping or revisit a favorite spot.\n*   **Dinner (7:00 PM):** Have a final budget-friendly dinner at a recommended local restaurant in a less touristy area, enjoying your last taste of Turkish cuisine (approx. $10-15).\n*   **Night (10:00 PM onwards):** Transfer to Istanbul Airport (IST) for your red-eye flight departing at 00:50 AM on August 19th. Allow ample time for travel and airport procedures.\n\n---\n\n**Budget Breakdown (Revised):**\n\n**Initial Total Budget:** $800\n**Revised Estimated Total Budget:** $1457.10\n\nHere's the detailed breakdown based on the cheapest available flight and assumed accommodation:\n\n*   **Flights:** $937.10 (Azerbaijan Airlines/PIA - significantly over initial $280 budget)\n*   **Accommodation:** $280.00 (Assumed $70/night x 4 nights - August 15-18)\n*   **Activities/Entrance Fees:** $160.00 (Topkapi Palace, Hagia Sophia, Basilica Cistern, Bosphorus Cruise, etc. - can vary greatly, allocate wisely)\n*   **Meals & Drinks:** $80.00 (Approximately $20 per day for 4 full days, meaning roughly $6-7 per meal. This requires sticking to street food, local eateries, and avoiding expensive tourist restaurants.)\n*   **Local Transportation:** $0.00 (This budget is tight; assume walking or minor public transport use. A daily Istanbulkart pass might be needed, budget approx. $3-5/day if used.)\n*   **Contingency/Miscellaneous:** $0.00 (Highly recommend adding a contingency fund of at least 10-15% of the total budget for unforeseen expenses or small splurges.)\n\n**Note on Meals:** The $80 meal budget for 4 days ($20/day) is very tight for Istanbul. Focus on street food, local bakeries, *esnaf lokantas\u0131*, and don't order multiple courses or expensive drinks to stay within this limit.\n\n---\n\n**Travel Tips for Istanbul on a Budget:**\n\n1.  **Istanbulkart:** Purchase an Istanbulkart upon arrival. It's a refillable card for all public transport (metro, tram, bus, ferry) and offers discounted fares compared to single tickets.\n2.  **Public Transport:** Utilize Istanbul's extensive public transport system. Taxis can be expensive, especially with traffic.\n3.  **Street Food & Lokantas:** Embrace street food (simit, d\u00f6ner, bal\u0131k ekmek, kumpir) and dine at *esnaf lokantas\u0131* (tradesmen's restaurants) for delicious, authentic, and affordable meals. Avoid tourist trap restaurants near major attractions.\n4.  **Free Attractions:** Many mosques (like the Blue Mosque, S\u00fcleymaniye) are free to enter for visitors outside of prayer times. Wandering through bazaars, historic neighborhoods (Balat, Fener), and along the Bosphorus are also free activities.\n5.  **Museum Pass (Optional):** If you plan to visit many museums, research the \"Museum Pass Istanbul.\" It might save you money, but calculate if it's worth it for your specific itinerary. For this budget, it might be challenging to fit many paid attractions into the activity budget.\n6.  **Water:** Carry a reusable water bottle and refill it to save money and reduce plastic waste. Tap water is generally not recommended for drinking directly.\n7.  **Bargain at Bazaars:** When shopping in the Grand Bazaar or Spice Bazaar, bargaining is expected and can help you get better prices, especially for souvenirs.\n8.  **Comfortable Shoes:** You'll be doing a lot of walking, so comfortable shoes are a must.\n9.  **Dress Code:** When visiting mosques, women should cover their heads, shoulders, and knees. Men should wear trousers and a shirt. Scarves are often provided at entrances if you don't have one.\n10. **Safety:** Istanbul is generally safe, but be aware of your surroundings, especially in crowded areas like bazaars, to prevent pickpocketing. Keep valuables secure.\n11. **Currency:** The local currency is the Turkish Lira (TRY). While many places accept credit cards, it's good to have some cash for small purchases, street food, and smaller establishments.\n12. **Language:** Turkish is the official language. Learning a few basic phrases (hello, thank you, please) can be helpful and appreciated by locals. English is commonly spoken in tourist areas.",
+        "extraction": "```json\n{\n  \"origin\": \"Lahore\",\n  \"destination\": \"Istanbul\",\n  \"departure_date\": \"2026-08-15\",\n  \"return_date\": \"2026-08-19\",\n  \"trip_duration\": 4,\n  \"total_budget\": 800,\n  \"num_adults\": 1,\n  \"num_children\": 0,\n  \"interests\": [\"history\", \"food\", \"shopping\"],\n  \"travel_style\": \"\",\n  \"budget_breakdown\": {\n    \"flights\": 280,\n    \"accommodation\": 280,\n    \"activities\": 160,\n    \"meals\": 80\n  }\n}\n```",
+        "latency": 85.54549026489258,
+        "phase1_extraction_s": 9.1,
+        "phase2_search_and_coord_s": 76.4,
         "errors": [],
         "llm": {
           "label": "6agent/SC-01",
-          "llm_calls": 23,
+          "llm_calls": 19,
           "llm_failures": 0,
-          "prompt_tokens": 93578,
-          "completion_tokens": 15980,
-          "total_tokens": 109558,
-          "cost_usd": 0.068604,
-          "llm_time_s": 107.56,
-          "wall_time_s": 178.8,
+          "prompt_tokens": 48694,
+          "completion_tokens": 15232,
+          "total_tokens": 63926,
+          "cost_usd": 0.052749,
+          "llm_time_s": 77.36,
+          "wall_time_s": 85.55,
           "models_used": [
             "gemini-2.5-flash"
           ],
           "failure_details": []
         },
-        "llm_calls": 23,
-        "total_tokens": 109558,
-        "cost_usd": 0.068604,
+        "llm_calls": 19,
+        "total_tokens": 63926,
+        "cost_usd": 0.052749,
         "scenario_id": "SC-01",
         "scenario_name": "Short city break - Lahore to Istanbul",
-        "runner": "B \u2014 6 AGENTS (naive)"
+        "runner": "B \u2014 6 AGENTS (naive)",
+        "groundedness": {
+          "scored": true,
+          "hotels_grounded": 1,
+          "hotels_available": 10,
+          "hotels_grounded_pct": 10.0,
+          "airlines_grounded": 2,
+          "airlines_available": 2,
+          "airlines_grounded_pct": 100.0,
+          "prices_quoted": 30,
+          "prices_grounded": 4,
+          "prices_grounded_pct": 13.3,
+          "uses_real_data": true,
+          "matched_hotels": [
+            "The Hotel Beyaz Saray - Grand Bazaar"
+          ],
+          "matched_airlines": [
+            "Azerbaijan Airlines",
+            "Turkish Airlines"
+          ]
+        }
       }
     ],
     "C": [
       {
         "arch": "architecture_6agent_optimized",
         "success": true,
-        "result": "**Your Istanbul Itinerary: August 15 - August 19, 2026**\n\nThis itinerary is designed for a solo traveler with interests in history, food, and shopping, based on the provided data. Please note the significant budget discrepancy regarding flights, which is detailed below.\n\n---\n\n**Recommended Flight:**\n*   **Airline:** Azerbaijan Airlines\n*   **Outbound:** 2026-08-15T03:05:00 LHE->IST (1 stop)\n*   **Return:** 2026-08-19T00:50:00 IST->LHE (1 stop)\n*   **Cost:** $937\n\n**Recommended Hotel:**\n*   **Hotel:** Theodora Pension Old Town\n*   **Cost:** $33/night (Total 4 nights = $132)\n*   **Rating:** 10/10\n\n---\n\n**Budget Breakdown:**\n\n*   **Original Total Budget:** $800\n*   **Original Budget Allocation:**\n    *   Flights: $280\n    *   Accommodation: $280\n    *   Activities: $160\n    *   Meals: $80\n\n*   **Actual Estimated Costs with Recommendations:**\n    *   **Flights:** $937 (Significantly over budget)\n    *   **Accommodation:** $132 (Under budget, based on Theodora Pension Old Town)\n    *   **Activities:** $160 (As per budget)\n    *   **Meals:** $80 (As per budget, very tight - see tips)\n    *   **New Estimated Total:** $1309\n\n    *Note: The actual cost of flights ($937) alone exceeds the total allocated trip budget for flights ($280) and the overall total budget ($800). This itinerary proceeds assuming these costs are accepted or additional funds are available.*\n\n---\n\n**Day-by-Day Itinerary:**\n\n**Day 1: Friday, August 15, 2026 - Arrival & Sultanahmet Wonders**\n*   **Morning/Afternoon:** Depart Lahore at 03:05. Arrive at Istanbul (IST) after your 1-stop flight. Transfer to your accommodation.\n*   **Afternoon:** Check into Theodora Pension Old Town. Settle in and explore the immediate vicinity of Sultanahmet.\n*   **Late Afternoon:** Begin your historical immersion with a visit to the magnificent **Hagia Sophia**, a marvel of Byzantine architecture and Ottoman conversion.\n*   **Evening:** Walk across to the iconic **Blue Mosque** (Sultan Ahmed Mosque) and admire its stunning cascade of domes and six minarets. Enjoy the ambiance of Sultanahmet Square.\n*   **Dinner:** Explore local, budget-friendly eateries in the Old Town area. (Estimated meal cost: $10-15)\n\n**Day 2: Saturday, August 16, 2026 - Imperial Palaces & Grand Shopping**\n*   **Morning:** Immerse yourself in the grandeur of the Ottoman Empire with a visit to **Topkapi Palace**. Explore its courtyards, treasury, and the Harem (if time permits).\n*   **Lunch:** Grab a quick bite near the palace or on your way to the bazaar.\n*   **Afternoon:** Dive into the vibrant world of the **Grand Bazaar**. Spend hours wandering through its labyrinthine streets, bargaining for souvenirs, spices, and Turkish delights.\n*   **Dinner:** Enjoy traditional Turkish street food or a casual meal near the Grand Bazaar. (Estimated meal cost: $10-15)\n\n**Day 3: Sunday, August 17, 2026 - Aromas, Spices & Bosphorus Breezes**\n*   **Morning:** Head to the bustling **Spice Market (Egyptian Bazaar)**. Indulge your senses with the aroma of countless spices, sweets, nuts, and Turkish coffee. This is a great spot for unique food-related souvenirs.\n*   **Lunch:** Taste some local delicacies around the Spice Market or Emin\u00f6n\u00fc area.\n*   **Afternoon:** Experience the beauty of Istanbul from the water with a relaxing **Bosphorus Cruise**. Enjoy panoramic views of palaces, historical mansions, and bridges spanning two continents.\n*   **Dinner:** Find a restaurant with a view of the Bosphorus or a charming local spot back in Sultanahmet. (Estimated meal cost: $15-20)\n\n**Day 4: Monday, August 18, 2026 - Last Explorations & Departure Prep**\n*   **Morning:** Enjoy a leisurely breakfast. Depending on your interests, you could revisit a favorite historical site, explore a different neighborhood (e.g., Galata Bridge area), or do some last-minute souvenir shopping.\n*   **Lunch:** Have your final authentic Turkish meal.\n*   **Afternoon:** Collect any remaining souvenirs, relax, and begin preparations for your departure. Pack your bags and check out from your hotel.\n*   **Evening:** Have an early dinner. Head to Istanbul Airport for your return flight, which departs very early the next morning.\n*   **Late Night/Early Morning:** Depart Istanbul at 00:50 on August 19, 2026.\n\n---\n\n**Travel Tips:**\n\n1.  **Budgeting for Meals:** With an allocated budget of $80 for 4 days ($20/day), finding inexpensive meals is crucial. Look for street food (like simit, d\u00f6ner, balik ekmek - fish sandwich), local \"lokantas\" (eateries serving home-style food), and avoid tourist trap restaurants where prices are inflated.\n2.  **Transportation:** Istanbul has an extensive public transport system (tram, metro, bus, ferry). Consider getting an Istanbulkart for easy and economical travel between attractions. Many key historical sites in Sultanahmet are within walking distance of Theodora Pension.\n3.  **Bargaining:** When shopping at the Grand Bazaar or Spice Market, bargaining is expected and part of the experience. Start with an offer significantly lower than the asking price.\n4.  **Dress Code:** When visiting mosques, women should cover their heads, shoulders, and knees. Men should ensure their shoulders and knees are covered. Scarves are often provided at mosque entrances, but it's advisable to carry your own.\n5.  **Comfortable Shoes:** You will be doing a lot of walking, especially around historical sites and bazaars. Wear comfortable footwear.\n6.  **Safety:** Istanbul is generally safe, but be aware of your surroundings, especially in crowded tourist areas, and watch out for pickpockets.\n7.  **Cash:** While cards are widely accepted, it's good to have some Turkish Lira for small purchases, street food, and tips.",
+        "result": "**Your 4-Day Istanbul Itinerary: A Historic Journey**\n\n**Trip Overview:**\n*   **Origin:** Lahore\n*   **Destination:** Istanbul\n*   **Departure:** August 15, 2026\n*   **Return:** August 19, 2026\n*   **Duration:** 4 Days\n*   **Traveler:** 1 Adult\n*   **Interests:** History, Food, Shopping\n\n---\n\n**Recommended Flight:**\n*   **Airline:** Azerbaijan Airlines\n*   **Departure:** 2026-08-15, 03:05 AM (Lahore to Istanbul, 1 stop)\n*   **Return:** 2026-08-19, 12:50 AM (Istanbul to Lahore)\n*   **Cost:** $937\n\n*Note: The actual cost for this flight ($937) is significantly higher than the allocated flight budget of $280. This will impact the total trip budget.*\n\n**Recommended Hotel:**\n*   **Hotel:** Theodora Pension Old Town\n*   **Rating:** 10/10\n*   **Cost:** $33/night\n*   **Total Accommodation Cost (4 nights):** $132\n\n*Note: This hotel is within the allocated accommodation budget of $280 and has an excellent rating.*\n\n---\n\n**Day-by-Day Itinerary:**\n\n**Day 1: Saturday, August 15, 2026 \u2013 Arrival & Sultanahmet's Historic Heart**\n*   **Morning:** Arrive in Istanbul. Check into your hotel.\n*   **Afternoon:** Begin your exploration in Sultanahmet, focusing on the major historical attractions.\n    *   Visit the iconic **Blue Mosque**.\n    *   Explore the magnificent **Hagia Sophia**, a testament to centuries of history.\n*   **Evening:** Enjoy a traditional Turkish meal. Stroll around Sultanahmet Square.\n*   **Focus:** History\n\n**Day 2: Sunday, August 16, 2026 \u2013 Palaces, Bazaars & Shopping Delights**\n*   **Morning:** Continue your historical journey in Sultanahmet.\n    *   Discover the opulent **Topkapi Palace**, the former residence of Ottoman sultans.\n*   **Afternoon:** Dive into the vibrant world of Turkish shopping.\n    *   Explore the labyrinthine **Grand Bazaar**, perfect for finding unique souvenirs and experiencing local culture.\n*   **Evening:** Experience \"More sightseeing + Shopping\" by perhaps visiting the Spice Bazaar for an aromatic experience before dinner.\n*   **Focus:** History, Shopping, Food\n\n**Day 3: Monday, August 17, 2026 \u2013 Bosphorus Views & Cultural Gems**\n*   **Morning:** Explore further areas of Istanbul.\n    *   Consider a Bosphorus cruise to enjoy panoramic views of both European and Asian sides of the city, experiencing Istanbul from the water.\n*   **Afternoon:** Discover other significant sites beyond Sultanahmet.\n    *   Visit the **S\u00fcleymaniye Mosque**, one of Istanbul's most impressive imperial mosques.\n*   **Evening:** Enjoy dinner in a different neighborhood, perhaps along the Bosphorus or in the Galata area.\n*   **Focus:** History, Scenery, Food\n\n**Day 4: Tuesday, August 18, 2026 \u2013 Final Sights & Departure Preparation**\n*   **Morning:** Visit a final historical gem or revisit a favorite spot.\n    *   Consider exploring the **Basilica Cistern**, an atmospheric underground marvel.\n*   **Afternoon:** Enjoy some last-minute souvenir shopping or revisit a market.\n*   **Evening:** Have a relaxed farewell dinner, savoring local cuisine. Prepare for your early morning departure.\n*   **Focus:** History, Shopping, Food\n\n**Day 5: Wednesday, August 19, 2026 \u2013 Departure**\n*   **Early Morning:** Depart from Istanbul for Lahore (00:50 AM flight).\n\n---\n\n**Budget Breakdown:**\n\n*   **Original Total Budget:** $800\n*   **Original Budget Breakdown:**\n    *   Flights: $280\n    *   Accommodation: $280\n    *   Activities: $160\n    *   Meals: $80\n\n*   **Actual Estimated Costs for this Itinerary:**\n    *   **Flights:** $937 (Significantly over original budget)\n    *   **Accommodation:** $132 ($33/night x 4 nights) (Under original budget)\n    *   **Activities:** $160 (As per original budget allocation)\n    *   **Meals:** $80 (As per original budget allocation)\n    *   **Total Estimated Trip Cost:** $937 (Flights) + $132 (Accommodation) + $160 (Activities) + $80 (Meals) = **$1309**\n\n*Note: The total estimated cost of this trip, primarily due to the flight cost, is significantly higher than your initial total budget of $800.*\n\n---\n\n**Travel Tip:**\n\n*   **Tour Guide:** Given your interest in history, it is worth considering a tour guide for exploring major historical sites like Hagia Sophia, Blue Mosque, and Topkapi Palace. A knowledgeable guide can provide deeper insights and enhance your understanding of Istanbul's rich past.",
         "extraction": "{\"origin\":\"Lahore\",\"destination\":\"Istanbul\",\"departure_date\":\"2026-08-15\",\"return_date\":\"2026-08-19\",\"trip_duration\":4,\"total_budget\":800,\"num_adults\":1,\"num_children\":0,\"interests\":[\"history\",\"food\",\"shopping\"],\"travel_style\":\"\",\"budget_breakdown\":{\"flights\":280,\"accommodation\":280,\"activities\":160,\"meals\":80}}",
-        "latency": 88.2031819820404,
-        "phase1_extraction_s": 3.6,
-        "phase2_search_parallel_s": 66.3,
-        "phase3_coordination_s": 18.4,
+        "latency": 66.07189512252808,
+        "phase1_extraction_s": 5.5,
+        "phase2_search_parallel_s": 47.7,
+        "phase3_coordination_s": 12.8,
         "errors": [],
         "llm": {
           "label": "6agent-opt/SC-01",
           "llm_calls": 9,
           "llm_failures": 0,
-          "prompt_tokens": 5360,
-          "completion_tokens": 5559,
-          "total_tokens": 10919,
-          "cost_usd": 0.015506,
-          "llm_time_s": 116.38,
-          "wall_time_s": 88.2,
+          "prompt_tokens": 5421,
+          "completion_tokens": 5387,
+          "total_tokens": 10808,
+          "cost_usd": 0.015094,
+          "llm_time_s": 92.66,
+          "wall_time_s": 66.07,
           "models_used": [
             "gemini-2.5-flash"
           ],
           "failure_details": []
         },
         "llm_calls": 9,
-        "total_tokens": 10919,
-        "cost_usd": 0.015506,
+        "total_tokens": 10808,
+        "cost_usd": 0.015094,
         "scenario_id": "SC-01",
         "scenario_name": "Short city break - Lahore to Istanbul",
-        "runner": "C \u2014 6 AGENTS (optimised)"
+        "runner": "C \u2014 6 AGENTS (optimised)",
+        "groundedness": {
+          "scored": true,
+          "hotels_grounded": 1,
+          "hotels_available": 10,
+          "hotels_grounded_pct": 10.0,
+          "airlines_grounded": 2,
+          "airlines_available": 2,
+          "airlines_grounded_pct": 100.0,
+          "prices_quoted": 22,
+          "prices_grounded": 13,
+          "prices_grounded_pct": 59.1,
+          "uses_real_data": true,
+          "matched_hotels": [
+            "Theodora Pension Old Town"
+          ],
+          "matched_airlines": [
+            "Azerbaijan Airlines",
+            "Turkish Airlines"
+          ]
+        }
       }
     ],
     "D": [
       {
         "arch": "architecture_3agent",
         "success": true,
-        "result": "Here is a complete day-by-day itinerary for your 4-day trip to Istanbul, based on the provided data:\n\n---\n\n**Istanbul Budget Itinerary: History, Food & Shopping**\n**Destination:** Istanbul, T\u00fcrkiye\n**Traveler:** 1 Adult\n**Dates:** August 15, 2026 - August 19, 2026\n**Interests:** History, Food, Shopping\n**Travel Style:** Budget\n\n---\n\n**Flight Details:**\n\n*   **Selected Flight Option:** Option 2 (Cheapest available)\n*   **Airline:** Azerbaijan Airlines (Outbound), PIA (Inbound)\n*   **Total Price:** $937.10 USD\n*   **Outbound:**\n    *   From: Lahore (LHE)\n    *   To: Istanbul (IST)\n    *   Departure: 2026-08-15, 03:05\n    *   Arrival: 2026-08-15, 10:45\n    *   Duration: 580 minutes (9 hours 40 minutes)\n    *   Stops: 1\n*   **Inbound:**\n    *   From: Istanbul (IST)\n    *   To: Lahore (LHE)\n    *   Departure: 2026-08-19, 00:50\n    *   Arrival: 2026-08-19, 08:05\n    *   Duration: 315 minutes (5 hours 15 minutes)\n    *   Stops: 0\n\n---\n\n**Hotel Accommodation:**\n\n*   **Selected Hotel:** Theodora Pension Old Town\n*   **Total Price (4 nights):** $132.34 USD ($33.09/night)\n*   **Rating:** 10/10 Exceptional (1 review)\n*   **Location:** 0.6 km from downtown, excellent for exploring the city center.\n*   **Check-in:** 2026-08-15\n*   **Check-out:** 2026-08-19 (Note: Your flight departs very early on the 19th, so you will depart for the airport late on the 18th).\n\n---\n\n**Day-by-Day Itinerary:**\n\n**Day 1: Saturday, August 15, 2026 (Arrival & Sultanahmet Introduction)**\n*   **Morning (10:45 AM):** Arrive at Istanbul (IST) airport via Azerbaijan Airlines.\n*   **Late Morning/Early Afternoon:** Transfer to Theodora Pension Old Town. Check-in and drop off luggage.\n*   **Afternoon (History):** Begin exploring the historic Sultanahmet area, as suggested for \"Day 1: Attractions in Sultanahmet.\" You can walk around the Hippodrome, Blue Mosque exterior, and Hagia Sophia exterior to get a feel for the area.\n*   **Evening (Food):** Experience the local food scene. Head towards the Fatih district for \"The best Fatih Street food,\" perfect for a budget-friendly and authentic dinner.\n\n**Day 2: Sunday, August 16, 2026 (Sultanahmet Immersion & Local Flavors)**\n*   **Morning (History):** Continue your exploration of Sultanahmet attractions. This could include visiting interiors of key historical sites or delving deeper into specific museums (e.g., Topkapi Palace if time permits, though individual entry fees will apply).\n*   **Lunch (Food):** Grab a cheap and delicious meal from local eateries or street food vendors in Sultanahmet.\n*   **Afternoon (Sightseeing/Light Shopping):** Enjoy more sightseeing in the old city or do some light shopping for local crafts and souvenirs in the vicinity.\n*   **Evening (Food):** Follow the spirit of \"What $10 Gets You in Istanbul, T\u00fcrkiye (Food Tour!)\" by trying various budget-friendly street foods for dinner, exploring different vendors and tastes.\n\n**Day 3: Monday, August 17, 2026 (Beyond Sultanahmet & Shopping Spree)**\n*   **Morning (Sightseeing):** Explore areas of Istanbul \"beyond\" the immediate Sultanahmet square, as suggested by the itinerary snippet. This could involve crossing the Galata Bridge towards Karakoy or Beyoglu for a different architectural and cultural experience.\n*   **Lunch (Food):** Enjoy a casual lunch, perhaps more street food or a local restaurant in the area you are exploring.\n*   **Afternoon (Shopping):** Dedicate time for shopping, as suggested for \"Day 2: More sightseeing + Shopping.\" Explore famous markets or modern shopping districts depending on your preference and location.\n*   **Evening (Food):** Embark on your own \"Ultimate Istanbul Food Tour: Best Turkish Street Food.\" Sample different Turkish dishes and snacks, exploring various neighborhoods for culinary delights.\n\n**Day 4: Tuesday, August 18, 2026 (Last-minute Exploration & Departure Prep)**\n*   **Morning (Leisure/Revisit):** Enjoy a relaxed morning. You could revisit a favorite historical site, explore a new neighborhood, or do some last-minute souvenir shopping.\n*   **Lunch (Food):** Have a final traditional Turkish meal or revisit a favorite street food spot.\n*   **Afternoon:** Collect any last-minute items. If the hotel allows, enjoy a late check-out, or check out at the standard time and store your luggage for the day.\n*   **Evening:** Have an early dinner. Head to the airport well in advance for your early morning flight.\n*   **Late Evening/Night:** Depart from Istanbul (IST) at 00:50 on August 19th via PIA.\n\n---\n\n**Budget Breakdown (USD):**\n\n*   **Total Budget Allocated:** $800\n*   **Budget Breakdown (Preferences):**\n    *   Flights: $280\n    *   Accommodation: $280\n    *   Activities: $160\n    *   Meals: $80\n\n*   **Actual Costs based on selections:**\n    *   **Flights:** $937.10 (Azerbaijan Airlines/PIA) - *Significantly over allocated budget.*\n    *   **Accommodation:** $132.34 (Theodora Pension Old Town for 4 nights) - *Well within allocated budget.*\n    *   **Total Actual for Flights & Accommodation:** $1069.44\n\n*   **Budget Discrepancy:** The chosen flight alone ($937.10) exceeds the total allocated budget for the entire trip ($800) by $137.10. Therefore, the overall trip as planned with these selections is over budget. With the selected flight and hotel, you would have a deficit of $269.44 ($800 - $1069.44) before accounting for activities and meals. This means you will need to adjust your spending or increase your total budget significantly.\n\n---\n\n**Travel Tips:**\n\n*   **Tour Guide:** Consider if hiring a tour guide is worth it for historical sites, as suggested in the attractions data, especially if you want in-depth information. Given your budget constraints, this might be a self-guided exploration or a free walking tour.\n*   **Food Focus:** Embrace street food and local eateries. Istanbul is renowned for its diverse and affordable street food, aligning perfectly with your \"food\" interest and \"budget\" travel style. Look for experiences like the \"Ultimate Istanbul Food Tour\" or \"What $10 Gets You in Istanbul\" to guide your culinary adventures.\n*   **Historical Exploration:** Focus on the Sultanahmet area for historical attractions. Many key sites are within walking distance of each other.\n*   **Shopping:** Plan specific time for shopping, whether it's for souvenirs in traditional markets or exploring other shopping districts.\n*   **Explore Beyond:** Don't limit yourself to just the central tourist areas; venture out to experience other parts of Istanbul as suggested.",
+        "result": "**Istanbul Budget Itinerary: History, Food & Shopping**\n\n**Trip Overview:**\n*   **Origin:** Lahore, Pakistan (LHE)\n*   **Destination:** Istanbul, Turkey (IST)\n*   **Dates:** August 15, 2026 \u2013 August 19, 2026 (4 nights)\n*   **Traveler:** 1 Adult\n*   **Interests:** History, Food, Shopping\n*   **Travel Style:** Budget\n\n---\n\n**Budget Breakdown:**\n\n| Category       | Allocated Budget (USD) | Actual/Recommended (USD) | Status      | Notes                                                                                                                                                                                                                                                                                                                                                                                              |\n| :------------- | :--------------------- | :----------------------- | :---------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| **Flights**    | $280                   | $937.10                  | **OVER**    | All available flights significantly exceed the allocated budget. The cheapest option is recommended, but a substantial budget adjustment is required.                                                                                                                                                                                                                              |\n| **Accommodation** | $280                   | $132.34                  | **UNDER**   | Theodora Pension Old Town offers exceptional value and a central location, staying well within the accommodation budget.                                                                                                                                                                                                                                                             |\n| **Activities** | $160                   | Est. $160                | On Track    | This budget can cover entrance fees for historical sites or a budget-friendly local tour.                                                                                                                                                                                                                                                                                           |\n| **Meals**      | $80                    | Est. $80                 | On Track    | Focusing on street food and local eateries will help stay within this daily budget of approximately $20.                                                                                                                                                                                                                                                                            |\n| **Total**      | **$800**               | **$1309.44 (approx.)**   | **OVER**    | The total trip cost is significantly over budget due to flight prices. A revised total budget of at least $1300 would be needed for this itinerary. Remaining budget for activities & meals after flights & hotel is $1309.44 - $937.10 - $132.34 = $240. This leaves $60 per day for activities and meals, which is slightly more flexible than the initial allocation. |\n\n---\n\n**Flight Recommendations:**\n\n*   **Outbound Flight (Lahore to Istanbul):**\n    *   **Airline:** Azerbaijan Airlines\n    *   **Departure:** 2026-08-15, 03:05 (LHE - Lahore)\n    *   **Arrival:** 2026-08-15, 10:45 (IST - Istanbul)\n    *   **Stops:** 1\n    *   **Duration:** 580 minutes (9h 40m)\n\n*   **Inbound Flight (Istanbul to Lahore):**\n    *   **Airline:** PIA\n    *   **Departure:** 2026-08-19, 00:50 (IST - Istanbul)\n    *   **Arrival:** 2026-08-19, 08:05 (LHE - Lahore)\n    *   **Stops:** 0\n    *   **Duration:** 315 minutes (5h 15m)\n\n*   **Total Flight Price:** $937.10 (This option is significantly over the allocated flight budget of $280.)\n\n---\n\n**Hotel Recommendations:**\n\n*   **Hotel Name:** Theodora Pension Old Town\n*   **Total Price:** $132.34 (for 4 nights)\n*   **Nightly Rate:** $33.09\n*   **Rating:** 10/10 Exceptional (based on 1 review)\n*   **Location:** 0.6 km from downtown, excellent for exploring.\n*   **Notes:** This hotel offers an exceptional rating and is well within the accommodation budget, providing a central base for exploring Istanbul.\n\n---\n\n**Day-by-Day Itinerary:**\n\n**Day 1: Saturday, August 15, 2026 \u2013 Arrival & Sultanahmet History**\n\n*   **Morning (10:45 AM onwards):**\n    *   Arrive at Istanbul (IST) via Azerbaijan Airlines.\n    *   Transfer to your accommodation, Theodora Pension Old Town.\n    *   Check-in and settle in.\n*   **Afternoon:**\n    *   Begin exploring \"Attractions in Sultanahmet,\" immersing yourself in the historic heart of Istanbul, which aligns with your interest in history.\n*   **Evening:**\n    *   Experience authentic Turkish street food for dinner, keeping to your budget and interest in food. Explore local stalls in the Sultanahmet area.\n\n**Day 2: Sunday, August 16, 2026 \u2013 Sightseeing & Shopping Delights**\n\n*   **Morning:**\n    *   Continue \"More sightseeing\" in Istanbul, perhaps venturing into areas connected to the attractions from the previous day or new historical sites.\n*   **Afternoon:**\n    *   Dedicate time to \"Shopping,\" exploring local markets or bazaars, catering to your shopping interest.\n*   **Evening:**\n    *   Head to the Fatih district to explore its vibrant atmosphere and enjoy \"The best Fatih Street food,\" a great way to experience local cuisine on a budget.\n\n**Day 3: Monday, August 17, 2026 \u2013 Beyond the Center & Culinary Exploration**\n\n*   **Morning/Afternoon:**\n    *   Venture out to \"Places to visit in Istanbul beyond\" the immediate city center, perhaps exploring a different district or a less central historical site.\n*   **Evening:**\n    *   Embark on a culinary adventure to \"taste the best Turkish dishes.\" Focus on exploring various local eateries and street food options as suggested in the restaurant data, aligning with your food interest and budget.\n\n**Day 4: Tuesday, August 18, 2026 \u2013 Last-Minute Exploration & Departure Preparation**\n\n*   **Morning:**\n    *   Revisit a favorite historical site, discover a new area for last-minute sightseeing, or do some final souvenir shopping.\n*   **Afternoon:**\n    *   Enjoy a relaxed final meal, perhaps trying another Turkish street food specialty.\n    *   Begin preparations for your early morning departure, including packing.\n*   **Evening:**\n    *   Have an early night or a light activity, as you will need to head to the airport before midnight for your flight.\n\n**Day 5: Wednesday, August 19, 2026 \u2013 Departure**\n\n*   **Early Morning (pre-00:50 AM):**\n    *   Depart from Theodora Pension Old Town to Istanbul Airport (IST) for your PIA flight back to Lahore.\n    *   Flight departs at 00:50 AM.\n\n---\n\n**Travel Tips:**\n\n*   **Budget Management:** The flight cost significantly impacts your total budget. Carefully manage your remaining funds for activities and meals. Theodora Pension's low cost gives you more flexibility here.\n*   **Transportation:** With a budget travel style and a centrally located hotel, public transport (trams, metro, ferries) will be your best friend for getting around Istanbul.\n*   **Food:** Embrace the street food scene! Istanbul is famous for its affordable and delicious street food, which perfectly aligns with your interests and budget. Look for local eateries away from the main tourist traps for better prices.\n*   **Activities:** Many historical sites in Istanbul offer combined tickets or are free to explore from the outside. Prioritize which paid attractions are most important to you to stay within your activity budget. Consider a walking tour as a budget-friendly way to learn about history.\n*   **Cultural Experience:** Engage with locals, try to learn a few basic Turkish phrases, and be open to new experiences. Istanbul offers a rich blend of history, culture, and culinary delights.\n*   **Early Departure:** Note the very early morning departure for your return flight on August 19th. Plan your transport to the airport accordingly, perhaps arranging a taxi or checking public transport schedules for that time.",
         "extraction": "{\"origin\":\"Lahore\",\"destination\":\"Istanbul\",\"departure_date\":\"2026-08-15\",\"return_date\":\"2026-08-19\",\"trip_duration\":4,\"total_budget\":800,\"num_adults\":1,\"num_children\":0,\"interests\":[\"history\",\"food\",\"shopping\"],\"travel_style\":\"budget\",\"budget_breakdown\":{\"flights\":280,\"accommodation\":280,\"activities\":160,\"meals\":80}}",
-        "latency": 23.233219623565674,
-        "phase1_extraction_s": 3.2,
+        "latency": 17.8711040019989,
+        "phase1_extraction_s": 2.7,
         "phase2_api_fetch_s": 0.0,
-        "phase3_coordination_s": 20.0,
+        "phase3_coordination_s": 15.2,
         "errors": [],
+        "ground_truth": {
+          "hotels": [
+            "YOTEL Istanbul Airport, City Entrance",
+            "ISG Sabiha G\u00f6k\u00e7en Airport Hotel",
+            "Theodora Pension Old Town",
+            "Nidya Hotel Esenyurt",
+            "Hilton Mall Of Istanbul",
+            "Aloft by Marriott Istanbul Karakoy",
+            "Sarn\u0131\u00e7 Butik Otel",
+            "G\u00fclhanepark Hotel & Spa",
+            "Titanic City Taksim",
+            "The Hotel Beyaz Saray - Grand Bazaar"
+          ],
+          "airlines": [
+            "Azerbaijan Airlines",
+            "Turkish Airlines"
+          ],
+          "prices": [
+            33.09,
+            61.36,
+            82.61,
+            96.21,
+            117.53,
+            123.19,
+            133.1,
+            161.97,
+            215.07,
+            347.24,
+            937.1,
+            946.97,
+            1285.1
+          ]
+        },
         "llm": {
           "label": "3agent/SC-01",
           "llm_calls": 2,
           "llm_failures": 0,
-          "prompt_tokens": 3866,
-          "completion_tokens": 4883,
-          "total_tokens": 8749,
-          "cost_usd": 0.013367,
-          "llm_time_s": 22.94,
-          "wall_time_s": 23.23,
+          "prompt_tokens": 3794,
+          "completion_tokens": 4019,
+          "total_tokens": 7813,
+          "cost_usd": 0.011186,
+          "llm_time_s": 17.55,
+          "wall_time_s": 17.87,
           "models_used": [
             "gemini-2.5-flash"
           ],
           "failure_details": []
         },
         "llm_calls": 2,
-        "total_tokens": 8749,
-        "cost_usd": 0.013367,
+        "total_tokens": 7813,
+        "cost_usd": 0.011186,
         "scenario_id": "SC-01",
         "scenario_name": "Short city break - Lahore to Istanbul",
-        "runner": "D \u2014 3 AGENTS (direct API)"
+        "runner": "D \u2014 3 AGENTS (direct API)",
+        "groundedness": {
+          "scored": true,
+          "hotels_grounded": 1,
+          "hotels_available": 10,
+          "hotels_grounded_pct": 10.0,
+          "airlines_grounded": 2,
+          "airlines_available": 2,
+          "airlines_grounded_pct": 100.0,
+          "prices_quoted": 21,
+          "prices_grounded": 12,
+          "prices_grounded_pct": 57.1,
+          "uses_real_data": true,
+          "matched_hotels": [
+            "Theodora Pension Old Town"
+          ],
+          "matched_airlines": [
+            "Azerbaijan Airlines",
+            "Turkish Airlines"
+          ]
+        }
       }
     ]
   },
@@ -299,67 +435,140 @@
     {
       "arch": "architecture_6agent",
       "success": true,
-      "result": "## Istanbul 4-Day Itinerary: History, Food, and Shopping Adventure\n\n**Travel Dates:** August 15, 2026 - August 19, 2026\n**Destination:** Istanbul, Turkey\n**Traveler:** 1 Adult\n**Interests:** History, Food, Shopping\n\n---\n\n### Flight Analysis\n\n**Chosen Flight Option (Option 2):**\n*   **Price:** $937 USD\n*   **Outbound:**\n    *   **Airline:** Azerbaijan Airlines\n    *   **From:** Lahore (LHE) to Istanbul (IST)\n    *   **Departure:** 2026-08-15T03:05:00\n    *   **Arrival:** 2026-08-15T10:45:00\n    *   **Duration:** 9 hours 40 minutes (1 stop)\n*   **Inbound:**\n    *   **Airline:** PIA\n    *   **From:** Istanbul (IST) to Lahore (LHE)\n    *   **Departure:** 2026-08-19T00:50:00\n    *   **Arrival:** 2026-08-19T08:05:00\n    *   **Duration:** 5 hours 15 minutes (0 stops)\n\n**Analysis:**\nThe flight budget allocated was $280. All available flight options were significantly over this budget. The chosen flight, priced at $937, was the cheapest available and aligns with the specified return date. This results in a substantial flight budget overrun of $657 ($937 - $280). The outbound journey includes one stop, while the inbound is direct. The early morning departure on August 19th means the traveler will have limited time for activities on the last day of the trip in Istanbul.\n\n---\n\n### Hotel Analysis\n\n**Chosen Hotel:** Theodora Pension Old Town\n*   **Price/night**: $33.09 USD\n*   **Total for 4 nights (including taxes/charges)**: $145.57 USD ($132.34 base + $13.23 taxes/charges)\n*   **Rating**: 10 Exceptional (based on 1 review)\n*   **Amenities**: 1 bed, free cancellation, no prepayment needed.\n*   **Location**: 0.6 km from downtown, convenient for sightseeing.\n\n**Analysis:**\nThe accommodation budget allocated was $280 for 4 nights (or $70 per night). Theodora Pension Old Town was selected as it is the most budget-friendly option, costing $145.57 for the entire stay. This is well within the allocated budget, providing a saving of $134.43 ($280 - $145.57). Its exceptional rating and central location make it an excellent choice for a budget traveler interested in history and exploring the old town.\n\n---\n\n### Budget Breakdown\n\n**Initial Total Budget:** $800 USD\n\n**Initial Budget Allocation:**\n*   Flights: $280\n*   Accommodation: $280\n*   Activities: $160\n*   Meals: $80\n*   **Total:** $800\n\n**Actual Costs & Revised Budget:**\n*   **Flights:** $937 USD (Over budget by $657)\n*   **Accommodation:** $145.57 USD (Under budget by $134.43)\n*   **Activities:** $160 USD (Original allocation - *please note this is an estimation, and actual costs may vary greatly depending on ticket prices for attractions. This budget is already fully consumed by flight overruns.*)\n*   **Meals:** $80 USD (Original allocation for 4 days / 12 meals = ~$6.67 per meal - *This budget is extremely tight for Istanbul and is already fully consumed by flight overruns.*)\n\n**Total Estimated Trip Cost (Flights & Accommodation Only):** $1082.57 USD\n**Total Estimated Trip Cost (Including original Activities & Meals):** $1082.57 + $160 + $80 = $1322.57 USD\n\n**Budget Summary:**\nThe trip is significantly over the initial total budget of $800. The cost for flights alone ($937) exceeds the total budget. After accounting for the chosen flight and accommodation, the total minimum cost for just these two categories is $1082.57, representing an overrun of $282.57 even before considering any activity admissions or meals. The original budgets for activities and meals are effectively negative, meaning the traveler will need to significantly increase their overall budget to cover these expenses. Strict budgeting for meals (e.g., street food, local markets) and careful selection of free or low-cost activities will be essential.\n\n---\n\n### Day-by-Day Itinerary\n\n**Day 0: Friday, August 14, 2026 (Departure)**\n*   **Evening:** Depart from Lahore (LHE) on Azerbaijan Airlines flight at 03:05 AM on August 15th. Ensure to arrive at the airport well in advance for check-in and security procedures.\n\n**Day 1: Saturday, August 15, 2026 (Arrival & Sultanahmet Exploration)**\n*   **Morning (10:45 AM):** Arrive at Istanbul (IST) airport. Clear immigration and customs. Take public transport (e.g., Metro + Tram) or an airport shuttle to Theodora Pension Old Town. Check in and drop off luggage.\n*   **Lunch:** Find a local eatery near Sultanahmet Square for a quick, budget-friendly meal. Look for doner kebabs, simit, or street food vendors.\n*   **Afternoon Activity:** Begin your exploration at the historic **Sultanahmet Square**. Visit the magnificent **Hagia Sophia Mosque**, a marvel of Byzantine architecture and Ottoman conversion. Afterwards, marvel at the stunning blue tiles of the **Blue Mosque (Sultan Ahmed Mosque)**.\n*   **Late Afternoon:** Explore the ancient underground **Basilica Cistern**.\n*   **Dinner:** Explore the side streets around your hotel for budget-friendly local restaurants offering traditional Turkish cuisine.\n*   **Evening:** Relax at the hotel or take a leisurely stroll around the illuminated Sultanahmet area.\n\n**Day 2: Sunday, August 16, 2026 (Ottoman Grandeur & Grand Bazaar)**\n*   **Morning Activity:** Head to **Topkapi Palace**, the grand residence of Ottoman sultans. Allow ample time to explore its courtyards, treasuries, and Harem, gaining insight into Ottoman history and enjoying stunning views of the Bosphorus.\n*   **Lunch:** Grab a bite at one of the cafes within the palace grounds or find a local restaurant outside the palace walls.\n*   **Afternoon Activity:** Immerse yourself in the bustling atmosphere of the **Grand Bazaar**, one of the world's oldest and largest covered markets. This is perfect for shopping (souvenirs, carpets, jewelry) and experiencing local culture. Practice your bargaining skills!\n*   **Dinner:** Enjoy dinner in the vibrant areas near the Grand Bazaar. Look for small lokantas (local eateries) for authentic and affordable Turkish dishes.\n*   **Evening:** Consider attending a Whirling Dervish show if interested in Sufi culture (check schedules and prices in advance).\n\n**Day 3: Monday, August 17, 2026 (Spice, S\u00fcleymaniye & Bosphorus Views)**\n*   **Morning Activity:** Visit the vibrant **Spice Market (Egyptian Bazaar)** for an aromatic experience. Explore the stalls selling spices, sweets, Turkish delights, and dried fruits.\n*   **Late Morning:** Walk to the impressive **S\u00fcleymaniye Mosque**, an Ottoman imperial mosque and one of Istanbul's largest. Admire its architecture and enjoy panoramic city views from its terrace.\n*   **Lunch:** Find a restaurant with a view near the Spice Market or S\u00fcleymaniye Mosque, or grab some snacks from the market.\n*   **Afternoon Activity:** Take a relaxing **Bosphorus Cruise**. This offers scenic views of both the European and Asian sides of Istanbul, showcasing palaces, historic sites, and modern villas from the water. Opt for a public ferry for a more budget-friendly experience.\n*   **Dinner:** Enjoy fresh seafood near the Galata Bridge or explore the Beyo\u011flu district for diverse dining options.\n*   **Evening:** Consider walking across the Galata Bridge and exploring the lively Karak\u00f6y neighborhood.\n\n**Day 4: Tuesday, August 18, 2026 (Last-Minute Exploration & Departure Preparation)**\n*   **Morning Activity:** Depending on your interests and energy levels, you could revisit a favorite area for last-minute shopping at the Grand Bazaar or Spice Market. Alternatively, explore the colorful historic houses of the Balat neighborhood, known for its bohemian charm and street art.\n*   **Lunch:** Enjoy a final authentic Turkish meal at a local cafe or restaurant.\n*   **Afternoon:** Pick up any last-minute souvenirs. Head back to the hotel to pack and organize your belongings.\n*   **Late Afternoon:** Check out from Theodora Pension Old Town. If your flight is very early on August 19th, you might consider arriving at the airport later in the evening to rest before check-in or booking a late check-out if available and affordable.\n*   **Evening:** Make your way to Istanbul (IST) airport for your flight back to Lahore. Your flight departs at 00:50 AM on August 19th, so plan to arrive at the airport by approximately 10:00 PM - 10:30 PM on August 18th.\n\n---\n\n### Travel Tips\n\n1.  **Budget Management:** Your trip significantly exceeds the initial $800 budget. Be prepared to spend considerably more. For meals, prioritize street food (e.g., simit, b\u00f6rek, doner, lahmacun, balik ekmek) and local eateries (lokantas) over tourist traps to save money. Carry a water bottle and refill it.\n2.  **Transportation:** Istanbul has an excellent public transportation system (Metro, Tram, Bus, Ferry). Purchase an Istanbulkart upon arrival for discounted fares. Taxis can be expensive; agree on a price or ensure the meter is used.\n3.  **Accommodation:** Theodora Pension Old Town is centrally located in Sultanahmet, making it easy to walk to many major attractions.\n4.  **Bargaining:** When shopping in the Grand Bazaar or Spice Market, bargaining is expected and a key part of the experience. Start by offering around 50% of the asking price and negotiate from there.\n5.  **Dress Code:** When visiting mosques, women should cover their heads, shoulders, and knees. Men should wear long pants. Scarves are often provided at mosque entrances, but it's advisable to carry your own.\n6.  **Safety:** Istanbul is generally safe for tourists. Be aware of your surroundings, especially in crowded areas, and keep an eye on your belongings to prevent pickpocketing.\n7.  **Currency:** The local currency is the Turkish Lira (TRY). Exchange money at reputable exchange offices or withdraw from ATMs.\n8.  **Connectivity:** Consider purchasing a local SIM card or an e-SIM for affordable data to help with navigation and communication.\n9.  **Footwear:** You will be doing a lot of walking, so comfortable shoes are essential.\n10. **Hydration:** Stay hydrated, especially during August which can be quite warm in Istanbul.\n11. **Language:** While many people in tourist areas speak English, learning a few basic Turkish phrases like \"Merhaba\" (Hello), \"Te\u015fekk\u00fcr ederim\" (Thank you), and \"Nas\u0131ls\u0131n?\" (How are you?) will be appreciated.",
-      "extraction": "{\"origin\":\"Lahore\",\"destination\":\"Istanbul\",\"departure_date\":\"2026-08-15\",\"return_date\":\"2026-08-19\",\"trip_duration\":4,\"total_budget\":800,\"num_adults\":1,\"num_children\":0,\"interests\":[\"history\",\"food\",\"shopping\"],\"travel_style\":\"\",\"budget_breakdown\":{\"flights\":280,\"accommodation\":280,\"activities\":160,\"meals\":80}}",
-      "latency": 178.8003625869751,
-      "phase1_extraction_s": 2.8,
-      "phase2_search_and_coord_s": 176.0,
+      "result": "**Istanbul Adventure: History, Food, and Shopping (August 15 - August 19, 2026)**\n\nThis itinerary is designed for one adult interested in history, food, and shopping in Istanbul. Please note the significant budget adjustments required, primarily due to flight costs exceeding the initial allocation.\n\n---\n\n**Flight Analysis:**\n\nThe initial flight budget was $280. However, the cheapest available flight option for your dates is **$937.10 USD**, which is considerably higher than budgeted. This means the overall trip budget will need to be significantly increased.\n\n**Selected Flight Option (Option 1 - Cheapest):**\n*   **Total Price:** $937.10 USD\n*   **Outbound Flight:**\n    *   **Airline:** Azerbaijan Airlines\n    *   **Departure:** 2026-08-15, 03:05 (Lahore - LHE)\n    *   **Arrival:** 2026-08-15, 10:45 (Istanbul - IST)\n    *   **Duration:** 9 hours 40 minutes (1 stop)\n*   **Inbound Flight:**\n    *   **Airline:** PIA\n    *   **Departure:** 2026-08-19, 00:50 (Istanbul - IST)\n    *   **Arrival:** 2026-08-19, 08:05 (Lahore - LHE)\n    *   **Duration:** 5 hours 15 minutes (non-stop)\n\n**Key Considerations:**\n*   The outbound flight involves a stop, increasing travel time.\n*   The inbound flight is a red-eye, departing early morning on August 19th, effectively ending your last full day in Istanbul on August 18th. You will need to check out of your accommodation on August 18th or arrange a late checkout/luggage storage.\n\n---\n\n**Hotel Analysis:**\n\nUnfortunately, due to limitations with the hotel search tools, I was unable to provide a list of real hotel options within your specified budget of $70 per night ($280 for 4 nights).\n\n**Accommodation Assumption:**\nFor this itinerary, we will proceed with the assumption that a budget-friendly hostel (private room) or a very basic guesthouse can be secured for approximately **$70 per night** in a central area, totaling **$280** for the 4 nights (August 15-18). It is strongly recommended to book accommodation well in advance, verifying actual prices and reviews to ensure it meets your expectations and budget.\n\n---\n\n**Daily Schedule:**\n\n**Day 1: Saturday, August 15, 2026 - Arrival and Imperial Wonders**\n\n*   **Morning (10:45 AM onwards):** Arrive at Istanbul Airport (IST). Clear immigration, collect luggage, and transfer to your accommodation. Check in, drop off your bags, and freshen up.\n*   **Lunch (1:00 PM):** Enjoy local street food or a budget-friendly eatery near Sultanahmet. Look for places selling *simit*, *d\u00f6ner kebab*, or *\u00e7i\u011f k\u00f6fte* for an authentic and quick meal (approx. $5-8).\n*   **Afternoon (2:30 PM - 6:30 PM):** Explore **Sultanahmet Square**. Begin with the magnificent **Hagia Sophia** (check entry requirements and potential costs) and then visit the iconic **Blue Mosque (Sultan Ahmet Camii)**. Afterwards, discover the ancient **Basilica Cistern (Yerebatan Sarayi)**.\n*   **Evening (7:00 PM):** Dinner at a local, inexpensive restaurant offering traditional Turkish cuisine in the Sultanahmet or Emin\u00f6n\u00fc area (approx. $10-15).\n*   **Night:** Stroll around Sultanahmet Square, enjoy the illuminated monuments, and head back to your accommodation.\n\n**Day 2: Sunday, August 16, 2026 - Grand Bazaars and Palatial Splendor**\n\n*   **Morning (9:00 AM - 1:00 PM):** Head to **Topkapi Palace (Topkapi Sarayi)**, the former residence of Ottoman sultans. Allow ample time to explore its courtyards, treasury, and Harem section (if interested, often separate ticket).\n*   **Lunch (1:30 PM):** Grab a quick and affordable meal from a food stall or small restaurant near Topkapi Palace or on your way to the Grand Bazaar (approx. $5-8).\n*   **Afternoon (2:30 PM - 6:30 PM):** Immerse yourself in the bustling **Grand Bazaar** for a unique shopping and cultural experience. Even if not buying, the atmosphere is incredible.\n*   **Dinner (7:00 PM):** Try another local eatery known for its simple, delicious, and budget-friendly Turkish dishes near the Grand Bazaar or your accommodation (approx. $10-15).\n*   **Night:** Relax or enjoy a traditional Turkish tea/coffee at a local cafe.\n\n**Day 3: Monday, August 17, 2026 - Bosphorus Views and Spice Aromas**\n\n*   **Morning (9:30 AM - 1:00 PM):** Take a scenic **Bosphorus Cruise** to see Istanbul from the water, enjoying panoramic views of palaces, mosques, and bridges spanning two continents. Many public ferries offer affordable tours.\n*   **Lunch (1:30 PM):** Have lunch at a casual restaurant on the waterfront near the Spice Bazaar or Emin\u00f6n\u00fc, or grab a fish sandwich (*bal\u0131k ekmek*) from a boat near Galata Bridge (approx. $8-12).\n*   **Afternoon (2:30 PM - 5:30 PM):** Visit the vibrant **Spice Bazaar (Egyptian Bazaar)** for an aromatic experience and more shopping opportunities for spices, sweets, and souvenirs.\n*   **Evening (6:00 PM - 9:00 PM):** Explore the **Asian Side of Istanbul**. Take a ferry to Kad\u0131k\u00f6y, known for its lively markets, food scene, and charming streets. Wander through Moda neighborhood.\n*   **Dinner (7:30 PM):** Find a local \"lokanta\" (traditional Turkish restaurant) in Kad\u0131k\u00f6y for an authentic and affordable dinner experience (approx. $10-15).\n*   **Night:** Enjoy the atmosphere of Kad\u0131k\u00f6y before taking a ferry back to the European side.\n\n**Day 4: Tuesday, August 18, 2026 - Architectural Gems and Historic Neighborhoods**\n\n*   **Morning (9:30 AM - 12:30 PM):** Visit **S\u00fcleymaniye Mosque**, an architectural masterpiece by Mimar Sinan, offering stunning views of the Golden Horn and Bosphorus.\n*   **Lunch (1:00 PM):** Enjoy a meal at a nearby cafe or a local \"esnaf lokantas\u0131\" (tradesmen's restaurant) for home-style, hearty Turkish food near S\u00fcleymaniye (approx. $8-12).\n*   **Afternoon (2:00 PM - 5:30 PM):** Wander through the charming and colorful historic streets of **Balat and Fener**. These UNESCO World Heritage sites are known for their well-preserved Ottoman houses, churches, and synagogues.\n*   **Late Afternoon (5:30 PM - 7:00 PM):** Head back to your accommodation to pick up luggage or arrange for late checkout. Have some free time for last-minute souvenir shopping or revisit a favorite spot.\n*   **Dinner (7:00 PM):** Have a final budget-friendly dinner at a recommended local restaurant in a less touristy area, enjoying your last taste of Turkish cuisine (approx. $10-15).\n*   **Night (10:00 PM onwards):** Transfer to Istanbul Airport (IST) for your red-eye flight departing at 00:50 AM on August 19th. Allow ample time for travel and airport procedures.\n\n---\n\n**Budget Breakdown (Revised):**\n\n**Initial Total Budget:** $800\n**Revised Estimated Total Budget:** $1457.10\n\nHere's the detailed breakdown based on the cheapest available flight and assumed accommodation:\n\n*   **Flights:** $937.10 (Azerbaijan Airlines/PIA - significantly over initial $280 budget)\n*   **Accommodation:** $280.00 (Assumed $70/night x 4 nights - August 15-18)\n*   **Activities/Entrance Fees:** $160.00 (Topkapi Palace, Hagia Sophia, Basilica Cistern, Bosphorus Cruise, etc. - can vary greatly, allocate wisely)\n*   **Meals & Drinks:** $80.00 (Approximately $20 per day for 4 full days, meaning roughly $6-7 per meal. This requires sticking to street food, local eateries, and avoiding expensive tourist restaurants.)\n*   **Local Transportation:** $0.00 (This budget is tight; assume walking or minor public transport use. A daily Istanbulkart pass might be needed, budget approx. $3-5/day if used.)\n*   **Contingency/Miscellaneous:** $0.00 (Highly recommend adding a contingency fund of at least 10-15% of the total budget for unforeseen expenses or small splurges.)\n\n**Note on Meals:** The $80 meal budget for 4 days ($20/day) is very tight for Istanbul. Focus on street food, local bakeries, *esnaf lokantas\u0131*, and don't order multiple courses or expensive drinks to stay within this limit.\n\n---\n\n**Travel Tips for Istanbul on a Budget:**\n\n1.  **Istanbulkart:** Purchase an Istanbulkart upon arrival. It's a refillable card for all public transport (metro, tram, bus, ferry) and offers discounted fares compared to single tickets.\n2.  **Public Transport:** Utilize Istanbul's extensive public transport system. Taxis can be expensive, especially with traffic.\n3.  **Street Food & Lokantas:** Embrace street food (simit, d\u00f6ner, bal\u0131k ekmek, kumpir) and dine at *esnaf lokantas\u0131* (tradesmen's restaurants) for delicious, authentic, and affordable meals. Avoid tourist trap restaurants near major attractions.\n4.  **Free Attractions:** Many mosques (like the Blue Mosque, S\u00fcleymaniye) are free to enter for visitors outside of prayer times. Wandering through bazaars, historic neighborhoods (Balat, Fener), and along the Bosphorus are also free activities.\n5.  **Museum Pass (Optional):** If you plan to visit many museums, research the \"Museum Pass Istanbul.\" It might save you money, but calculate if it's worth it for your specific itinerary. For this budget, it might be challenging to fit many paid attractions into the activity budget.\n6.  **Water:** Carry a reusable water bottle and refill it to save money and reduce plastic waste. Tap water is generally not recommended for drinking directly.\n7.  **Bargain at Bazaars:** When shopping in the Grand Bazaar or Spice Bazaar, bargaining is expected and can help you get better prices, especially for souvenirs.\n8.  **Comfortable Shoes:** You'll be doing a lot of walking, so comfortable shoes are a must.\n9.  **Dress Code:** When visiting mosques, women should cover their heads, shoulders, and knees. Men should wear trousers and a shirt. Scarves are often provided at entrances if you don't have one.\n10. **Safety:** Istanbul is generally safe, but be aware of your surroundings, especially in crowded areas like bazaars, to prevent pickpocketing. Keep valuables secure.\n11. **Currency:** The local currency is the Turkish Lira (TRY). While many places accept credit cards, it's good to have some cash for small purchases, street food, and smaller establishments.\n12. **Language:** Turkish is the official language. Learning a few basic phrases (hello, thank you, please) can be helpful and appreciated by locals. English is commonly spoken in tourist areas.",
+      "extraction": "```json\n{\n  \"origin\": \"Lahore\",\n  \"destination\": \"Istanbul\",\n  \"departure_date\": \"2026-08-15\",\n  \"return_date\": \"2026-08-19\",\n  \"trip_duration\": 4,\n  \"total_budget\": 800,\n  \"num_adults\": 1,\n  \"num_children\": 0,\n  \"interests\": [\"history\", \"food\", \"shopping\"],\n  \"travel_style\": \"\",\n  \"budget_breakdown\": {\n    \"flights\": 280,\n    \"accommodation\": 280,\n    \"activities\": 160,\n    \"meals\": 80\n  }\n}\n```",
+      "latency": 85.54549026489258,
+      "phase1_extraction_s": 9.1,
+      "phase2_search_and_coord_s": 76.4,
       "errors": [],
       "llm": {
         "label": "6agent/SC-01",
-        "llm_calls": 23,
+        "llm_calls": 19,
         "llm_failures": 0,
-        "prompt_tokens": 93578,
-        "completion_tokens": 15980,
-        "total_tokens": 109558,
-        "cost_usd": 0.068604,
-        "llm_time_s": 107.56,
-        "wall_time_s": 178.8,
+        "prompt_tokens": 48694,
+        "completion_tokens": 15232,
+        "total_tokens": 63926,
+        "cost_usd": 0.052749,
+        "llm_time_s": 77.36,
+        "wall_time_s": 85.55,
         "models_used": [
           "gemini-2.5-flash"
         ],
         "failure_details": []
       },
-      "llm_calls": 23,
-      "total_tokens": 109558,
-      "cost_usd": 0.068604,
+      "llm_calls": 19,
+      "total_tokens": 63926,
+      "cost_usd": 0.052749,
       "scenario_id": "SC-01",
       "scenario_name": "Short city break - Lahore to Istanbul",
-      "runner": "B \u2014 6 AGENTS (naive)"
+      "runner": "B \u2014 6 AGENTS (naive)",
+      "groundedness": {
+        "scored": true,
+        "hotels_grounded": 1,
+        "hotels_available": 10,
+        "hotels_grounded_pct": 10.0,
+        "airlines_grounded": 2,
+        "airlines_available": 2,
+        "airlines_grounded_pct": 100.0,
+        "prices_quoted": 30,
+        "prices_grounded": 4,
+        "prices_grounded_pct": 13.3,
+        "uses_real_data": true,
+        "matched_hotels": [
+          "The Hotel Beyaz Saray - Grand Bazaar"
+        ],
+        "matched_airlines": [
+          "Azerbaijan Airlines",
+          "Turkish Airlines"
+        ]
+      }
     }
   ],
   "optimized_details": [
     {
       "arch": "architecture_3agent",
       "success": true,
-      "result": "Here is a complete day-by-day itinerary for your 4-day trip to Istanbul, based on the provided data:\n\n---\n\n**Istanbul Budget Itinerary: History, Food & Shopping**\n**Destination:** Istanbul, T\u00fcrkiye\n**Traveler:** 1 Adult\n**Dates:** August 15, 2026 - August 19, 2026\n**Interests:** History, Food, Shopping\n**Travel Style:** Budget\n\n---\n\n**Flight Details:**\n\n*   **Selected Flight Option:** Option 2 (Cheapest available)\n*   **Airline:** Azerbaijan Airlines (Outbound), PIA (Inbound)\n*   **Total Price:** $937.10 USD\n*   **Outbound:**\n    *   From: Lahore (LHE)\n    *   To: Istanbul (IST)\n    *   Departure: 2026-08-15, 03:05\n    *   Arrival: 2026-08-15, 10:45\n    *   Duration: 580 minutes (9 hours 40 minutes)\n    *   Stops: 1\n*   **Inbound:**\n    *   From: Istanbul (IST)\n    *   To: Lahore (LHE)\n    *   Departure: 2026-08-19, 00:50\n    *   Arrival: 2026-08-19, 08:05\n    *   Duration: 315 minutes (5 hours 15 minutes)\n    *   Stops: 0\n\n---\n\n**Hotel Accommodation:**\n\n*   **Selected Hotel:** Theodora Pension Old Town\n*   **Total Price (4 nights):** $132.34 USD ($33.09/night)\n*   **Rating:** 10/10 Exceptional (1 review)\n*   **Location:** 0.6 km from downtown, excellent for exploring the city center.\n*   **Check-in:** 2026-08-15\n*   **Check-out:** 2026-08-19 (Note: Your flight departs very early on the 19th, so you will depart for the airport late on the 18th).\n\n---\n\n**Day-by-Day Itinerary:**\n\n**Day 1: Saturday, August 15, 2026 (Arrival & Sultanahmet Introduction)**\n*   **Morning (10:45 AM):** Arrive at Istanbul (IST) airport via Azerbaijan Airlines.\n*   **Late Morning/Early Afternoon:** Transfer to Theodora Pension Old Town. Check-in and drop off luggage.\n*   **Afternoon (History):** Begin exploring the historic Sultanahmet area, as suggested for \"Day 1: Attractions in Sultanahmet.\" You can walk around the Hippodrome, Blue Mosque exterior, and Hagia Sophia exterior to get a feel for the area.\n*   **Evening (Food):** Experience the local food scene. Head towards the Fatih district for \"The best Fatih Street food,\" perfect for a budget-friendly and authentic dinner.\n\n**Day 2: Sunday, August 16, 2026 (Sultanahmet Immersion & Local Flavors)**\n*   **Morning (History):** Continue your exploration of Sultanahmet attractions. This could include visiting interiors of key historical sites or delving deeper into specific museums (e.g., Topkapi Palace if time permits, though individual entry fees will apply).\n*   **Lunch (Food):** Grab a cheap and delicious meal from local eateries or street food vendors in Sultanahmet.\n*   **Afternoon (Sightseeing/Light Shopping):** Enjoy more sightseeing in the old city or do some light shopping for local crafts and souvenirs in the vicinity.\n*   **Evening (Food):** Follow the spirit of \"What $10 Gets You in Istanbul, T\u00fcrkiye (Food Tour!)\" by trying various budget-friendly street foods for dinner, exploring different vendors and tastes.\n\n**Day 3: Monday, August 17, 2026 (Beyond Sultanahmet & Shopping Spree)**\n*   **Morning (Sightseeing):** Explore areas of Istanbul \"beyond\" the immediate Sultanahmet square, as suggested by the itinerary snippet. This could involve crossing the Galata Bridge towards Karakoy or Beyoglu for a different architectural and cultural experience.\n*   **Lunch (Food):** Enjoy a casual lunch, perhaps more street food or a local restaurant in the area you are exploring.\n*   **Afternoon (Shopping):** Dedicate time for shopping, as suggested for \"Day 2: More sightseeing + Shopping.\" Explore famous markets or modern shopping districts depending on your preference and location.\n*   **Evening (Food):** Embark on your own \"Ultimate Istanbul Food Tour: Best Turkish Street Food.\" Sample different Turkish dishes and snacks, exploring various neighborhoods for culinary delights.\n\n**Day 4: Tuesday, August 18, 2026 (Last-minute Exploration & Departure Prep)**\n*   **Morning (Leisure/Revisit):** Enjoy a relaxed morning. You could revisit a favorite historical site, explore a new neighborhood, or do some last-minute souvenir shopping.\n*   **Lunch (Food):** Have a final traditional Turkish meal or revisit a favorite street food spot.\n*   **Afternoon:** Collect any last-minute items. If the hotel allows, enjoy a late check-out, or check out at the standard time and store your luggage for the day.\n*   **Evening:** Have an early dinner. Head to the airport well in advance for your early morning flight.\n*   **Late Evening/Night:** Depart from Istanbul (IST) at 00:50 on August 19th via PIA.\n\n---\n\n**Budget Breakdown (USD):**\n\n*   **Total Budget Allocated:** $800\n*   **Budget Breakdown (Preferences):**\n    *   Flights: $280\n    *   Accommodation: $280\n    *   Activities: $160\n    *   Meals: $80\n\n*   **Actual Costs based on selections:**\n    *   **Flights:** $937.10 (Azerbaijan Airlines/PIA) - *Significantly over allocated budget.*\n    *   **Accommodation:** $132.34 (Theodora Pension Old Town for 4 nights) - *Well within allocated budget.*\n    *   **Total Actual for Flights & Accommodation:** $1069.44\n\n*   **Budget Discrepancy:** The chosen flight alone ($937.10) exceeds the total allocated budget for the entire trip ($800) by $137.10. Therefore, the overall trip as planned with these selections is over budget. With the selected flight and hotel, you would have a deficit of $269.44 ($800 - $1069.44) before accounting for activities and meals. This means you will need to adjust your spending or increase your total budget significantly.\n\n---\n\n**Travel Tips:**\n\n*   **Tour Guide:** Consider if hiring a tour guide is worth it for historical sites, as suggested in the attractions data, especially if you want in-depth information. Given your budget constraints, this might be a self-guided exploration or a free walking tour.\n*   **Food Focus:** Embrace street food and local eateries. Istanbul is renowned for its diverse and affordable street food, aligning perfectly with your \"food\" interest and \"budget\" travel style. Look for experiences like the \"Ultimate Istanbul Food Tour\" or \"What $10 Gets You in Istanbul\" to guide your culinary adventures.\n*   **Historical Exploration:** Focus on the Sultanahmet area for historical attractions. Many key sites are within walking distance of each other.\n*   **Shopping:** Plan specific time for shopping, whether it's for souvenirs in traditional markets or exploring other shopping districts.\n*   **Explore Beyond:** Don't limit yourself to just the central tourist areas; venture out to experience other parts of Istanbul as suggested.",
+      "result": "**Istanbul Budget Itinerary: History, Food & Shopping**\n\n**Trip Overview:**\n*   **Origin:** Lahore, Pakistan (LHE)\n*   **Destination:** Istanbul, Turkey (IST)\n*   **Dates:** August 15, 2026 \u2013 August 19, 2026 (4 nights)\n*   **Traveler:** 1 Adult\n*   **Interests:** History, Food, Shopping\n*   **Travel Style:** Budget\n\n---\n\n**Budget Breakdown:**\n\n| Category       | Allocated Budget (USD) | Actual/Recommended (USD) | Status      | Notes                                                                                                                                                                                                                                                                                                                                                                                              |\n| :------------- | :--------------------- | :----------------------- | :---------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| **Flights**    | $280                   | $937.10                  | **OVER**    | All available flights significantly exceed the allocated budget. The cheapest option is recommended, but a substantial budget adjustment is required.                                                                                                                                                                                                                              |\n| **Accommodation** | $280                   | $132.34                  | **UNDER**   | Theodora Pension Old Town offers exceptional value and a central location, staying well within the accommodation budget.                                                                                                                                                                                                                                                             |\n| **Activities** | $160                   | Est. $160                | On Track    | This budget can cover entrance fees for historical sites or a budget-friendly local tour.                                                                                                                                                                                                                                                                                           |\n| **Meals**      | $80                    | Est. $80                 | On Track    | Focusing on street food and local eateries will help stay within this daily budget of approximately $20.                                                                                                                                                                                                                                                                            |\n| **Total**      | **$800**               | **$1309.44 (approx.)**   | **OVER**    | The total trip cost is significantly over budget due to flight prices. A revised total budget of at least $1300 would be needed for this itinerary. Remaining budget for activities & meals after flights & hotel is $1309.44 - $937.10 - $132.34 = $240. This leaves $60 per day for activities and meals, which is slightly more flexible than the initial allocation. |\n\n---\n\n**Flight Recommendations:**\n\n*   **Outbound Flight (Lahore to Istanbul):**\n    *   **Airline:** Azerbaijan Airlines\n    *   **Departure:** 2026-08-15, 03:05 (LHE - Lahore)\n    *   **Arrival:** 2026-08-15, 10:45 (IST - Istanbul)\n    *   **Stops:** 1\n    *   **Duration:** 580 minutes (9h 40m)\n\n*   **Inbound Flight (Istanbul to Lahore):**\n    *   **Airline:** PIA\n    *   **Departure:** 2026-08-19, 00:50 (IST - Istanbul)\n    *   **Arrival:** 2026-08-19, 08:05 (LHE - Lahore)\n    *   **Stops:** 0\n    *   **Duration:** 315 minutes (5h 15m)\n\n*   **Total Flight Price:** $937.10 (This option is significantly over the allocated flight budget of $280.)\n\n---\n\n**Hotel Recommendations:**\n\n*   **Hotel Name:** Theodora Pension Old Town\n*   **Total Price:** $132.34 (for 4 nights)\n*   **Nightly Rate:** $33.09\n*   **Rating:** 10/10 Exceptional (based on 1 review)\n*   **Location:** 0.6 km from downtown, excellent for exploring.\n*   **Notes:** This hotel offers an exceptional rating and is well within the accommodation budget, providing a central base for exploring Istanbul.\n\n---\n\n**Day-by-Day Itinerary:**\n\n**Day 1: Saturday, August 15, 2026 \u2013 Arrival & Sultanahmet History**\n\n*   **Morning (10:45 AM onwards):**\n    *   Arrive at Istanbul (IST) via Azerbaijan Airlines.\n    *   Transfer to your accommodation, Theodora Pension Old Town.\n    *   Check-in and settle in.\n*   **Afternoon:**\n    *   Begin exploring \"Attractions in Sultanahmet,\" immersing yourself in the historic heart of Istanbul, which aligns with your interest in history.\n*   **Evening:**\n    *   Experience authentic Turkish street food for dinner, keeping to your budget and interest in food. Explore local stalls in the Sultanahmet area.\n\n**Day 2: Sunday, August 16, 2026 \u2013 Sightseeing & Shopping Delights**\n\n*   **Morning:**\n    *   Continue \"More sightseeing\" in Istanbul, perhaps venturing into areas connected to the attractions from the previous day or new historical sites.\n*   **Afternoon:**\n    *   Dedicate time to \"Shopping,\" exploring local markets or bazaars, catering to your shopping interest.\n*   **Evening:**\n    *   Head to the Fatih district to explore its vibrant atmosphere and enjoy \"The best Fatih Street food,\" a great way to experience local cuisine on a budget.\n\n**Day 3: Monday, August 17, 2026 \u2013 Beyond the Center & Culinary Exploration**\n\n*   **Morning/Afternoon:**\n    *   Venture out to \"Places to visit in Istanbul beyond\" the immediate city center, perhaps exploring a different district or a less central historical site.\n*   **Evening:**\n    *   Embark on a culinary adventure to \"taste the best Turkish dishes.\" Focus on exploring various local eateries and street food options as suggested in the restaurant data, aligning with your food interest and budget.\n\n**Day 4: Tuesday, August 18, 2026 \u2013 Last-Minute Exploration & Departure Preparation**\n\n*   **Morning:**\n    *   Revisit a favorite historical site, discover a new area for last-minute sightseeing, or do some final souvenir shopping.\n*   **Afternoon:**\n    *   Enjoy a relaxed final meal, perhaps trying another Turkish street food specialty.\n    *   Begin preparations for your early morning departure, including packing.\n*   **Evening:**\n    *   Have an early night or a light activity, as you will need to head to the airport before midnight for your flight.\n\n**Day 5: Wednesday, August 19, 2026 \u2013 Departure**\n\n*   **Early Morning (pre-00:50 AM):**\n    *   Depart from Theodora Pension Old Town to Istanbul Airport (IST) for your PIA flight back to Lahore.\n    *   Flight departs at 00:50 AM.\n\n---\n\n**Travel Tips:**\n\n*   **Budget Management:** The flight cost significantly impacts your total budget. Carefully manage your remaining funds for activities and meals. Theodora Pension's low cost gives you more flexibility here.\n*   **Transportation:** With a budget travel style and a centrally located hotel, public transport (trams, metro, ferries) will be your best friend for getting around Istanbul.\n*   **Food:** Embrace the street food scene! Istanbul is famous for its affordable and delicious street food, which perfectly aligns with your interests and budget. Look for local eateries away from the main tourist traps for better prices.\n*   **Activities:** Many historical sites in Istanbul offer combined tickets or are free to explore from the outside. Prioritize which paid attractions are most important to you to stay within your activity budget. Consider a walking tour as a budget-friendly way to learn about history.\n*   **Cultural Experience:** Engage with locals, try to learn a few basic Turkish phrases, and be open to new experiences. Istanbul offers a rich blend of history, culture, and culinary delights.\n*   **Early Departure:** Note the very early morning departure for your return flight on August 19th. Plan your transport to the airport accordingly, perhaps arranging a taxi or checking public transport schedules for that time.",
       "extraction": "{\"origin\":\"Lahore\",\"destination\":\"Istanbul\",\"departure_date\":\"2026-08-15\",\"return_date\":\"2026-08-19\",\"trip_duration\":4,\"total_budget\":800,\"num_adults\":1,\"num_children\":0,\"interests\":[\"history\",\"food\",\"shopping\"],\"travel_style\":\"budget\",\"budget_breakdown\":{\"flights\":280,\"accommodation\":280,\"activities\":160,\"meals\":80}}",
-      "latency": 23.233219623565674,
-      "phase1_extraction_s": 3.2,
+      "latency": 17.8711040019989,
+      "phase1_extraction_s": 2.7,
       "phase2_api_fetch_s": 0.0,
-      "phase3_coordination_s": 20.0,
+      "phase3_coordination_s": 15.2,
       "errors": [],
+      "ground_truth": {
+        "hotels": [
+          "YOTEL Istanbul Airport, City Entrance",
+          "ISG Sabiha G\u00f6k\u00e7en Airport Hotel",
+          "Theodora Pension Old Town",
+          "Nidya Hotel Esenyurt",
+          "Hilton Mall Of Istanbul",
+          "Aloft by Marriott Istanbul Karakoy",
+          "Sarn\u0131\u00e7 Butik Otel",
+          "G\u00fclhanepark Hotel & Spa",
+          "Titanic City Taksim",
+          "The Hotel Beyaz Saray - Grand Bazaar"
+        ],
+        "airlines": [
+          "Azerbaijan Airlines",
+          "Turkish Airlines"
+        ],
+        "prices": [
+          33.09,
+          61.36,
+          82.61,
+          96.21,
+          117.53,
+          123.19,
+          133.1,
+          161.97,
+          215.07,
+          347.24,
+          937.1,
+          946.97,
+          1285.1
+        ]
+      },
       "llm": {
         "label": "3agent/SC-01",
         "llm_calls": 2,
         "llm_failures": 0,
-        "prompt_tokens": 3866,
-        "completion_tokens": 4883,
-        "total_tokens": 8749,
-        "cost_usd": 0.013367,
-        "llm_time_s": 22.94,
-        "wall_time_s": 23.23,
+        "prompt_tokens": 3794,
+        "completion_tokens": 4019,
+        "total_tokens": 7813,
+        "cost_usd": 0.011186,
+        "llm_time_s": 17.55,
+        "wall_time_s": 17.87,
         "models_used": [
           "gemini-2.5-flash"
         ],
         "failure_details": []
       },
       "llm_calls": 2,
-      "total_tokens": 8749,
-      "cost_usd": 0.013367,
+      "total_tokens": 7813,
+      "cost_usd": 0.011186,
       "scenario_id": "SC-01",
       "scenario_name": "Short city break - Lahore to Istanbul",
-      "runner": "D \u2014 3 AGENTS (direct API)"
+      "runner": "D \u2014 3 AGENTS (direct API)",
+      "groundedness": {
+        "scored": true,
+        "hotels_grounded": 1,
+        "hotels_available": 10,
+        "hotels_grounded_pct": 10.0,
+        "airlines_grounded": 2,
+        "airlines_available": 2,
+        "airlines_grounded_pct": 100.0,
+        "prices_quoted": 21,
+        "prices_grounded": 12,
+        "prices_grounded_pct": 57.1,
+        "uses_real_data": true,
+        "matched_hotels": [
+          "Theodora Pension Old Town"
+        ],
+        "matched_airlines": [
+          "Azerbaijan Airlines",
+          "Turkish Airlines"
+        ]
+      }
     }
   ]
 }

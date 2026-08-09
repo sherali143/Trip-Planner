@@ -15,6 +15,7 @@ from src.server.mcp_server import search_hotels_comprehensive, search_attraction
 from src.agents import TripPlannerAgents
 from src.core.llm_metrics import recorder
 from src.core.resilience import kickoff_with_retry
+from comparison.metrics import extract_ground_truth
 
 
 def _make_coordinator():
@@ -223,5 +224,10 @@ RESTAURANTS:
         "phase1_extraction_s": round(t1 - start, 1),
         "phase2_api_fetch_s": round(t2 - t1, 1),
         "phase3_coordination_s": round(end - t2, 1),
-        "errors": errors
+        "errors": errors,
+        # This arm fetches all four data types deterministically, so what it
+        # retrieved is the scenario's ground truth. Every arm's itinerary is
+        # scored against it (see comparison/metrics.py) — including the arms
+        # that never called an API.
+        "ground_truth": extract_ground_truth(flights_data, hotels_data),
     }

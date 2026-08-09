@@ -37,6 +37,11 @@ RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
 SERPER_API_KEY = os.getenv("SERPER_API_KEY", "")
 BOOKING_HOST = "booking-com15.p.rapidapi.com"
 
+# How many hotels get the extra review-breakdown + nearby-attraction lookups.
+# Each one costs 2 additional Booking.com calls against a 50-call MONTHLY free
+# tier; see the comment at the enrichment block in search_hotels_comprehensive.
+_HOTEL_ENRICHMENT_TOP_N = int(os.getenv("HOTEL_ENRICHMENT_TOP_N", "0"))
+
 
 # ============================================
 # HOTEL/ACCOMMODATION FUNCTIONS
@@ -477,8 +482,18 @@ This could be because:
 🆔 Hotel ID: {hotel_id}
 """
         
-        # STEP 3: Get reviews for top 3 hotels only (to avoid too many API calls)
-        if idx <= 3 and hotel_id:
+        # STEP 3: Optional per-hotel enrichment (review breakdown + nearby POIs).
+        #
+        # Each enriched hotel costs 2 extra Booking.com calls, so enriching the
+        # top 3 made one hotel search cost 8 calls (1 destination + 1 search +
+        # 6 enrichment). The free tier allows 50 calls PER MONTH, so a single
+        # 20-scenario evaluation would need 160 and is impossible.
+        #
+        # Disabled by default: the review breakdown and nearby-attraction lists
+        # are not used by any itinerary, and the headline rating and review
+        # count already come free with the search response. Set
+        # HOTEL_ENRICHMENT_TOP_N to re-enable for interactive demos.
+        if idx <= _HOTEL_ENRICHMENT_TOP_N and hotel_id:
             # Get review scores
             reviews = get_hotel_reviews(str(hotel_id))
             if reviews.get("success"):
