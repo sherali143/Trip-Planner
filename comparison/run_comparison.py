@@ -89,8 +89,17 @@ def main():
 
     overall_start = time.time()
 
+    # Execute arm D first for each scenario, then report in ARMS order.
+    #
+    # D fetches every data type once, deterministically, with canonical
+    # parameters. Running it first populates the HTTP cache, so the agent arms
+    # that follow mostly replay rather than spending live quota on the same
+    # queries. Reversed (agents first), each arm's ReAct loop can issue slightly
+    # different parameters and burn several months' allowance in one run.
+    execution_order = sorted(ARMS, key=lambda a: a[0] != "D")
+
     for scenario in scenarios:
-        for code, name, runner in ARMS:
+        for code, name, runner in execution_order:
             results_by_arm[code].append(run_scenario(scenario, runner, f"{code} — {name}"))
 
         # Groundedness: score every arm's itinerary against the data arm D
