@@ -19,7 +19,18 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"), override=True
 from comparison.scenarios import SCENARIOS
 from comparison.architecture_6agent import plan_trip_baseline
 from comparison.architecture_3agent import plan_trip_optimized
+from comparison.architecture_6agent_optimized import plan_trip_optimized_6agent
+from comparison.architecture_single_llm import plan_trip_single_llm
 from src.core.http_cache import cache_summary, get_mode
+
+# Ordered least-to-most engineered so the results table reads as a progression:
+# no tools at all -> naive multi-agent -> tuned multi-agent -> direct execution.
+ARMS = [
+    ("A", "SINGLE LLM", plan_trip_single_llm),
+    ("B", "6 AGENTS (naive)", plan_trip_baseline),
+    ("C", "6 AGENTS (optimised)", plan_trip_optimized_6agent),
+    ("D", "3 AGENTS (direct API)", plan_trip_optimized),
+]
 
 
 def run_scenario(scenario: dict, runner_fn, label: str) -> dict:
@@ -57,8 +68,7 @@ def run_scenario(scenario: dict, runner_fn, label: str) -> dict:
 def main():
     os.makedirs("comparison/results", exist_ok=True)
 
-    baseline_results = []
-    optimized_results = []
+    results_by_arm = {code: [] for code, _, _ in ARMS}
 
     # Optional scenario filter: `python -m comparison.run_comparison SC-01 SC-04`.
     # Lets a run be repeated over only the scenarios whose API responses are
@@ -72,20 +82,15 @@ def main():
 
     print("\n" + "="*70)
     print("  TRIP PLANNER ARCHITECTURE COMPARISON")
-    print(f"  {len(scenarios)} scenario(s) x 2 architectures  |  API mode: {get_mode()}")
+    print(f"  {len(scenarios)} scenario(s) x {len(ARMS)} architectures  |  API mode: {get_mode()}")
     print(f"  Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*70)
 
     overall_start = time.time()
 
     for scenario in scenarios:
-        # Run baseline (6-agent)
-        b_result = run_scenario(scenario, plan_trip_baseline, "BASELINE (6 agents)")
-        baseline_results.append(b_result)
-
-        # Run optimized (3-agent + direct API)
-        o_result = run_scenario(scenario, plan_trip_optimized, "OPTIMIZED (3 agents)")
-        optimized_results.append(o_result)
+        for code, name, runner in ARMS:
+            results_by_arm[code].append(run_scenario(scenario, runner, f"{code} — {name}"))
 
     total_time = time.time() - overall_start
 
@@ -114,8 +119,24 @@ def main():
             "llm_failures": sum(r.get("llm", {}).get("llm_failures", 0) for r in results),
         }
 
-    b_agg = aggregate(baseline_results)
-    o_agg = aggregate(optimized_results)
+    agg_by_arm = {code: aggregate(results_by_arm[code]) for code, _, _ in ARMS}
+    arm_names = {code: name for code, name, _ in ARMS}
+
+    def gain(reference: str, candidate: str) -> dict:
+        """Percentage improvement of `candidate` over `reference`."""
+        ref, cand = agg_by_arm[reference], agg_by_arm[candidate]
+        pct = lambda a, b, floor=0.001: round((1 - b / max(a, floor)) * 100, 1)
+        return {
+            "vs": reference,
+            "latency_pct": pct(ref["avg_latency"], cand["avg_latency"]),
+            "llm_calls_pct": pct(ref["avg_llm_calls"], cand["avg_llm_calls"]),
+            "tokens_pct": pct(ref["avg_total_tokens"], cand["avg_total_tokens"]),
+            "cost_pct": pct(ref["avg_cost_usd"], cand["avg_cost_usd"], 1e-9),
+            "success_rate_diff": round(cand["success_rate_pct"] - ref["success_rate_pct"], 1),
+        }
+
+    # Kept for backwards compatibility with anything reading the two-arm shape.
+    b_agg, o_agg = agg_by_arm["B"], agg_by_arm["D"]
 
     comparison = {
         "timestamp": datetime.now().isoformat(),
@@ -129,17 +150,21 @@ def main():
             "api_mode": get_mode(),
             "api_cache": cache_summary(),
         },
+        "arms": {code: {"name": arm_names[code], **agg_by_arm[code]} for code, _, _ in ARMS},
+        "improvements": {
+            # The headline claim: direct execution vs the TUNED multi-agent arm.
+            # Quoting D against naive B alone invites "your baseline was badly
+            # configured"; D vs C answers that objection directly.
+            "D_vs_C": gain("C", "D"),
+            "D_vs_B": gain("B", "D"),
+            "C_vs_B": gain("B", "C"),
+        },
         "baseline": b_agg,
         "optimized": o_agg,
-        "improvement": {
-            "latency_pct": round((1 - o_agg["avg_latency"] / max(b_agg["avg_latency"], 0.001)) * 100, 1),
-            "llm_calls_pct": round((1 - o_agg["avg_llm_calls"] / max(b_agg["avg_llm_calls"], 0.001)) * 100, 1),
-            "tokens_pct": round((1 - o_agg["avg_total_tokens"] / max(b_agg["avg_total_tokens"], 0.001)) * 100, 1),
-            "cost_pct": round((1 - o_agg["avg_cost_usd"] / max(b_agg["avg_cost_usd"], 1e-9)) * 100, 1),
-            "success_rate_diff": round(o_agg["success_rate_pct"] - b_agg["success_rate_pct"], 1),
-        },
-        "baseline_details": baseline_results,
-        "optimized_details": optimized_results
+        "improvement": gain("B", "D"),
+        "details_by_arm": results_by_arm,
+        "baseline_details": results_by_arm["B"],
+        "optimized_details": results_by_arm["D"],
     }
 
     # Save results
@@ -155,22 +180,24 @@ def main():
     print(f"\n{'='*70}")
     print(f"  SUMMARY")
     print(f"{'='*70}")
-    print(f"  {'Metric':<30} {'Baseline (6 agents)':<20} {'Optimized (3 agents)':<20}")
-    print(f"  {'─'*30} {'─'*20} {'─'*20}")
-    print(f"  {'Success rate':<30} {b_agg['success']}/{b_agg['total']:<16} {o_agg['success']}/{o_agg['total']:<16}")
-    print(f"  {'Avg latency (s)':<30} {b_agg['avg_latency']:<20.1f} {o_agg['avg_latency']:<20.1f}")
-    print(f"  {'Avg LLM calls (measured)':<30} {b_agg['avg_llm_calls']:<20.1f} {o_agg['avg_llm_calls']:<20.1f}")
-    print(f"  {'Avg tokens':<30} {b_agg['avg_total_tokens']:<20.0f} {o_agg['avg_total_tokens']:<20.0f}")
-    print(f"  {'Avg cost (USD)':<30} {b_agg['avg_cost_usd']:<20.5f} {o_agg['avg_cost_usd']:<20.5f}")
-    print(f"  {'Total LLM calls':<30} {b_agg['total_llm_calls']:<20} {o_agg['total_llm_calls']:<20}")
-    print(f"  {'Total latency (s)':<30} {b_agg['total_latency']:<20.1f} {o_agg['total_latency']:<20.1f}")
+    header = f"  {'Arm':<26}{'OK':>6}{'LLM':>8}{'Tokens':>10}{'Cost $':>10}{'Secs':>9}"
+    print(header)
+    print("  " + "─" * (len(header) - 2))
+    for code, name, _ in ARMS:
+        a = agg_by_arm[code]
+        print(f"  {code + ' — ' + name:<26}{a['success']}/{a['total']:<4}"
+              f"{a['avg_llm_calls']:>8.1f}{a['avg_total_tokens']:>10.0f}"
+              f"{a['avg_cost_usd']:>10.5f}{a['avg_latency']:>9.1f}")
     print(f"{'='*70}")
-    print(f"  IMPROVEMENT (optimized vs baseline):")
-    print(f"    Latency:   {comparison['improvement']['latency_pct']}% faster")
-    print(f"    LLM calls: {comparison['improvement']['llm_calls_pct']}% fewer")
-    print(f"    Tokens:    {comparison['improvement']['tokens_pct']}% fewer")
-    print(f"    Cost:      {comparison['improvement']['cost_pct']}% cheaper")
-    print(f"    Success:   {comparison['improvement']['success_rate_diff']}% difference")
+    for key, caption in [
+        ("D_vs_C", "D (3-agent) vs C (6-agent TUNED)  <- headline claim"),
+        ("D_vs_B", "D (3-agent) vs B (6-agent naive)"),
+        ("C_vs_B", "C (tuned) vs B (naive)            <- value of tuning"),
+    ]:
+        g = comparison["improvements"][key]
+        print(f"  {caption}")
+        print(f"    LLM calls {g['llm_calls_pct']:>6}% fewer | tokens {g['tokens_pct']:>6}% fewer | "
+              f"cost {g['cost_pct']:>6}% cheaper | latency {g['latency_pct']:>6}% faster")
     print(f"{'='*70}")
     print(f"  API mode: {comparison['provenance']['api_mode']} | "
           f"live calls: {comparison['provenance']['api_cache']['live_calls']} | "
