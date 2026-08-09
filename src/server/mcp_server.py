@@ -8,9 +8,20 @@ Integrates all APIs as MCP tools:
 - Calculator (Math operations)
 """
 import os
+import sys
 import json
 import asyncio
 from typing import Any, Optional
+
+# This module is launched as a STANDALONE subprocess by MCPClient
+# (`python src/server/mcp_server.py`), so the project root is not on sys.path
+# and any `src.*` import would raise ModuleNotFoundError. The failure is quiet
+# from the caller's side: every tool call just comes back as "Connection lost".
+# Must run before the first src.* import below.
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
 import requests
 from src.core.http_cache import cached_get, cached_post
 from mcp.server import Server

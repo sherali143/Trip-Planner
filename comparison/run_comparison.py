@@ -60,15 +60,25 @@ def main():
     baseline_results = []
     optimized_results = []
 
+    # Optional scenario filter: `python -m comparison.run_comparison SC-01 SC-04`.
+    # Lets a run be repeated over only the scenarios whose API responses are
+    # already recorded, so the comparison can be re-run at zero API cost while
+    # the monthly quota is being conserved for uncached scenarios.
+    wanted = {a.upper() for a in sys.argv[1:] if a.upper().startswith("SC-")}
+    scenarios = [s for s in SCENARIOS if s["id"] in wanted] if wanted else list(SCENARIOS)
+    if wanted and not scenarios:
+        print(f"No scenarios matched {sorted(wanted)}. Known ids: {[s['id'] for s in SCENARIOS]}")
+        return None
+
     print("\n" + "="*70)
     print("  TRIP PLANNER ARCHITECTURE COMPARISON")
-    print(f"  {len(SCENARIOS)} scenarios x 2 architectures")
+    print(f"  {len(scenarios)} scenario(s) x 2 architectures  |  API mode: {get_mode()}")
     print(f"  Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*70)
 
     overall_start = time.time()
 
-    for scenario in SCENARIOS:
+    for scenario in scenarios:
         # Run baseline (6-agent)
         b_result = run_scenario(scenario, plan_trip_baseline, "BASELINE (6 agents)")
         baseline_results.append(b_result)
@@ -109,7 +119,8 @@ def main():
 
     comparison = {
         "timestamp": datetime.now().isoformat(),
-        "total_scenarios": len(SCENARIOS),
+        "total_scenarios": len(scenarios),
+        "scenario_ids": [s["id"] for s in scenarios],
         "total_time_s": round(total_time, 1),
         # Provenance: which model produced these numbers and whether the API
         # layer was live or replayed. Required for the results to be reproducible.

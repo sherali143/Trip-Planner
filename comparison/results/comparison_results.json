@@ -1,0 +1,130 @@
+{
+  "timestamp": "2026-08-09T15:44:34.975175",
+  "total_scenarios": 1,
+  "scenario_ids": [
+    "SC-01"
+  ],
+  "total_time_s": 404.2,
+  "provenance": {
+    "model": "gemini/gemini-2.5-flash",
+    "api_mode": "replay",
+    "api_cache": {
+      "mode": "replay",
+      "cache_dir": ".api_cache",
+      "recorded_entries": 15,
+      "cache_hits": 12,
+      "cache_misses": 1,
+      "live_calls": 0,
+      "live_errors": 0,
+      "responses_stored": 0
+    }
+  },
+  "baseline": {
+    "total": 1,
+    "success": 1,
+    "fail": 0,
+    "success_rate_pct": 100.0,
+    "avg_latency": 383.74740862846375,
+    "avg_llm_calls": 22.0,
+    "avg_total_tokens": 94959.0,
+    "avg_cost_usd": 0.063659,
+    "total_latency": 383.74740862846375,
+    "total_llm_calls": 22,
+    "total_tokens": 94959,
+    "total_cost_usd": 0.063659,
+    "avg_latency_all_scenarios": 383.74740862846375,
+    "avg_llm_calls_all_scenarios": 22.0,
+    "llm_failures": 0
+  },
+  "optimized": {
+    "total": 1,
+    "success": 1,
+    "fail": 0,
+    "success_rate_pct": 100.0,
+    "avg_latency": 18.402586460113525,
+    "avg_llm_calls": 2.0,
+    "avg_total_tokens": 7878.0,
+    "avg_cost_usd": 0.01119,
+    "total_latency": 18.402586460113525,
+    "total_llm_calls": 2,
+    "total_tokens": 7878,
+    "total_cost_usd": 0.01119,
+    "avg_latency_all_scenarios": 18.402586460113525,
+    "avg_llm_calls_all_scenarios": 2.0,
+    "llm_failures": 0
+  },
+  "improvement": {
+    "latency_pct": 95.2,
+    "llm_calls_pct": 90.9,
+    "tokens_pct": 91.7,
+    "cost_pct": 82.4,
+    "success_rate_diff": 0.0
+  },
+  "baseline_details": [
+    {
+      "arch": "architecture_6agent",
+      "success": true,
+      "result": "**Istanbul Adventure: Lahore to Istanbul (August 15 - August 19, 2026)**\n\nThis 5-day itinerary has been prepared based on your travel details and available flight and hotel options. Please note a significant discrepancy between your initial budget and the actual cost of flights, which will be detailed in the budget breakdown. Due to technical limitations with the attraction and restaurant search tools, specific recommendations for daily activities and dining could not be provided.\n\n---\n\n### **Flight Analysis**\n\nYour initial flight budget was $280. However, the available flight options are considerably higher. The selected option is the most economical choice found.\n\n**Selected Flight Option:** Option 2\n*   **Total Price:** $937 (USD)\n\n**Outbound Flight:**\n*   Airline: Azerbaijan Airlines\n*   Route: Lahore (LHE) to Istanbul (IST)\n*   Departure: 2026-08-15, 03:05 AM\n*   Arrival: 2026-08-15, 10:45 AM\n*   Duration: 9 hours 40 minutes\n*   Stops: 1\n\n**Inbound Flight:**\n*   Airline: PIA\n*   Route: Istanbul (IST) to Lahore (LHE)\n*   Departure: 2026-08-19, 12:50 AM\n*   Arrival: 2026-08-19, 08:05 AM\n*   Duration: 5 hours 15 minutes\n*   Stops: 0\n\n**Analysis:** This option represents the best value for flights, despite being significantly over the initial flight budget. The outbound journey includes one stop and brings you to Istanbul by late morning, allowing for a good portion of the first day to settle in and explore. The return flight is a convenient non-stop red-eye, departing just after midnight on August 19th. This effectively gives you a full day in Istanbul on August 18th before heading to the airport.\n\n---\n\n### **Hotel Analysis**\n\nYour accommodation budget was $280 for 4 nights (approximately $70 per night). Several excellent options were found within this budget.\n\n**Selected Hotel:** Hermanos Hotel\n*   **Price per night (excluding taxes and charges):** $34.42 USD\n*   **Total Price (excluding taxes and charges) for 4 nights:** $137.68 USD\n*   **Rating:** 7.6 Good (based on 1301 reviews)\n*   **Amenities:** Getaway Deal, Breakfast included\n\n**Analysis:** Hermanos Hotel offers exceptional value, coming in well under your accommodation budget. Its \"Good\" rating from a large number of reviews suggests a satisfactory stay, and the inclusion of breakfast is a great perk that will help reduce daily meal expenses. It's advisable to check the hotel's exact location in relation to your areas of interest (history, food, shopping) upon arrival to plan your daily commutes efficiently.\n\n---\n\n### **Daily Schedule**\n\n**Travel Dates:** August 15, 2026 - August 19, 2026\n\n**Day 1: Saturday, August 15, 2026 - Arrival and Initial Exploration**\n\n*   **Morning (03:05 AM - 10:45 AM):** Depart from Lahore (LHE) on Azerbaijan Airlines. Arrive at Istanbul Airport (IST).\n*   **Late Morning (10:45 AM - 12:30 PM):** Clear customs and immigration, collect luggage.\n*   **Noon (12:30 PM - 02:00 PM):** Travel from Istanbul Airport to Hermanos Hotel. Check-in (or drop off luggage if too early for check-in).\n*   **Afternoon (02:00 PM - 06:00 PM):** Settle into your hotel. Begin your Istanbul experience with a leisurely walk around the hotel's vicinity to get acquainted with the local area. (Specific attraction/dining recommendations could not be retrieved).\n*   **Evening (06:00 PM onwards):** Enjoy a local dinner. Relax after your journey.\n\n**Day 2: Sunday, August 16, 2026 - History and Culture Focus**\n\n*   **Morning (08:00 AM - 09:00 AM):** Enjoy breakfast at Hermanos Hotel.\n*   **Morning (09:00 AM - 01:00 PM):** Dedicate this time to exploring one of Istanbul's major historical sites. (Specific attraction recommendations could not be retrieved).\n*   **Lunch (01:00 PM - 02:00 PM):** Find a local eatery for lunch. (Specific dining recommendations could not be retrieved).\n*   **Afternoon (02:00 PM - 06:00 PM):** Continue exploring historical areas or a museum. Your interests include history, so focus on key historical landmarks. (Specific attraction recommendations could not be retrieved).\n*   **Evening (06:00 PM onwards):** Enjoy dinner and perhaps a leisurely stroll. (Specific dining recommendations could not be retrieved).\n\n**Day 3: Monday, August 17, 2026 - Food and Shopping Immersion**\n\n*   **Morning (08:00 AM - 09:00 AM):** Enjoy breakfast at Hermanos Hotel.\n*   **Morning (09:00 AM - 01:00 PM):** Immerse yourself in Istanbul's vibrant food scene and explore a bustling market for shopping. (Specific market/food recommendations could not be retrieved).\n*   **Lunch (01:00 PM - 02:00 PM):** Taste local delicacies for lunch. (Specific dining recommendations could not be retrieved).\n*   **Afternoon (02:00 PM - 06:00 PM):** Continue your shopping spree or visit another area known for its unique shops and local crafts. Your interests include shopping and food. (Specific shopping/attraction recommendations could not be retrieved).\n*   **Evening (06:00 PM onwards):** Experience a different part of Istanbul for dinner. (Specific dining recommendations could not be retrieved).\n\n**Day 4: Tuesday, August 18, 2026 - Further Exploration & Departure Preparation**\n\n*   **Morning (08:00 AM - 09:00 AM):** Enjoy breakfast at Hermanos Hotel.\n*   **Morning (09:00 AM - 01:00 PM):** Explore another area of Istanbul, perhaps one offering a different perspective or a panoramic view of the city. (Specific attraction recommendations could not be retrieved).\n*   **Lunch (01:00 PM - 02:00 PM):** Have your last full lunch in Istanbul. (Specific dining recommendations could not be retrieved).\n*   **Afternoon (02:00 PM - 06:00 PM):** Do some last-minute souvenir shopping, revisit a favorite spot, or simply relax.\n*   **Evening (06:00 PM - 09:00 PM):** Enjoy an early dinner. Head back to the hotel to collect your luggage.\n*   **Late Evening (09:00 PM onwards):** Depart from Hermanos Hotel to Istanbul Airport for your red-eye flight.\n\n**Day 5: Wednesday, August 19, 2026 - Departure**\n\n*   **Early Morning (12:50 AM):** Depart from Istanbul (IST) on PIA.\n*   **Morning (08:05 AM):** Arrive back in Lahore (LHE).\n\n---\n\n### **Budget Breakdown (Revised)**\n\n**Initial Total Budget:** $800 USD\n\n**Revised Total Trip Cost (based on selected flights/hotels + *original* activity/meal budget):** $1314.68 USD\n\n**Original Budget Allocation:**\n*   Flights: $280\n*   Accommodation: $280\n*   Activities: $160\n*   Meals: $80\n\n**Actual/Revised Budget Allocation:**\n*   **Flights (Actual Cost):** $937.00 USD\n*   **Accommodation (Actual Cost):** $137.68 USD (4 nights at Hermanos Hotel)\n*   **Activities (Estimated):** $160.00 USD (based on original budget allocation, as specific costs could not be determined)\n*   **Meals (Estimated):** $80.00 USD (based on original budget allocation, for 4 full days, approximately $20/day)\n*   **Transportation (Estimated):** It is crucial to allocate additional budget for local transportation (e.g., public transport, taxis) within Istanbul, which was not explicitly covered in the initial breakdown. ($50-$100 recommended, depending on usage).\n\n**Total Estimated Trip Cost:** $937.00 (Flights) + $137.68 (Accommodation) + $160.00 (Activities) + $80.00 (Meals) = **$1314.68 USD**\n\n**Budget Discrepancy:**\nThe actual cost of flights ($937) alone significantly exceeds your initial total budget of $800. The total estimated cost of this itinerary ($1314.68) is $514.68 over your initial total budget. It is critical to adjust your budget significantly to accommodate these costs. The amounts for activities and meals are estimates based on your original allocation, but with such a high flight cost, these categories may also need to be reassessed by the traveler.\n\n---\n\n### **Travel Tips**\n\n*   **Currency:** The local currency is the Turkish Lira (TRY). While USD might be accepted in some tourist areas, it's best to use Lira for daily transactions. Exchange currency at reputable exchanges or withdraw from ATMs.\n*   **Language:** Turkish is the official language. Learning a few basic phrases (hello, thank you, please) can be very helpful and appreciated. English is widely spoken in tourist areas.\n*   **Transportation:** Istanbul has an extensive public transportation system including metro, tram, bus, and ferries. Consider purchasing an Istanbulkart for easy and economical travel. Taxis are also available but confirm the fare or use a metered taxi.\n*   **Cultural Sensitivity:** When visiting mosques, dress modestly (shoulders and knees covered). Women should cover their heads. Remove your shoes before entering.\n*   **Bargaining:** In markets like the Grand Bazaar, bargaining is expected and part of the shopping experience.\n*   **Safety:** Istanbul is generally safe for tourists, but always be aware of your surroundings, especially in crowded areas. Keep an eye on your belongings to prevent pickpocketing.\n*   **Hydration:** Especially in August, Istanbul can be hot. Stay hydrated by drinking plenty of water.\n*   **Connectivity:** Consider purchasing a local SIM card upon arrival for easy internet access and navigation.\n*   **Flexibility:** While this itinerary provides a framework, be flexible and allow for spontaneous discoveries!\n*   **Attraction Planning:** Given the lack of specific recommendations, use online resources or guidebooks to research popular historical sites (like Hagia Sophia, Blue Mosque, Topkapi Palace), food districts (like Kadikoy, Beyo\u011flu), and shopping areas (like Grand Bazaar, Spice Bazaar) that align with your interests in history, food, and shopping. Plan your daily routes to minimize travel time between sites.",
+      "extraction": "{\"origin\":\"Lahore\",\"destination\":\"Istanbul\",\"departure_date\":\"2026-08-15\",\"return_date\":\"2026-08-19\",\"trip_duration\":5,\"total_budget\":800,\"num_adults\":1,\"num_children\":0,\"interests\":[\"history\",\"food\",\"shopping\"],\"travel_style\":\"\",\"budget_breakdown\":{\"flights\":280,\"accommodation\":280,\"activities\":160,\"meals\":80}}",
+      "latency": 383.74740862846375,
+      "phase1_extraction_s": 4.3,
+      "phase2_search_and_coord_s": 379.4,
+      "errors": [],
+      "llm": {
+        "label": "6agent/SC-01",
+        "llm_calls": 22,
+        "llm_failures": 0,
+        "prompt_tokens": 79097,
+        "completion_tokens": 15862,
+        "total_tokens": 94959,
+        "cost_usd": 0.063659,
+        "llm_time_s": 104.11,
+        "wall_time_s": 383.75,
+        "models_used": [
+          "gemini-2.5-flash"
+        ],
+        "failure_details": []
+      },
+      "llm_calls": 22,
+      "total_tokens": 94959,
+      "cost_usd": 0.063659,
+      "scenario_id": "SC-01",
+      "scenario_name": "Short city break - Lahore to Istanbul",
+      "runner": "BASELINE (6 agents)"
+    }
+  ],
+  "optimized_details": [
+    {
+      "arch": "architecture_3agent",
+      "success": true,
+      "result": "**Istanbul Trip Itinerary**\n\n**Traveler Preferences Summary:**\n*   **Origin:** Lahore (LHE)\n*   **Destination:** Istanbul (IST)\n*   **Departure Date:** 2026-08-15\n*   **Return Date:** 2026-08-19\n*   **Trip Duration:** 4 Days\n*   **Total Budget:** $800\n*   **Number of Adults:** 1\n*   **Interests:** History, Food, Shopping\n*   **Travel Style:** Budget\n\n---\n\n**Flight Details:**\n\n*   **Recommended Option:** Flight Option 2\n*   **Total Price:** $937.10 (Note: This is significantly over the allocated flight budget of $280)\n*   **Outbound Flight (Lahore to Istanbul):**\n    *   **Airline:** Azerbaijan Airlines\n    *   **Departure:** 2026-08-15, 03:05 (LHE)\n    *   **Arrival:** 2026-08-15, 10:45 (IST)\n    *   **Stops:** 1\n    *   **Duration:** 580 minutes\n*   **Inbound Flight (Istanbul to Lahore):**\n    *   **Airline:** PIA\n    *   **Departure:** 2026-08-19, 00:50 (IST)\n    *   **Arrival:** 2026-08-19, 08:05 (LHE)\n    *   **Stops:** 0\n    *   **Duration:** 315 minutes\n\n---\n\n**Accommodation Details:**\n\n*   **Recommended Hotel:** Theodora Pension Old Town\n*   **Total Price:** $132.34 (Significantly under the allocated accommodation budget of $280)\n*   **Price Per Night:** $33.09\n*   **Rating:** 10/10 Exceptional (based on 1 review)\n*   **Distance to Downtown:** 0.6 km (Excellent for exploring)\n*   **Check-in:** 2026-08-15\n*   **Check-out:** 2026-08-19\n\n---\n\n**Day-by-Day Itinerary:**\n\n**Day 1: Saturday, August 15, 2026 - Arrival & Sultanahmet History**\n*   **Morning:**\n    *   03:05: Depart from Lahore (LHE) via Azerbaijan Airlines.\n    *   10:45: Arrive at Istanbul (IST) airport.\n*   **Late Morning/Afternoon:**\n    *   Travel to Theodora Pension Old Town and check-in.\n    *   **Activity:** Begin exploring \"Attractions in Sultanahmet\" (as per attraction data). Given the hotel's central location (0.6 km from downtown), Sultanahmet will be easily accessible. Focus on historical sites.\n*   **Evening:**\n    *   **Meal:** Experience \"Turkish Street Food\" for dinner, a budget-friendly and authentic food experience (as suggested by restaurant data).\n\n**Day 2: Sunday, August 16, 2026 - Sightseeing & Shopping**\n*   **Morning:**\n    *   **Activity:** Continue with \"More sightseeing\" in Istanbul (as per attraction data). Explore other historical areas or views.\n*   **Afternoon:**\n    *   **Activity:** Indulge in \"Shopping\" (as per attraction data and interests). Seek out local markets or bazaars.\n*   **Evening:**\n    *   **Meal:** Try more local \"Turkish Street Food\" for dinner, potentially exploring options suggested in the \"$10 Gets You in Istanbul\" food tour video for budget-friendly eats.\n\n**Day 3: Monday, August 17, 2026 - Beyond Sultanahmet & Food Exploration**\n*   **Morning:**\n    *   **Activity:** Explore \"Places to visit in Istanbul beyond\" the immediate Sultanahmet area (as per attraction data). This could involve venturing into different neighborhoods.\n*   **Afternoon:**\n    *   **Activity/Meal:** Embark on a \"Street food in Fatih\" tour (as suggested by restaurant data), focusing on tasting the \"Best Turkish dishes around the clock\" (as per restaurant data). This combines the \"food\" interest with local exploration.\n*   **Evening:**\n    *   **Meal:** Enjoy a final authentic Turkish dinner.\n\n**Day 4: Tuesday, August 18, 2026 - Last Istanbul Moments & Departure**\n*   **Morning/Afternoon:**\n    *   **Activity:** Enjoy a final few hours of sightseeing or last-minute souvenir shopping. Since your flight is early morning on the 19th, this is your last full day in Istanbul.\n*   **Evening:**\n    *   **Meal:** Have an early dinner.\n    *   **Departure:** Check-out from Theodora Pension Old Town.\n    *   Late evening: Depart for Istanbul (IST) airport to catch your early morning flight on August 19th.\n\n---\n\n**Budget Breakdown:**\n\n*   **Total Budget Allocated:** $800\n*   **Budget Breakdown from Preferences:**\n    *   Flights: $280\n    *   Accommodation: $280\n    *   Activities: $160\n    *   Meals: $80\n\n*   **Actual Costs & Remaining Budget:**\n    *   **Flights:** $937.10 (Actual cost. This exceeds the total trip budget of $800 by $137.10)\n    *   **Accommodation:** $132.34 (Actual cost for 4 nights at Theodora Pension Old Town)\n    *   **Remaining for Activities & Meals:** Given the significant overage on flights, the original budget for activities and meals ($160 + $80 = $240) is no longer available within the $800 total budget. The trip is currently $137.10 over the total budget due to flight costs alone. To stay within the *original activities/meals allocation*, the traveler would need to adjust the total budget or find ways to save drastically elsewhere.\n    *   **Recommended Spending for Activities & Meals (if flight budget is adhered to):** $0 (due to flight overage).\n    *   **If trip proceeds with chosen flights:** The traveler would need to cover the additional $137.10 from personal funds, plus all activity and meal costs.\n\n---\n\n**Travel Tips:**\n\n*   **Budget Focus:** Given the \"budget\" travel style and the flight cost exceeding the total budget, prioritize free or low-cost activities and street food for meals to manage expenses.\n*   **Central Location:** Staying at Theodora Pension Old Town puts you in a prime location for walking to many historical sites in Sultanahmet, saving on transportation costs.\n*   **Embrace Street Food:** Istanbul offers a wide variety of delicious and affordable street food options, which aligns perfectly with a budget food interest and will help manage meal costs. Look for food stalls and local eateries mentioned in food tour suggestions.\n*   **Historical Interests:** Focus on exploring the rich history of Istanbul, particularly in areas like Sultanahmet, which are easily accessible from your accommodation.",
+      "extraction": "{\"origin\":\"Lahore\",\"destination\":\"Istanbul\",\"departure_date\":\"2026-08-15\",\"return_date\":\"2026-08-19\",\"trip_duration\":4,\"total_budget\":800,\"num_adults\":1,\"num_children\":0,\"interests\":[\"history\",\"food\",\"shopping\"],\"travel_style\":\"budget\",\"budget_breakdown\":{\"flights\":280,\"accommodation\":280,\"activities\":160,\"meals\":80}}",
+      "latency": 18.402586460113525,
+      "phase1_extraction_s": 3.1,
+      "phase2_api_fetch_s": 0.0,
+      "phase3_coordination_s": 15.3,
+      "errors": [],
+      "llm": {
+        "label": "3agent/SC-01",
+        "llm_calls": 2,
+        "llm_failures": 0,
+        "prompt_tokens": 3866,
+        "completion_tokens": 4012,
+        "total_tokens": 7878,
+        "cost_usd": 0.01119,
+        "llm_time_s": 18.17,
+        "wall_time_s": 18.4,
+        "models_used": [
+          "gemini-2.5-flash"
+        ],
+        "failure_details": []
+      },
+      "llm_calls": 2,
+      "total_tokens": 7878,
+      "cost_usd": 0.01119,
+      "scenario_id": "SC-01",
+      "scenario_name": "Short city break - Lahore to Istanbul",
+      "runner": "OPTIMIZED (3 agents)"
+    }
+  ]
+}
