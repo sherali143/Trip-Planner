@@ -149,14 +149,23 @@ class TripPlannerTasks:
                 - num_children: Number of children (DEFAULT TO 0 if not specified)
                 
                 **Budget Breakdown:**
-                Calculate the exact budget allocations (simple math):
-                - flights_budget: total_budget * 0.35 (35% of total)
-                - accommodation_budget: total_budget * 0.35 (35% of total)
-                - activities_budget: total_budget * 0.20 (20% of total)
-                - meals_budget: total_budget * 0.10 (10% of total)
-                
+                If the user stated how they want their budget split, USE THEIR
+                NUMBERS — this is their preference, not yours to override.
+                Examples of the user stating a split:
+                  "most of it on the hotel"        -> weight accommodation higher
+                  "I want 50% on flights"          -> flights = total * 0.50
+                  "$600 for flights, rest flexible" -> flights_budget = 600
+
+                Only if the user said NOTHING about splitting the budget, use:
+                - flights_budget: total_budget * 0.35
+                - accommodation_budget: total_budget * 0.35
+                - activities_budget: total_budget * 0.20
+                - meals_budget: total_budget * 0.10
+
+                The four values must add up to total_budget.
                 DO NOT use any tools for this calculation - just compute it directly.
-                Example: If total_budget = 150000, then flights = 150000 * 0.35 = 52500
+                Example: If total_budget = 150000 and no split was stated,
+                flights = 150000 * 0.35 = 52500
                 
                 **⚠️⚠️⚠️ BUDGET VALIDATION - VERY IMPORTANT ⚠️⚠️⚠️**
                 

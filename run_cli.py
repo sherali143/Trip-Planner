@@ -33,6 +33,62 @@ if os.getenv("GOOGLE_API_KEY") and not os.getenv("GEMINI_API_KEY"):
 SEP = "━" * 60
 
 
+def _choose_budget_allocation(total_budget, duration, travelers, style, origin, destination):
+    """
+    Show a suggested budget split, explain it, and let the user change it.
+
+    Asking "what percentage for flights?" cold is not a fair question — most
+    people have no basis for answering it. So the system proposes a split
+    derived from the trip's own shape (distance, nights, party size, style),
+    explains what each category pays for and why those numbers were chosen, and
+    then accepts any change. See src/core/budget.py for the evidence base.
+    """
+    from src.core.budget import build_allocation
+
+    allocation = build_allocation(
+        total_budget=total_budget, trip_duration=duration, num_travelers=travelers,
+        travel_style=style, origin=origin, destination=destination,
+    )
+
+    print(f"\n{SEP}")
+    print("  ▶ BUDGET ALLOCATION")
+    print(f"{SEP}\n")
+    print(allocation.explain())
+
+    print("\n  Press Enter to accept, or type a different split.")
+    print("  Examples:  40/30/20/10      (flights/accommodation/activities/meals)")
+    print("             hotel 50, flights 25")
+    print("             flights 600, hotel 400")
+    try:
+        answer = input("\n  Your choice: ").strip()
+    except (EOFError, KeyboardInterrupt):
+        # Non-interactive run (piped input, CI) — keep the suggestion.
+        answer = ""
+
+    if not answer:
+        print("\n  Using the suggested split.\n")
+        return allocation
+
+    revised = build_allocation(
+        total_budget=total_budget, trip_duration=duration, num_travelers=travelers,
+        travel_style=style, origin=origin, destination=destination,
+        user_input=answer,
+    )
+    if revised.source != "user":
+        # Input could not be read; build_allocation already explains why.
+        print("\n  Keeping the suggested split.\n")
+        for note in revised.reasons:
+            print(f"    {note}")
+        return revised
+
+    print()
+    print(revised.explain())
+    if revised.warnings:
+        print("\n  Your split is being used as entered. The notes above are")
+        print("  warnings, not corrections.\n")
+    return revised
+
+
 def validate_api_keys():
     required = {
         "GOOGLE_API_KEY": "Google Gemini (AI agents)",
@@ -183,15 +239,22 @@ def main():
     budget = prefs.get("total_budget", 0)
     interests = ", ".join(prefs.get("interests", [])) if isinstance(prefs.get("interests"), list) else str(prefs.get("interests", ""))
 
-    bd = prefs.get("budget_breakdown", {})
-    if isinstance(bd, dict):
-        fb = bd.get("flights", budget * 0.35) or budget * 0.35
-        ab = bd.get("accommodation", budget * 0.35) or budget * 0.35
-        mb = bd.get("meals", budget * 0.10) or budget * 0.10
-    else:
-        fb = budget * 0.35
-        ab = budget * 0.35
-        mb = budget * 0.10
+    # ---- Budget allocation: suggest, explain, then let the user decide -------
+    # Previously this applied a fixed 35/35/20/10 with no explanation and no way
+    # to change it. The split is a user preference, not a system assumption.
+    allocation = _choose_budget_allocation(
+        total_budget=budget,
+        duration=duration,
+        travelers=adults + prefs.get("num_children", 0),
+        style=prefs.get("travel_style", "moderate"),
+        origin=origin,
+        destination=destination,
+    )
+    prefs["budget_breakdown"] = allocation.as_dict()
+
+    fb = allocation.amounts["flights"]
+    ab = allocation.amounts["accommodation"]
+    mb = allocation.amounts["meals"]
 
     bpn = ab / duration if duration > 0 else ab
     bpm = mb / (duration * 2) if duration > 0 else mb

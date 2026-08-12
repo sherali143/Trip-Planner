@@ -66,7 +66,9 @@ class TripPlannerAgents:
                     "total_budget": N, "interests": [], "travel_style": "budget/moderate/luxury"
                 }
 
-                Budget allocation: flights 35%, hotels 35%, activities 20%, meals 10%.
+                Budget allocation: if the user stated how to split their budget,
+                use their split. Otherwise default to flights 35%, hotels 35%,
+                activities 20%, meals 10%. The parts must sum to the total.
                 Calculate return_date from departure + duration if not explicit.
                 Defaults: 1 adult, 0 children if not specified.
             """),
