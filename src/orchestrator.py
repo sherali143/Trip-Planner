@@ -86,165 +86,89 @@ class TripPlannerCrew:
                 else:
                     raise
     
-    def _is_budget_too_low(self, extraction_output: str, conversation_transcript: str) -> bool:
-        """
-        Check if the budget is too low for the trip.
-        
-        Uses simple heuristics:
-        - International trips need at least $500 per person
-        - Flights alone typically cost $300-$1500
-        - Hotels typically cost $50-$200/night minimum
-        """
-        import re
+    @staticmethod
+    def _parse_prefs(extraction_output: str) -> dict:
+        """Pull the structured preferences out of the extractor's output."""
         import json
-        
-        # Try to parse budget from extraction output
-        try:
-            # First, try to parse as JSON directly
-            try:
-                # Look for JSON block in the output - match complete JSON object
-                json_match = re.search(r'\{(?:[^{}]|\{[^{}]*\})*"total_budget"(?:[^{}]|\{[^{}]*\})*\}', extraction_output, re.DOTALL)
-                if json_match:
-                    data = json.loads(json_match.group(0))
-                    total_budget = float(data.get('total_budget', 0))
-                    print(f"[DEBUG] Parsed budget from JSON: ${total_budget}")
-                else:
-                    # Fallback: regex search
-                    budget_match = re.search(r'"total_budget":\s*(\d+(?:\.\d+)?)', extraction_output)
-                    if budget_match:
-                        total_budget = float(budget_match.group(1))
-                        print(f"[DEBUG] Parsed budget from regex: ${total_budget}")
-                    else:
-                        print("[DEBUG] Could not find budget in extraction output")
-                        return False  # Can't determine budget, proceed
-            except json.JSONDecodeError as e:
-                print(f"[DEBUG] JSON decode error: {e}")
-                # Fallback: regex search
-                budget_match = re.search(r'"total_budget":\s*(\d+(?:\.\d+)?)', extraction_output)
-                if budget_match:
-                    total_budget = float(budget_match.group(1))
-                    print(f"[DEBUG] Parsed budget from regex fallback: ${total_budget}")
-                else:
-                    print("[DEBUG] Could not find budget in extraction output (fallback)")
-                    return False  # Can't determine budget, proceed
-            
-            # Look for trip duration
-            duration_match = re.search(r'"trip_duration":\s*(\d+)', extraction_output)
-            if duration_match:
-                trip_duration = int(duration_match.group(1))
-            else:
-                trip_duration = 5  # Default assumption
-            
-            # Look for number of travelers
-            travelers_match = re.search(r'"total_travelers":\s*(\d+)', extraction_output)
-            if travelers_match:
-                num_travelers = int(travelers_match.group(1))
-            else:
-                num_travelers = 1
-            
-            # Check for explicit budget warning from agent
-            if "BUDGET_TOO_LOW" in extraction_output:
-                return True
-            
-            # Calculate minimum realistic budget
-            # Minimum: $300 flights + $50/night hotels + $30/day activities per person
-            min_flight_cost = 300 * num_travelers
-            min_hotel_cost = 50 * trip_duration
-            min_daily_cost = 30 * trip_duration * num_travelers
-            min_total = min_flight_cost + min_hotel_cost + min_daily_cost
-            
-            # If budget is less than 60% of minimum, it's too low
-            if total_budget < (min_total * 0.6):
-                return True
-            
-            # Specific check: if budget < $200 for any international trip, reject
-            if total_budget < 200:
-                return True
-                
-            return False
-            
-        except Exception as e:
-            print(f"Budget validation error: {e}")
-            return False  # On error, proceed with trip planning
-    
-    def _get_budget_error_message(self, extraction_output: str, conversation_transcript: str) -> str:
-        """
-        Generate a helpful error message when budget is too low.
-        """
         import re
-        import json
-        
-        # Extract details - try JSON first, then regex fallback
-        try:
-            json_match = re.search(r'\{[^}]*"total_budget"[^}]*\}', extraction_output, re.DOTALL)
-            if json_match:
-                data = json.loads(json_match.group(0))
-                total_budget = float(data.get('total_budget', 0))
-                trip_duration = int(data.get('trip_duration', 5))
-                num_travelers = int(data.get('total_travelers', 1))
-                destination = data.get('destination', 'your destination')
-                origin = data.get('origin', 'your origin')
-            else:
-                raise ValueError("No JSON found")
-        except (json.JSONDecodeError, ValueError):
-            # Fallback to regex
-            budget_match = re.search(r'"total_budget":\s*(\d+(?:\.\d+)?)', extraction_output)
-            total_budget = float(budget_match.group(1)) if budget_match else 0
-            
-            duration_match = re.search(r'"trip_duration":\s*(\d+)', extraction_output)
-            trip_duration = int(duration_match.group(1)) if duration_match else 5
-            
-            travelers_match = re.search(r'"total_travelers":\s*(\d+)', extraction_output)
-            num_travelers = int(travelers_match.group(1)) if travelers_match else 1
-            
-            destination_match = re.search(r'"destination":\s*"([^"]+)"', extraction_output)
-            destination = destination_match.group(1) if destination_match else "your destination"
-            
-            origin_match = re.search(r'"origin":\s*"([^"]+)"', extraction_output)
-            origin = origin_match.group(1) if origin_match else "your origin"
-        
-        # Calculate recommended minimum
-        min_flight = 400 * num_travelers
-        min_hotel = 60 * trip_duration
-        min_daily = 40 * trip_duration * num_travelers
-        recommended_min = min_flight + min_hotel + min_daily
-        
-        message = f"""
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                        ❌ BUDGET TOO LOW - CANNOT PROCEED                     ║
-╚══════════════════════════════════════════════════════════════════════════════╝
 
-I'm sorry, but your budget of ${total_budget:.0f} is too low for a trip from {origin} to {destination}.
+        for pattern in (
+            r'\{(?:[^{}]|\{[^{}]*\})*"total_budget"(?:[^{}]|\{[^{}]*\})*\}',
+            r'\{.*"destination".*\}',
+        ):
+            match = re.search(pattern, extraction_output, re.DOTALL)
+            if match:
+                try:
+                    return json.loads(match.group(0))
+                except json.JSONDecodeError:
+                    continue
 
-📊 YOUR REQUEST:
-   • Origin: {origin}
-   • Destination: {destination}
-   • Duration: {trip_duration} days
-   • Travelers: {num_travelers} person(s)
-   • Your Budget: ${total_budget:.0f}
+        # Fall back to field-by-field regex if the JSON will not parse.
+        prefs = {}
+        for key, cast in (("total_budget", float), ("trip_duration", int),
+                          ("num_adults", int), ("num_children", int)):
+            m = re.search(rf'"{key}":\s*(\d+(?:\.\d+)?)', extraction_output)
+            if m:
+                prefs[key] = cast(float(m.group(1)))
+        for key in ("destination", "origin"):
+            m = re.search(rf'"{key}":\s*"([^"]+)"', extraction_output)
+            if m:
+                prefs[key] = m.group(1)
+        return prefs
 
-💰 REALISTIC COST BREAKDOWN:
-   • Flights: ${min_flight:.0f} minimum (${min_flight/num_travelers:.0f}/person round-trip)
-   • Hotels: ${min_hotel:.0f} minimum (${min_hotel/trip_duration:.0f}/night for {trip_duration} nights)
-   • Daily expenses: ${min_daily:.0f} (food, transport, activities)
-   
-   📌 MINIMUM RECOMMENDED BUDGET: ${recommended_min:.0f}
+    def _assess_budget(self, extraction_output: str):
+        """
+        Judge the stated budget against what this specific trip costs.
 
-🔧 YOUR OPTIONS:
-   1. Increase your budget to at least ${recommended_min:.0f}
-   2. Reduce trip duration to {max(1, int(total_budget / 150))} days
-   3. Choose a closer/cheaper destination
-   4. Reduce number of travelers
+        Replaces a fixed formula that ignored the destination entirely
+        (300 per traveller for flights, 50 a night for hotels, times a 0.6
+        fudge factor). That judged a 700 dollar Bangkok trip and a 700 dollar
+        London trip identically, accepting both — so London produced a
+        confidently fictional itinerary. See src/core/trip_cost.py.
+        """
+        from src.core.trip_cost import assess_budget
 
-Please restart with a more realistic budget. International travel from Pakistan 
-typically costs at least $800-$1500 per person for a week-long trip.
+        prefs = self._parse_prefs(extraction_output)
 
-╔══════════════════════════════════════════════════════════════════════════════╗
-║              Run 'python run_cli.py' again with a revised budget             ║
-╚══════════════════════════════════════════════════════════════════════════════╝
-"""
-        return message
-    
+        # An explicit refusal from the extractor still wins.
+        if "BUDGET_TOO_LOW" in extraction_output:
+            print("[Budget] Extractor flagged the budget as too low")
+
+        travelers = int(prefs.get("num_adults", 1) or 1) + int(prefs.get("num_children", 0) or 0)
+        verdict = assess_budget(
+            total_budget=float(prefs.get("total_budget", 0) or 0),
+            destination=prefs.get("destination", ""),
+            nights=int(prefs.get("trip_duration", 5) or 5),
+            travelers=max(1, travelers),
+            origin=prefs.get("origin", ""),
+        )
+
+        if not prefs.get("destination"):
+            # Without a destination there is no basis to refuse; let it proceed
+            # rather than block on a parsing failure.
+            print("[Budget] No destination parsed — skipping feasibility check")
+            verdict.feasible = True
+        return verdict
+
+    @staticmethod
+    def _budget_error_message(verdict) -> str:
+        """Explain why the trip cannot be planned, and what would make it work."""
+        lines = [
+            "",
+            "=" * 70,
+            "  THIS TRIP CANNOT BE PLANNED WITHIN THAT BUDGET",
+            "=" * 70,
+            "",
+            f"  {verdict.message}",
+            "",
+            verdict.estimate.explain(),
+            "",
+            "  WHAT YOU CAN DO:",
+        ]
+        lines += [f"    {i}. {s}" for i, s in enumerate(verdict.suggestions, 1)]
+        lines += ["", "=" * 70, ""]
+        return "\n".join(lines)
+
     def _validate_and_enhance_itinerary(
         self, 
         itinerary: str, 
@@ -488,17 +412,17 @@ typically costs at least $800-$1500 per person for a week-long trip.
         extraction_output = str(extraction_result)
         self._extraction_output = extraction_output
         
-        if self._is_budget_too_low(extraction_output, conversation_transcript):
-            print("\n" + "="*80)
-            print("BUDGET TOO LOW - CANNOT PROCEED")
-            print("="*80)
-            budget_error_message = self._get_budget_error_message(extraction_output, conversation_transcript)
-            print(budget_error_message)
-            print("="*80 + "\n")
+        budget_verdict = self._assess_budget(extraction_output)
+        if not budget_verdict.feasible:
+            message = self._budget_error_message(budget_verdict)
+            print(message)
             self.a2a_protocol.end_conversation(conversation_id)
-            return budget_error_message
-        
-        print("\nBudget validated! Proceeding with trip planning...\n")
+            return message
+
+        # Feasible, but say plainly what this budget buys — a tight budget is a
+        # legitimate choice, so it warns and proceeds rather than blocking.
+        print(f"\n[Budget] {budget_verdict.verdict.replace('_', ' ').title()}: "
+              f"{budget_verdict.message}\n")
         
         # ============================================
         # PHASE 3: Fetch Real Data via Direct API Calls
@@ -707,9 +631,12 @@ typically costs at least $800-$1500 per person for a week-long trip.
         print(extraction_output[:500])
         print("...\n")
         
-        if self._is_budget_too_low(extraction_output, conversation_transcript):
+        budget_verdict = self._assess_budget(extraction_output)
+        if not budget_verdict.feasible:
             self.a2a_protocol.end_conversation(conversation_id)
-            return self._get_budget_error_message(extraction_output, conversation_transcript)
+            return self._budget_error_message(budget_verdict)
+        print(f"\n[Budget] {budget_verdict.verdict.replace('_', ' ').title()}: "
+              f"{budget_verdict.message}\n")
         
         # === Send A2A: Preferences → Coordinator ===
         self._send_a2a_message(
