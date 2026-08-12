@@ -1,25 +1,10 @@
-[tool.poetry]
-name = "trip-planner"
-version = "0.2.0"
-description = "AI trip planner with A2A protocol and MCP integration"
-authors = ["x"]
-package-mode = false
-
-[tool.poetry.dependencies]
-python = ">=3.10,<=3.13"
-crewai = {version = "*", extras = ["tools"]}
-litellm = "*"
-mcp = "*"
-python-dotenv = "*"
-requests = "*"
-pydantic = "*"
-pyyaml = "*"
-setuptools = "*"
-langchain = "*"
-streamlit = "*"
-pytest = "*"
-
-[tool.poetry.group.dev.dependencies]
+# Tooling configuration only.
+#
+# Dependencies live in requirements.txt, which is PINNED to the exact versions
+# the published evaluation results were produced with. This file used to carry
+# a parallel [tool.poetry.dependencies] list with every version as "*", so
+# installing via poetry produced a different (and untested) dependency set than
+# installing via pip. One source of truth avoids that drift.
 
 [tool.pytest.ini_options]
 # `testing/manual/` holds ad-hoc API probe scripts, not tests. They are named
@@ -32,13 +17,9 @@ norecursedirs = ["manual", ".venv", "__pycache__", ".api_cache", ".git"]
 [tool.pyright]
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
 useLibraryCodeForTypes = true
-exclude = [".cache"]
+exclude = [".venv", ".api_cache", "**/__pycache__"]
 
 [tool.ruff]
 # https://beta.ruff.rs/docs/configuration/
 select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
 ignore = ['W291', 'W292', 'W293']
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"

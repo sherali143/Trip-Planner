@@ -1,206 +1,197 @@
-# AI Trip Planner — Multi-Agent System with A2A Protocol & MCP
+# AI Trip Planner — Multi-Agent Travel Planning System
 
-A production-grade AI trip planning system using multi-agent collaboration, real travel APIs, and industry-standard protocols.
+MSc dissertation project (Birmingham City University, CMP7200).
 
-## Architecture
+Turns a plain-English travel request into a day-by-day itinerary with real
+flights, hotels, attractions and restaurants — built on a custom **MCP server**
+and a typed **Agent-to-Agent (A2A) protocol**, and evaluated as **four competing
+architectures**.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         USER INPUT                           │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│              CONVERSATIONAL AGENT (GPT-4o)                   │
-│              Gathers travel details via chat                 │
-└─────────────────────────┬───────────────────────────────────┘
-                          │ A2A Protocol
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│            PREFERENCES EXTRACTOR (GPT-4o)                    │
-│            Structures conversation → JSON                    │
-└─────────────────────────┬───────────────────────────────────┘
-                          │ A2A Protocol
-              ┌───────────┼───────────┐
-              ▼           ▼           ▼
-┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
-│  FLIGHT AGENT    │ │  HOTEL AGENT     │ │ ATTRACTION AGENT │
-│  Kiwi + Booking  │ │  Booking.com     │ │  Serper (Google) │
-│  via MCP Server  │ │  via MCP Server  │ │  via MCP Server  │
-└────────┬─────────┘ └────────┬─────────┘ └────────┬─────────┘
-         │                    │                     │
-         └────────────┬───────┴─────────────────────┘
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│            ITINERARY COORDINATOR (GPT-4o)                    │
-│            Synthesizes → Day-by-day travel plan              │
-└─────────────────────────────────────────────────────────────┘
-```
+---
 
-## Tech Stack
+## The research question
 
-| Component | Technology |
-|-----------|-----------|
-| Agent Framework | [CrewAI](https://docs.crewai.com/) |
-| LLM | OpenAI GPT-4o |
-| Agent Communication | Custom A2A Protocol |
-| Tool Protocol | [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) |
-| Flight API | RapidAPI → Kiwi.com + Booking.com Flights |
-| Hotel API | RapidAPI → Booking.com Hotels |
-| Web Search | Serper API (Google Search) |
-| UI | Streamlit |
-| Package Manager | Poetry |
+The proposal specified a 6-agent architecture. Instrumenting it showed most of
+its LLM calls went on deterministic data retrieval rather than reasoning. So a
+3-agent design was built that keeps the same protocols but fetches data in plain
+Python — and the multi-agent arm was *tuned* first, so the comparison is against
+a fair baseline rather than a straw man.
 
-## Quick Start
+| Arm | Architecture | File |
+|---|---|---|
+| **A** | Single LLM — no agents, no tools | `comparison/architecture_single_llm.py` |
+| **B** | 6 agents, naive (as first built) | `comparison/architecture_6agent.py` |
+| **C** | 6 agents, tuned — the proposal as designed | `comparison/architecture_6agent_optimized.py` |
+| **D** | 3 agents + direct API calls | `comparison/architecture_3agent.py` |
 
-### Prerequisites
+### Measured results (SC-01, all four arms)
 
-- Python 3.10–3.13
-- API Keys (see below)
+| Arm | LLM calls | Tokens | Cost | Time | Prices that are real |
+|---|---|---|---|---|---|
+| A single LLM | 1 | 11,392 | $0.028 | 93s | **0%** |
+| B 6-agent naive | 19 | 63,926 | $0.053 | 86s | 13% |
+| C 6-agent tuned | 9 | 10,808 | $0.015 | 66s | 59% |
+| D 3-agent direct | 2 | 7,813 | $0.011 | 18s | 57% |
 
-### Installation
+Every LLM request is counted via LiteLLM callbacks — none of these numbers is an
+estimate. Two findings:
+
+- **Tuning matters more than agent count.** Tuning cut the multi-agent arm's
+  tokens ~83%; most of the naive penalty was implementation, not architecture.
+  Against the *tuned* arm, D still wins clearly on call count and latency, but
+  only modestly on cost.
+- **Cheap can mean worthless.** The tool-less arm quoted 57 prices and matched
+  **none** to a real fare. That is the hallucination failure the literature
+  describes (Xie et al., 2024) — measured, not asserted.
+
+---
+
+## Quick start
 
 ```bash
-git clone https://github.com/HamzahAhmad2000/trip-planner.git
-cd trip-planner
-pip install poetry
-poetry install
+# 1. install
+setup.bat                      # Windows
+# or: python -m venv .venv && pip install -r requirements.txt
+
+# 2. configure
+cp .env.example .env           # then paste your keys in
+
+# 3. run the comparison — FREE, replays recorded API responses
+TRIP_PLANNER_API_MODE=replay python -m comparison.run_comparison SC-01
 ```
 
-### Configure API Keys
+### Other entry points
 
-Copy `.env.example` to `.env` and fill in your keys:
+| Command | What it does |
+|---|---|
+| `python run_cli.py` | Interactive terminal planner |
+| `python run_web.py` | Streamlit web UI (localhost:8501) |
+| `python demo_comparison.py --no-pause` | Viva demo: all four arms side by side |
+| `python run_6agent.py` / `run_3agent.py` | Single architecture, step by step |
+| `python -m comparison.run_comparison` | Full evaluation, all 20 scenarios |
+| `python generate_docx.py` | Rebuild the dissertation document from results |
+| `python -m pytest` | Test suite (67 tests) |
+
+---
+
+## ⚠️ API quota — read this before running anything live
+
+The flight and hotel free tiers are **monthly and very small**:
+
+| API | Limit | Used for |
+|---|---|---|
+| fly-scraper | **30 / month** | Flights |
+| booking-com15 | **50 / month** | Hotels |
+| Serper | large | Attractions, restaurants |
+| Gemini | free tier | The LLM |
+
+One careless run can spend a whole month's allowance, and you cannot buy it
+back. Two protections:
 
 ```bash
-cp .env.example .env
+# never touches the network — reproduces everything from recordings
+export TRIP_PLANNER_API_MODE=replay
+
+# hard stop after N live calls
+export TRIP_PLANNER_MAX_LIVE_CALLS=10
 ```
 
-Required keys:
+### Record / replay
 
-| Key | Provider | Get it from |
-|-----|----------|-------------|
-| `OPENAI_API_KEY` | OpenAI | https://platform.openai.com/api-keys |
-| `SERPER_API_KEY` | Serper | https://serper.dev/ |
-| `RAPIDAPI_KEY` | RapidAPI | https://rapidapi.com/ |
+Every HTTP call goes through `src/core/http_cache.py`. Recorded responses live
+in `.api_cache/` and **are committed**, so anyone can reproduce the published
+results **with no API keys at all**.
 
-For RapidAPI, subscribe to:
-- [Kiwi.com Cheap Flights](https://rapidapi.com/apiheya/api/kiwi-com-cheap-flights) (free tier)
-- [Booking.com](https://rapidapi.com/booking-com15/api/booking-com15) (free tier)
+Only 2xx responses are cached, so a quota 429 is never baked in. Request headers
+are excluded from both the cache key and the stored file, so no key material is
+written to disk.
 
-### Run
+Because recordings are permanent, the evaluation can be built up **in batches
+across months** — record some scenarios now, the rest after the quota resets,
+then replay all 20 for free.
 
-```bash
-# CLI mode (interactive conversation)
-poetry run python main.py
+---
 
-# Web UI mode (Streamlit)
-poetry run streamlit run app.py
-```
-
-## Project Structure
+## Project structure
 
 ```
 trip_planner/
-├── main.py                    # Main orchestrator (TripPlannerCrew)
-├── agents.py                  # 6 CrewAI agent definitions
-├── tasks.py                   # Task definitions with Pydantic models
-├── a2a_protocol.py            # A2A message protocol implementation
-├── agent_cards.py             # Agent metadata & capability cards
-├── config.yaml                # Configuration (models, budgets, protocol)
-├── app.py                     # Streamlit web UI
-├── run_ui.bat                 # Windows shortcut for Streamlit
-│
-├── mcp_servers/               # MCP Server (tool provider)
-│   └── trip_planner_mcp_server.py   # Unified server (13 tools)
-│
-├── tools/                     # CrewAI tool wrappers
-│   ├── __init__.py            # Tool exports
-│   ├── mcp_tools.py           # MCP client + direct API tools
-│   ├── searchtool.py          # Web search tools
-│   └── calculatortool.py      # Budget calculator
-│
-├── utils/                     # Utilities
-│   ├── itinerary_validator.py # Day-count validation
-│   ├── cache_manager.py       # API response caching
-│   └── api_resilience.py      # Retry/fallback logic
-│
-├── tests/                     # Test suite
-├── experiments/               # Research experiment runners & results
-├── papers/                    # Academic paper (LaTeX)
-├── docs/                      # Additional documentation
-│
-├── pyproject.toml             # Poetry dependencies
-├── poetry.lock                # Locked dependencies
-├── .env.example               # Environment template
-└── .gitignore                 # Git ignore rules
+├── src/
+│   ├── agents.py               # CrewAI agent definitions
+│   ├── tasks.py                # Task definitions
+│   ├── orchestrator.py         # Main workflow (CLI + web)
+│   ├── comms/                  # A2A protocol: envelope, registry, priority queue
+│   ├── core/
+│   │   ├── http_cache.py       # Record/replay + quota guard
+│   │   ├── llm_metrics.py      # Real LLM call/token/cost measurement
+│   │   ├── resilience.py       # Retry with backoff
+│   │   ├── validators.py       # Itinerary day-count validation
+│   │   └── log_setup.py        # Keeps the Gemini key out of logs
+│   ├── server/mcp_server.py    # MCP server — 12 tools over JSON-RPC/stdio
+│   ├── tools/mcp_tools.py      # CrewAI tool wrappers + direct API calls
+│   └── ui/app.py               # Streamlit interface
+├── comparison/
+│   ├── architecture_*.py       # The four arms
+│   ├── distilled_tools.py      # Compact tool output for arm C
+│   ├── metrics.py              # Groundedness / bookability scoring
+│   ├── scenarios.py            # 20 evaluation scenarios
+│   ├── run_comparison.py       # Evaluation runner
+│   └── results/                # Measured results (committed)
+├── testing/                    # Test suite (pytest)
+│   └── manual/                 # Ad-hoc API probe scripts — NOT tests
+├── .api_cache/                 # Recorded API responses (committed)
+└── AGENTS.md                   # Working notes, gotchas, current state
 ```
 
-## How It Works
+---
 
-### Workflow (6 Phases)
+## Architecture
 
-1. **Conversation** — Agent asks user questions one-by-one (destination, dates, budget, interests)
-2. **Extraction** — Structures conversation into JSON with budget validation
-3. **Flight Search** — Calls Booking.com/Kiwi.com APIs for real flight data
-4. **Hotel Search** — Calls Booking.com API for hotels, reviews, nearby attractions
-5. **Attraction Search** — Uses Serper (Google) for activities & restaurants
-6. **Coordination** — Combines all data into a detailed day-by-day itinerary
+**MCP server** (`src/server/mcp_server.py`) — 12 schema-validated tools over
+JSON-RPC/stdio. Runs as a subprocess, so it bootstraps `sys.path` before
+importing `src.*`; without that every tool call fails as "Connection lost".
 
-### MCP Server
+**A2A protocol** (`src/comms/`) — 8 agent cards, 6 message types (REQUEST,
+RESPONSE, QUERY, INFO, ERROR, ACK), permission validation, priority queue.
+**Identical in every arm** — that is the point: the protocol layer is
+independent of how data is fetched.
 
-The unified MCP server (`mcp_servers/trip_planner_mcp_server.py`) exposes 13 tools:
+**Tech stack**
 
-| Tool | API | Purpose |
-|------|-----|---------|
-| `search_flights_kiwi` | Kiwi.com | Cheap flight search |
-| `search_cheap_flights` | Kiwi.com | Unified flight search |
-| `search_hotels_comprehensive` | Booking.com | Full hotel search + reviews |
-| `search_hotel_destination` | Booking.com | Get destination ID |
-| `search_hotels_by_destination` | Booking.com | Search by dest_id |
-| `get_hotel_reviews` | Booking.com | Hotel review scores |
-| `get_attractions_near_hotel` | Booking.com | Nearby POIs |
-| `search_accommodations_with_location` | Booking.com | GPS-based search |
-| `search_car_rentals` | Booking.com | Car rental search |
-| `search_internet` | Serper | General web search |
-| `search_attractions` | Serper | Tourist attractions |
-| `search_restaurants` | Serper | Restaurant search |
-| `calculate` | Local | Math operations |
+| Component | Technology |
+|---|---|
+| Agents | CrewAI |
+| LLM | Google Gemini 2.5 Flash via LiteLLM |
+| Flights | fly-scraper (RapidAPI) |
+| Hotels | Booking.com (RapidAPI) |
+| Web search | Serper.dev |
+| UI | Streamlit + CLI |
 
-### A2A Protocol
+---
 
-Agents communicate via structured messages:
+## Gotchas worth knowing
 
-```json
-{
-  "sender": "preferences_extractor",
-  "receiver": "flight_agent",
-  "message_type": "request",
-  "content": {"origin": "Islamabad", "destination": "Tokyo", ...},
-  "conversation_id": "uuid",
-  "priority": "high"
-}
-```
+- **fly-scraper is a two-phase API.** The search endpoint only *starts* the
+  search and returns a `sessionId`; results come from
+  `/v2/flights/search-incomplete`. Treating the first response as final returns
+  zero flights, every time.
+- **Its date parameters are camelCase** (`departureDate`, `returnDate`). The
+  snake_case forms are silently ignored — HTTP 200, wrong dates, no error.
+- **Endpoint paths are plural** (`/flights/...`); the RapidAPI console lists
+  them as `flight/...`, which 404s.
+- **CrewAI `@tool` makes `Tool` objects, not functions.** Call `.run(...)`, not
+  `f(...)`. Runtime code imports the plain functions from `mcp_server.py`.
+- **Never hand-count LLM calls.** Use `src/core/llm_metrics.py`; its callbacks
+  fire off-thread, so sessions drain before reporting.
 
-## Testing
+---
 
-```bash
-# Run unit tests
-poetry run pytest tests/
+## Status
 
-# Test MCP server independently
-poetry run python mcp_servers/trip_planner_mcp_server.py
-```
+Working: all four arms, all APIs, MCP server, A2A protocol, test suite,
+auto-generated dissertation document, Streamlit UI.
 
-## Configuration
+Remaining: record the other 19 scenarios (batched across quota resets), then
+re-run `generate_docx.py`.
 
-Edit `config.yaml` to customize:
-- Agent models and temperatures
-- Budget allocation percentages
-- A2A protocol timeouts
-- Search result limits
-
-## References
-
-- [CrewAI Documentation](https://docs.crewai.com/)
-- [Model Context Protocol](https://modelcontextprotocol.io/)
-- [MCP + CrewAI Integration](https://docs.crewai.com/en/mcp/overview)
+See `AGENTS.md` for detailed working notes.

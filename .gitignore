@@ -52,3 +52,6 @@ htmlcov/
 # ========================
 *.log
 *.tmp
+# Debug dumps written by testing/manual/ scripts
+booking_flights_response.json
+*_response.json
