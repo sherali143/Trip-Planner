@@ -108,12 +108,46 @@ class TestUserInput:
         shares, messages = parse_user_allocation(
             "flights 500, hotel 300, food 100, activities 100", 1000)
         assert shares["flights"] == pytest.approx(0.50)
-        assert any("absolute" in m for m in messages)
+        assert any("money" in m for m in messages)
 
     def test_percentages_not_summing_to_100_are_scaled_and_reported(self):
         shares, messages = parse_user_allocation("flights 50, hotel 50, food 50, tours 50", 1000)
         assert abs(sum(shares.values()) - 1.0) < 1e-6
         assert any("scaled" in m for m in messages)
+
+    def test_four_bare_numbers_are_reported_as_percentages_not_rescaled(self):
+        # Regression: the four-number path passed raw values (40, 30, 20, 10)
+        # to the normaliser, which read their sum of 100 as 10,000% and told
+        # the user their input had been "scaled" when nothing had changed.
+        shares, messages = parse_user_allocation("40/30/20/10", 1000)
+        assert shares["flights"] == pytest.approx(0.40)
+        assert not any("scaled" in m for m in messages)
+        assert any("percentages" in m for m in messages)
+
+    def test_four_bare_numbers_matching_the_budget_read_as_money(self):
+        shares, messages = parse_user_allocation("400/300/200/100", 1000)
+        assert shares["flights"] == pytest.approx(0.40)
+        assert any("money" in m for m in messages)
+
+    def test_overshooting_percentages_are_not_mistaken_for_money(self):
+        # Regression: "sum > 100 means money" misread four 50s as $200 spread
+        # over a $1,000 trip, silently returning 25% each instead of scaling
+        # the user's percentages.
+        shares, messages = parse_user_allocation(
+            "flights 50, hotel 50, food 50, tours 50", 1000)
+        assert all(v == pytest.approx(0.25) for v in shares.values())
+        assert any("percentages" in m for m in messages)
+        assert any("200%" in m for m in messages), "user should be told what was read"
+
+    def test_amounts_near_the_budget_read_as_money(self):
+        shares, messages = parse_user_allocation("flights 600, hotel 400", 1000)
+        assert shares["flights"] == pytest.approx(0.60)
+        assert any("money" in m for m in messages)
+
+    def test_small_named_percentages_stay_percentages(self):
+        shares, messages = parse_user_allocation("flights 40, hotel 30", 1000)
+        assert shares["flights"] == pytest.approx(0.40)
+        assert any("percentages" in m for m in messages)
 
     def test_unreadable_input_explains_itself(self):
         shares, messages = parse_user_allocation("i want it cheap please", 1000)

@@ -326,9 +326,10 @@ def parse_user_allocation(
     bare = re.findall(r"\d+(?:\.\d+)?", text)
     if not any(word in text for word in aliases) and len(bare) == 4:
         values = [float(v) for v in bare]
-        shares = dict(zip(CATEGORIES, values))
         messages.append(f"Read as flights/accommodation/activities/meals = "
                         f"{'/'.join(str(int(v)) for v in values)}")
+        divisor = _unit_divisor(values, text, total_budget, messages)
+        shares = {c: v / divisor for c, v in zip(CATEGORIES, values)}
         return _finalise_user_shares(shares, total_budget, messages), messages
 
     # Form 2: named pairs, possibly partial.
@@ -347,11 +348,10 @@ def parse_user_allocation(
         )
         return None, messages
 
-    # Absolute amounts if the numbers are clearly money rather than percentages.
-    looks_absolute = sum(named.values()) > 100.5 or "$" in text
-    if looks_absolute and total_budget > 0:
-        messages.append("Read as absolute amounts.")
-        shares = {c: named.get(c, 0.0) / total_budget for c in CATEGORIES}
+    # Absolute amounts or percentages? See _unit_divisor for the rule.
+    divisor = _unit_divisor(list(named.values()), text, total_budget, messages)
+    if divisor != 100.0:
+        shares = {c: named.get(c, 0.0) / divisor for c in CATEGORIES}
         missing = [c for c in CATEGORIES if c not in named]
         if missing:
             stated = sum(shares[c] for c in named)
@@ -377,6 +377,40 @@ def parse_user_allocation(
                         f"{', '.join(missing)}.")
 
     return _finalise_user_shares(shares, total_budget, messages), messages
+
+
+def _unit_divisor(values: List[float], text: str, total_budget: float,
+                  messages: List[str]) -> float:
+    """
+    Decide whether the user typed percentages or money, and return the divisor
+    that converts their numbers into fractions (100 for percent, the total
+    budget for money).
+
+    A naive "sum > 100 means money" rule misreads the common case of
+    percentages that overshoot — "flights 50, hotel 50, food 50, tours 50"
+    sums to 200 but is plainly four percentages the user needs rescaling, not
+    $200 spread over a $1,000 trip. The signals that actually distinguish them:
+
+      * an explicit currency symbol
+      * any single value above 100, since nobody writes "150%"
+      * a total in the neighbourhood of the trip budget
+    """
+    if not values:
+        return 100.0
+
+    total = sum(values)
+    absolute = (
+        "$" in text
+        or any(v > 100 for v in values)
+        or (total_budget > 0 and 0.5 * total_budget <= total <= 1.5 * total_budget)
+    )
+
+    if absolute and total_budget > 0:
+        messages.append("Read as amounts of money, not percentages.")
+        return float(total_budget)
+
+    messages.append("Read as percentages.")
+    return 100.0
 
 
 def _finalise_user_shares(shares: Dict[str, float], total_budget: float,
