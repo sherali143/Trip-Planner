@@ -181,6 +181,24 @@ def classify_haul(destination: str) -> str:
     return "medium"
 
 
+def is_known_destination(destination: str) -> bool:
+    """
+    True when there is actual price data for this destination.
+
+    Unknown cities are still costed, using mid-tier defaults, so that planning
+    can proceed — but callers presenting a figure as "what this trip costs"
+    need to know whether it rests on data or on a default.
+    """
+    dest = (destination or "").strip().lower()
+    if not dest:
+        return False
+    return any(
+        city in dest
+        for group in (_CHEAP, _EXPENSIVE, _SHORT_HAUL, _LONG_HAUL)
+        for city in group
+    )
+
+
 def classify_price_tier(destination: str) -> str:
     dest = (destination or "").strip().lower()
     if any(city in dest for city in _CHEAP):

@@ -66,6 +66,35 @@ class TestSuggestion:
         pair = suggest_allocation(4000, 5, 3, "moderate", "Lahore", "Istanbul")
         assert pair.shares["flights"] > solo.shares["flights"]
 
+    def test_allocation_follows_the_budget_not_just_the_style(self):
+        # Regression: shares were derived from the tier matching the stated
+        # style, so a bare-bones ratio got applied to a large budget. A
+        # 14-night Bangkok trip needs about $350 of airfare, and the
+        # minimum-tier ratio put flights at 51% — which on $3,000 would have
+        # reserved $1,530 for a $350 flight.
+        lean = suggest_allocation(700, 14, 1, "budget", "Lahore", "Bangkok")
+        rich = suggest_allocation(6000, 14, 1, "budget", "Lahore", "Bangkok")
+        assert lean.shares["flights"] > rich.shares["flights"] + 0.15
+        assert rich.shares["accommodation"] > lean.shares["accommodation"]
+
+    def test_style_still_shifts_the_split_at_equal_budget(self):
+        # The budget picks the bracket; style moves position inside it.
+        lux = suggest_allocation(5000, 5, 2, "luxury", "Lahore", "Dubai")
+        lean = suggest_allocation(5000, 5, 2, "budget", "Lahore", "Dubai")
+        assert lux.shares["accommodation"] > lean.shares["accommodation"]
+
+    def test_known_destination_uses_the_cost_model(self):
+        a = suggest_allocation(3000, 5, 1, "moderate", "Lahore", "Tokyo")
+        assert "actually costs" in a.reasons[0]
+
+    def test_unknown_destination_does_not_claim_cost_data(self):
+        # Regression: unknown cities are costed with mid-tier defaults, and
+        # presenting those as "what this trip costs" is false confidence.
+        a = suggest_allocation(3000, 5, 1, "moderate", "Lahore", "Xanadu")
+        assert "actually costs" not in a.reasons[0]
+        assert "not a destination with known price data" in a.reasons[0]
+        assert _sums_to_one(a)
+
     def test_reasons_are_always_given(self):
         a = suggest_allocation(1000, 5, 1, "moderate", "Lahore", "Istanbul")
         assert a.reasons, "a suggestion with no explanation is not usable"

@@ -164,6 +164,108 @@ def _normalise(shares: Dict[str, float]) -> Dict[str, float]:
     return {c: v / total for c, v in clean.items()}
 
 
+def _cost_derived_shares(
+    destination: str, trip_duration: int, num_travelers: int, travel_style: str,
+    total_budget: float,
+) -> Optional[Tuple[Dict[str, float], str]]:
+    """
+    Derive the split from what the trip's parts actually cost.
+
+    Preferred over the adjustment rules below, because it is arithmetic rather
+    than estimation: if a realistic Tokyo trip costs $1,050 in airfare and $480
+    in hotels, the flight share follows from those numbers instead of from a
+    hand-chosen "+10% for long haul". The rules were measurably off where the
+    two disagreed — on a 3-night Tokyo trip they put flights at 45.5% when the
+    real cost structure puts them at 55%.
+
+    Returns None when the destination is unknown, so the caller falls back to
+    the rule-based path rather than trusting a default-priced guess.
+    """
+    from src.core.trip_cost import classify_price_tier, estimate_trip_cost, is_known_destination
+
+    dest = (destination or "").strip()
+    # Only claim a cost-derived split for destinations there is actually price
+    # data for. An unknown city silently receives mid-tier defaults, and
+    # presenting those as "what this trip costs" would be false confidence.
+    if not dest or not is_known_destination(dest):
+        return None
+
+    estimate = estimate_trip_cost(dest, trip_duration, num_travelers)
+    if estimate.comfortable <= 0:
+        return None
+
+    # Pick the standard the BUDGET can actually buy, not the one the user named.
+    # Deriving shares from the bare-bones tier and applying them to a much
+    # larger budget over-allocates badly: a 14-night Bangkok trip costs about
+    # $350 in airfare, so the minimum-tier ratio puts flights at 51% — which on
+    # a $3,000 budget would reserve $1,530 for a $350 flight.
+    level, blend, label = _tier_for_budget(estimate, total_budget, travel_style)
+
+    def share_at(cat: str) -> float:
+        low, high = blend
+        return (estimate.breakdown[cat][low] * (1 - level)
+                + estimate.breakdown[cat][high] * level)
+
+    costs = {c: share_at(c) for c in CATEGORIES}
+    total = sum(costs.values())
+    if total <= 0:
+        return None
+
+    reason = (
+        f"Based on what a {label} trip to {dest} actually costs: "
+        f"{estimate.haul}-haul flights for {num_travelers} traveller(s), "
+        f"{trip_duration} night(s) at {classify_price_tier(dest)}-tier prices."
+    )
+    return {c: costs[c] / total for c in CATEGORIES}, reason
+
+
+def _tier_for_budget(estimate, total_budget: float, travel_style: str):
+    """
+    Locate the budget between the costed standards and blend the two either side.
+
+    Returns (position, (low_tier, high_tier), label) where position is 0..1
+    between the two named tiers, so the resulting shares move smoothly with the
+    budget instead of jumping between three fixed ratios.
+    """
+    budget = float(total_budget or 0)
+    style = (travel_style or "moderate").strip().lower()
+
+    # With no budget stated, fall back to the named style.
+    if budget <= 0:
+        if style in ("luxury", "premium", "high-end"):
+            return 1.0, ("comfortable", "luxury"), "luxury"
+        if style in ("budget", "backpacker", "cheap", "economy"):
+            return 0.0, ("minimum", "comfortable"), "bare-bones"
+        return 1.0, ("minimum", "comfortable"), "comfortable"
+
+    # The budget sets the bracket; the stated style still shifts position inside
+    # it. Two people with the same money who describe themselves as "luxury" and
+    # "budget" genuinely do want different splits — the first toward nicer
+    # rooms, the second toward cheaper stays and more doing.
+    bias = 0.0
+    if style in ("luxury", "premium", "high-end"):
+        bias = 0.15
+    elif style in ("budget", "backpacker", "cheap", "economy"):
+        bias = -0.15
+
+    def clamp(value: float) -> float:
+        return max(0.0, min(1.0, value))
+
+    if budget <= estimate.minimum:
+        return clamp(bias), ("minimum", "comfortable"), "bare-bones"
+    if budget <= estimate.comfortable:
+        span = max(1.0, estimate.comfortable - estimate.minimum)
+        position = clamp((budget - estimate.minimum) / span + bias)
+        return position, ("minimum", "comfortable"), (
+            "modest" if position < 0.5 else "comfortable")
+    if budget <= estimate.luxury:
+        span = max(1.0, estimate.luxury - estimate.comfortable)
+        position = clamp((budget - estimate.comfortable) / span + bias)
+        return position, ("comfortable", "luxury"), (
+            "comfortable" if position < 0.5 else "high-end")
+    return 1.0, ("comfortable", "luxury"), "luxury"
+
+
 def suggest_allocation(
     total_budget: float,
     trip_duration: int = 5,
@@ -175,11 +277,31 @@ def suggest_allocation(
     """
     Suggest a split for THIS trip, with the reasoning recorded.
 
-    Adjustments are applied to BASE_ALLOCATION and then renormalised, so the
-    result always sums to 100% regardless of how many rules fire.
+    Prefers a split derived from the trip's real cost structure. Falls back to
+    the adjustment rules below only when the destination is unknown, since
+    those rules cannot be checked against anything.
     """
+    derived = _cost_derived_shares(
+        destination, trip_duration, num_travelers, travel_style, total_budget)
+    if derived is not None:
+        shares, reason = derived
+        allocation = Allocation(
+            shares=shares,
+            amounts={c: round(total_budget * s, 2) for c, s in shares.items()},
+            total_budget=float(total_budget),
+            reasons=[reason],
+            source="suggested",
+        )
+        allocation.warnings = check_realism(
+            allocation, trip_duration, num_travelers, _haul(origin, destination)
+        )
+        return allocation
+
     shares = dict(BASE_ALLOCATION)
-    reasons: List[str] = []
+    reasons: List[str] = [
+        f"'{destination}' is not a destination with known price data, so this "
+        f"uses published average travel-spending shares adjusted for your trip."
+    ] if destination else []
 
     # --- distance: sets the flight share -------------------------------------
     haul = _haul(origin, destination)
