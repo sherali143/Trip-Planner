@@ -25,12 +25,90 @@ Usage
 """
 
 import logging
+import os
 import threading
 import time
 from contextlib import contextmanager
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+
+class LLMBudgetExceeded(RuntimeError):
+    """Raised when a run has spent its allowed number of LLM requests."""
+
+
+class _GlobalLLMBudget:
+    """
+    Process-wide ceiling on LLM requests, with pacing.
+
+    A full four-arm run over 20 scenarios issues roughly 620 Gemini requests
+    (measured: 31 per scenario). Free tiers cap both requests-per-minute and
+    requests-per-day, so an unguarded run can exhaust the day's allowance part
+    way through and leave the evaluation half finished — having spent the quota
+    without producing a complete result.
+
+    TRIP_PLANNER_MAX_LLM_CALLS   hard ceiling; raises rather than overspending
+    TRIP_PLANNER_LLM_DELAY_S     seconds to wait between requests (RPM relief)
+    """
+
+    def __init__(self) -> None:
+        self.calls = 0
+        self._last_call_at = 0.0
+        self._lock = threading.Lock()
+
+    @property
+    def limit(self) -> Optional[int]:
+        raw = os.getenv("TRIP_PLANNER_MAX_LLM_CALLS", "").strip()
+        if not raw:
+            return None
+        try:
+            return max(0, int(raw))
+        except ValueError:
+            return None
+
+    @property
+    def delay(self) -> float:
+        try:
+            return max(0.0, float(os.getenv("TRIP_PLANNER_LLM_DELAY_S", "0")))
+        except ValueError:
+            return 0.0
+
+    def remaining(self) -> Optional[int]:
+        limit = self.limit
+        return None if limit is None else max(0, limit - self.calls)
+
+    def record(self) -> None:
+        """Count one observed request. Called by the recorder's callback."""
+        with self._lock:
+            self.calls += 1
+
+    def would_exceed(self, expected: int) -> bool:
+        """
+        True if starting a unit of work costing `expected` requests would go
+        past the ceiling.
+
+        Checked at scenario boundaries rather than per request: a scenario that
+        stops half way still spends its API quota but produces no usable row,
+        so the useful place to stop is between whole scenarios.
+        """
+        limit = self.limit
+        return limit is not None and (self.calls + expected) > limit
+
+    def pace(self) -> None:
+        """Wait out TRIP_PLANNER_LLM_DELAY_S since the last paced step."""
+        delay = self.delay
+        if delay <= 0:
+            return
+        with self._lock:
+            if self._last_call_at:
+                wait = delay - (time.time() - self._last_call_at)
+                if wait > 0:
+                    time.sleep(wait)
+            self._last_call_at = time.time()
+
+
+BUDGET = _GlobalLLMBudget()
 
 
 def _safe_int(value: Any) -> int:
@@ -165,6 +243,10 @@ class LLMRecorder:
         logger.debug("llm_metrics callbacks installed")
 
     def _handle_success(self, request_kwargs=None, response=None, start_time=None, end_time=None):
+        # Counted even outside a session, so the process-wide budget reflects
+        # every request made against the provider's daily allowance.
+        BUDGET.record()
+
         session = self._active
         if session is None:
             return

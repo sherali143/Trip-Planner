@@ -1,19 +1,21 @@
 {
-  "timestamp": "2026-08-09T16:27:13.669905",
+  "timestamp": "2026-08-14T00:00:54.706036",
   "total_scenarios": 1,
   "scenario_ids": [
     "SC-01"
   ],
-  "total_time_s": 266.2,
+  "total_time_s": 0.0,
   "provenance": {
     "model": "gemini/gemini-2.5-flash",
     "api_mode": "replay",
     "api_cache": {
       "mode": "replay",
       "cache_dir": ".api_cache",
-      "recorded_entries": 15,
-      "cache_hits": 10,
-      "cache_misses": 1,
+      "recorded_entries": 23,
+      "live_call_budget": null,
+      "live_calls_remaining": null,
+      "cache_hits": 0,
+      "cache_misses": 0,
       "live_calls": 0,
       "live_errors": 0,
       "responses_stored": 0
@@ -570,5 +572,8 @@
         ]
       }
     }
-  ]
+  ],
+  "status": "complete",
+  "scenarios_reused_from_previous_run": 1,
+  "llm_requests_this_run": 0
 }

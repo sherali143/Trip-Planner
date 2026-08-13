@@ -23,6 +23,7 @@ from comparison.architecture_6agent_optimized import plan_trip_optimized_6agent
 from comparison.architecture_single_llm import plan_trip_single_llm
 from comparison.metrics import score_groundedness
 from src.core.http_cache import cache_summary, get_mode
+from src.core.llm_metrics import BUDGET
 
 # Ordered least-to-most engineered so the results table reads as a progression:
 # no tools at all -> naive multi-agent -> tuned multi-agent -> direct execution.
@@ -66,6 +67,29 @@ def run_scenario(scenario: dict, runner_fn, label: str) -> dict:
         }
 
 
+RESULTS_PATH = "comparison/results/comparison_results.json"
+
+
+def _load_previous():
+    """Previously completed scenarios, so a stopped run can be resumed."""
+    if not os.path.exists(RESULTS_PATH):
+        return {}
+    try:
+        with open(RESULTS_PATH, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (json.JSONDecodeError, OSError):
+        return {}
+    by_arm = data.get("details_by_arm") or {}
+    return {code: {r.get("scenario_id"): r for r in rows if r.get("scenario_id")}
+            for code, rows in by_arm.items()}
+
+
+def _save(payload):
+    os.makedirs("comparison/results", exist_ok=True)
+    with open(RESULTS_PATH, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, indent=2, default=str)
+
+
 def main():
     os.makedirs("comparison/results", exist_ok=True)
 
@@ -98,9 +122,42 @@ def main():
     # different parameters and burn several months' allowance in one run.
     execution_order = sorted(ARMS, key=lambda a: a[0] != "D")
 
+    # Resume: reuse scenarios already completed in a previous run rather than
+    # paying for them again. A full four-arm run over 20 scenarios costs about
+    # 620 LLM requests, so a run that stops part way — daily quota, network, a
+    # crash — must not throw away what it already bought.
+    previous = _load_previous()
+    reused = 0
+
+    # Roughly what one scenario costs across all arms, used to decide whether
+    # there is enough budget left to start another one.
+    per_scenario_llm = int(os.getenv("TRIP_PLANNER_LLM_PER_SCENARIO", "35"))
+    stopped_early = None
+
     for scenario in scenarios:
+        sid = scenario["id"]
+
+        done_everywhere = all(sid in previous.get(code, {}) for code, _, _ in ARMS)
+        if done_everywhere and "--force" not in sys.argv:
+            for code, _, _ in ARMS:
+                results_by_arm[code].append(previous[code][sid])
+            reused += 1
+            print(f"  [skip] {sid} already recorded — pass --force to redo it")
+            continue
+
+        if BUDGET.would_exceed(per_scenario_llm):
+            stopped_early = (
+                f"Stopped before {sid}: starting it would pass the "
+                f"TRIP_PLANNER_MAX_LLM_CALLS ceiling "
+                f"({BUDGET.calls} requests used). Completed scenarios are saved "
+                f"— re-run the same command later to continue from here."
+            )
+            print(f"\n  ! {stopped_early}\n")
+            break
+
         for code, name, runner in execution_order:
             results_by_arm[code].append(run_scenario(scenario, runner, f"{code} — {name}"))
+        BUDGET.pace()
 
         # Groundedness: score every arm's itinerary against the data arm D
         # actually retrieved for this scenario. Arms with no tool access have
@@ -112,6 +169,15 @@ def main():
                 result["groundedness"] = score_groundedness(result.get("result", ""), truth)
         else:
             print("  ! no ground truth retrieved for this scenario — groundedness skipped")
+
+        # Save after every scenario — and after scoring, so the checkpoint is
+        # complete — rather than once at the end. An interrupted run then keeps
+        # everything it has already paid for.
+        _save({
+            "status": "in_progress",
+            "completed_scenarios": [r.get("scenario_id") for r in results_by_arm["D"]],
+            "details_by_arm": results_by_arm,
+        })
 
     total_time = time.time() - overall_start
 
@@ -202,10 +268,16 @@ def main():
         "optimized_details": results_by_arm["D"],
     }
 
-    # Save results
-    out_path = "comparison/results/comparison_results.json"
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(comparison, f, indent=2, default=str)
+    # Record how complete this result set is, so a partial run is never
+    # mistaken for a finished evaluation when the numbers are written up.
+    comparison["status"] = "partial" if stopped_early else "complete"
+    comparison["scenarios_reused_from_previous_run"] = reused
+    comparison["llm_requests_this_run"] = BUDGET.calls
+    if stopped_early:
+        comparison["stopped_early"] = stopped_early
+
+    out_path = RESULTS_PATH
+    _save(comparison)
 
     print(f"\n{'='*70}")
     print(f"  COMPARISON COMPLETE")
