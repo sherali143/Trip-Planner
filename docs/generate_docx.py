@@ -33,7 +33,11 @@ def add_bullet(text):
     p = doc.add_paragraph(text, style='List Bullet')
     return p
 
-RESULTS_PATH = os.path.join('comparison', 'results', 'comparison_results.json')
+# Anchored to this file, not the working directory: the script lives in docs/
+# but the results live at the project root, so a CWD-relative path silently
+# found nothing and the document fell back to "NOT YET GENERATED".
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RESULTS_PATH = os.path.join(_ROOT, 'comparison', 'results', 'comparison_results.json')
 
 
 def _load_results():

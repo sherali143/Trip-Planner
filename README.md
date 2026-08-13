@@ -66,11 +66,13 @@ TRIP_PLANNER_API_MODE=replay python -m comparison.run_comparison SC-01
 |---|---|
 | `python run_cli.py` | Interactive terminal planner |
 | `python run_web.py` | Streamlit web UI (localhost:8501) |
-| `python demo_comparison.py --no-pause` | Viva demo: all four arms side by side |
-| `python run_6agent.py` / `run_3agent.py` | Single architecture, step by step |
+| `python demos/demo_comparison.py --no-pause` | Viva demo: all four arms side by side |
+| `python demos/run_6agent.py` / `demos/run_3agent.py` | Single architecture, step by step |
 | `python -m comparison.run_comparison` | Full evaluation, all 20 scenarios |
-| `python generate_docx.py` | Rebuild the dissertation document from results |
-| `python -m pytest` | Test suite (67 tests) |
+| `python docs/generate_docx.py` | Rebuild the dissertation document from results |
+| `python -m pytest` | Test suite (142 tests) |
+| `python figures/make_charts.py` | Regenerate results charts |
+| `python figures/make_diagrams.py` | Regenerate architecture diagrams |
 
 ---
 
@@ -139,7 +141,13 @@ trip_planner/
 │   └── results/                # Measured results (committed)
 ├── testing/                    # Test suite (pytest)
 │   └── manual/                 # Ad-hoc API probe scripts — NOT tests
+├── figures/                    # Generated charts and diagrams
+│   ├── make_charts.py          # Results charts, read from results JSON
+│   └── make_diagrams.py        # Architecture and flow diagrams
+├── demos/                      # Walkthrough scripts for the viva
+├── docs/                       # Proposal, project document, its generator
 ├── .api_cache/                 # Recorded API responses (committed)
+├── run_cli.py, run_web.py      # Entry points
 └── AGENTS.md                   # Working notes, gotchas, current state
 ```
 
@@ -192,6 +200,6 @@ Working: all four arms, all APIs, MCP server, A2A protocol, test suite,
 auto-generated dissertation document, Streamlit UI.
 
 Remaining: record the other 19 scenarios (batched across quota resets), then
-re-run `generate_docx.py`.
+re-run `docs/generate_docx.py`.
 
 See `AGENTS.md` for detailed working notes.

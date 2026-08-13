@@ -25,6 +25,11 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
+# This script lives in a subdirectory, so the project root is not on
+# sys.path when it is run directly. Add it before importing src/comparison.
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+
 import src  # applies logging defaults so the Gemini key is not printed
 from src.core.http_cache import cache_summary, get_mode
 

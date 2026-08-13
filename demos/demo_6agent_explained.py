@@ -20,6 +20,11 @@ from crewai import Agent, Task, Crew, Process
 
 logging.getLogger("opentelemetry").setLevel(logging.ERROR)
 
+# This script lives in a subdirectory, so the project root is not on
+# sys.path when it is run directly. Add it before importing src/comparison.
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+
 from src.tools import (
     search_round_trip_flights, search_comprehensive_flights,
     search_hotels_comprehensive, search_accommodations_with_location,

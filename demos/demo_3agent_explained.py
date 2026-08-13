@@ -20,6 +20,11 @@ os.environ["CREWAI_TRACING_ENABLED"] = "false"
 from crewai import Agent, Task, Crew, Process
 
 logging.getLogger("opentelemetry").setLevel(logging.ERROR)
+# This script lives in a subdirectory, so the project root is not on
+# sys.path when it is run directly. Add it before importing src/comparison.
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+
 from src.agents import TripPlannerAgents
 from src.tools.mcp_tools import _call_fly_scraper_api
 from src.server.mcp_server import search_hotels_comprehensive, search_attractions, search_restaurants

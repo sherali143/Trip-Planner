@@ -45,9 +45,36 @@ def retry_with_backoff(
 
 RATE_LIMIT_MARKERS = ("rate_limit", "ratelimit", "rate limit", "429", "resource_exhausted", "quota")
 
+# Exhaustion that waiting will not fix: a spending cap or an exhausted monthly
+# allowance stays exhausted for the rest of the billing period. These arrive
+# wearing the same 429 / RESOURCE_EXHAUSTED clothes as ordinary throttling, so
+# without this distinction every scenario burns four retries and several minutes
+# of backoff before failing anyway.
+PERMANENT_QUOTA_MARKERS = (
+    "spending cap",
+    "billing account",
+    "exceeded the monthly quota",
+    "monthly quota for requests",
+    "upgrade your plan",
+    "insufficient_quota",
+)
+
+
+def is_permanent_quota_error(error: BaseException) -> bool:
+    """True if the provider is refusing until the billing period rolls over."""
+    text = str(error).lower()
+    return any(marker in text for marker in PERMANENT_QUOTA_MARKERS)
+
 
 def is_rate_limit_error(error: BaseException) -> bool:
-    """True if an exception looks like provider throttling rather than a real fault."""
+    """
+    True if an exception looks like transient throttling worth retrying.
+
+    A permanent quota refusal is deliberately excluded: it matches the same
+    markers but retrying it only wastes time.
+    """
+    if is_permanent_quota_error(error):
+        return False
     text = str(error).lower()
     return any(marker in text for marker in RATE_LIMIT_MARKERS)
 
@@ -69,6 +96,12 @@ def kickoff_with_retry(crew, max_retries: int = 4, base_delay: float = 12.0):
             return crew.kickoff()
         except Exception as exc:
             last_error = exc
+            if is_permanent_quota_error(exc):
+                logger.error("Provider quota exhausted for this billing period: %s", exc)
+                print("\n  ! The LLM provider has refused the request for the rest of "
+                      "the billing period\n    (spending cap or monthly allowance). "
+                      "Retrying will not help — stopping.\n")
+                raise
             if not is_rate_limit_error(exc) or attempt == max_retries - 1:
                 raise
             hinted = re.search(r"(\d+(?:\.\d+)?)\s*s", str(exc))
