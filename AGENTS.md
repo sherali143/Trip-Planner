@@ -128,7 +128,7 @@ longer true and there is no `GROQ_API_KEY`.)
 ## Tests
 
 ```bash
-python -m pytest -q          # 67 passed, 1 skipped
+python -m pytest -q          # 137 passed
 ```
 
 `testing/manual/` holds ad-hoc API probe scripts, excluded from collection —

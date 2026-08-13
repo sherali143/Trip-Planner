@@ -70,7 +70,7 @@ TRIP_PLANNER_API_MODE=replay python -m comparison.run_comparison SC-01
 | `python demos/run_6agent.py` / `demos/run_3agent.py` | Single architecture, step by step |
 | `python -m comparison.run_comparison` | Full evaluation, all 20 scenarios |
 | `python docs/generate_docx.py` | Rebuild the dissertation document from results |
-| `python -m pytest` | Test suite (142 tests) |
+| `python -m pytest` | Test suite (137 tests) |
 | `python figures/make_charts.py` | Regenerate results charts |
 | `python figures/make_diagrams.py` | Regenerate architecture diagrams |
 
