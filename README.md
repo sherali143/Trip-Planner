@@ -67,10 +67,11 @@ TRIP_PLANNER_API_MODE=replay python -m comparison.run_comparison SC-01
 | `python run_cli.py` | Interactive terminal planner |
 | `python run_web.py` | Streamlit web UI (localhost:8501) |
 | `python demos/demo_comparison.py --no-pause` | Viva demo: all four arms side by side |
-| `python demos/run_6agent.py` / `demos/run_3agent.py` | Single architecture, step by step |
+| `python demos/demo_6agent_explained.py` | Arm B step by step, with MCP and A2A narrated |
+| `python demos/demo_3agent_explained.py` | Arm D step by step, showing where the LLM was removed |
 | `python -m comparison.run_comparison` | Full evaluation, all 20 scenarios |
 | `python docs/generate_docx.py` | Rebuild the dissertation document from results |
-| `python -m pytest` | Test suite (137 tests) |
+| `python -m pytest` | Test suite (148 tests) |
 | `python figures/make_charts.py` | Regenerate results charts |
 | `python figures/make_diagrams.py` | Regenerate architecture diagrams |
 
@@ -139,7 +140,7 @@ trip_planner/
 │   ├── scenarios.py            # 20 evaluation scenarios
 │   ├── run_comparison.py       # Evaluation runner
 │   └── results/                # Measured results (committed)
-├── testing/                    # Test suite — 137 tests, all with assertions
+├── testing/                    # Test suite — 148 tests, all with assertions
 ├── figures/                    # Generated charts and diagrams
 │   ├── make_charts.py          # Results charts, read from results JSON
 │   └── make_diagrams.py        # Architecture and flow diagrams
@@ -187,7 +188,7 @@ independent of how data is fetched.
 - **Endpoint paths are plural** (`/flights/...`); the RapidAPI console lists
   them as `flight/...`, which 404s.
 - **CrewAI `@tool` makes `Tool` objects, not functions.** Call `.run(...)`, not
-  `f(...)`. Runtime code imports the plain functions from `mcp_server.py`.
+  `f(...)`. Runtime code imports the plain functions from `src/server/mcp_server.py`.
 - **Never hand-count LLM calls.** Use `src/core/llm_metrics.py`; its callbacks
   fire off-thread, so sessions drain before reporting.
 

@@ -1,7 +1,7 @@
 # Tests
 
 ```bash
-python -m pytest -q        # 137 tests, from the project root
+python -m pytest -q        # 148 tests, from the project root
 ```
 
 No API keys required and no network access — every test here is pure logic.
@@ -15,6 +15,7 @@ No API keys required and no network access — every test here is pure logic.
 | `test_calculator.py` | 26 | The safe AST calculator, including rejection of malicious input |
 | `test_itinerary_validator.py` | 20 | Day-count validation on generated itineraries |
 | `test_budget_validation.py` | 16 | Budget parsing and breakdown |
+| `test_documentation_accuracy.py` | 11 | That the READMEs still tell the truth about the code |
 
 ## What is deliberately not here
 
@@ -34,3 +35,12 @@ worse than no test, because it reports confidence it has not earned.
 
 Every test asserts. If you find yourself writing a `print` to check something,
 that belongs in a script, not in here.
+
+## Why documentation is tested
+
+`test_documentation_accuracy.py` fails when the prose and the project disagree:
+a README naming a deleted file, a documented command with no target, a tool
+count that no longer matches the server, or a results table that has drifted
+from the measured data. Those are the first things a reader hits, and each one
+costs more trust than it saves. The project document already generates its
+numbers from the results file; this is what protects the hand-written ones.

@@ -20,13 +20,13 @@ day-by-day itinerary built from live flight, hotel and attraction data.
 
 | Module | What it solves |
 |---|---|
-| `http_cache.py` | Record/replay for every HTTP call, plus a hard live-call ceiling. Makes the evaluation reproducible without API keys and stops one run draining a monthly allowance. |
-| `llm_metrics.py` | Counts real LLM requests, tokens and cost from LiteLLM callbacks. Never hand-count — ReAct loops issue far more requests than there are tasks. |
-| `resilience.py` | Decides whether a provider refusal is worth retrying. A spending cap and a per-minute limit look identical; treating them alike is expensive either way. |
-| `budget.py` | Derives a budget split from what the trip's parts actually cost, and honours whatever split the user gives instead. |
-| `trip_cost.py` | Estimates what a trip costs at minimum, comfortable and luxury standards, and refuses budgets below the true floor. |
-| `validators.py` | Checks the generated itinerary actually contains every day it should. |
-| `log_setup.py` | Keeps the Gemini API key out of the console — it travels as a URL parameter, which httpx logs at INFO. |
+| `core/http_cache.py` | Record/replay for every HTTP call, plus a hard live-call ceiling. Makes the evaluation reproducible without API keys and stops one run draining a monthly allowance. |
+| `core/llm_metrics.py` | Counts real LLM requests, tokens and cost from LiteLLM callbacks. Never hand-count — ReAct loops issue far more requests than there are tasks. |
+| `core/resilience.py` | Decides whether a provider refusal is worth retrying. A spending cap and a per-minute limit look identical; treating them alike is expensive either way. |
+| `core/budget.py` | Derives a budget split from what the trip's parts actually cost, and honours whatever split the user gives instead. |
+| `core/trip_cost.py` | Estimates what a trip costs at minimum, comfortable and luxury standards, and refuses budgets below the true floor. |
+| `core/validators.py` | Checks the generated itinerary actually contains every day it should. |
+| `core/log_setup.py` | Keeps the Gemini API key out of the console — it travels as a URL parameter, which httpx logs at INFO. |
 
 ## Three things that will bite you
 
