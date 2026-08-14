@@ -34,10 +34,6 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 
-class LLMBudgetExceeded(RuntimeError):
-    """Raised when a run has spent its allowed number of LLM requests."""
-
-
 class _GlobalLLMBudget:
     """
     Process-wide ceiling on LLM requests, with pacing.

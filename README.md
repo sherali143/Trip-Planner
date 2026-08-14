@@ -139,12 +139,11 @@ trip_planner/
 │   ├── scenarios.py            # 20 evaluation scenarios
 │   ├── run_comparison.py       # Evaluation runner
 │   └── results/                # Measured results (committed)
-├── testing/                    # Test suite (pytest)
-│   └── manual/                 # Ad-hoc API probe scripts — NOT tests
+├── testing/                    # Test suite — 137 tests, all with assertions
 ├── figures/                    # Generated charts and diagrams
 │   ├── make_charts.py          # Results charts, read from results JSON
 │   └── make_diagrams.py        # Architecture and flow diagrams
-├── demos/                      # Walkthrough scripts for the viva
+├── demos/                      # Three walkthrough scripts for the viva
 ├── docs/                       # Proposal, project document, its generator
 ├── .api_cache/                 # Recorded API responses (committed)
 ├── run_cli.py, run_web.py      # Entry points

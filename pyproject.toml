@@ -7,12 +7,11 @@
 # installing via pip. One source of truth avoids that drift.
 
 [tool.pytest.ini_options]
-# `testing/manual/` holds ad-hoc API probe scripts, not tests. They are named
-# test_*.py so pytest collects them by default, and importing them fails (they
-# call live endpoints and exit() at module scope) — which aborted the entire
-# session and left `pytest testing/` collecting zero tests.
+# Every file under testing/ is a real test with real assertions. Ad-hoc API
+# probe scripts were removed rather than kept alongside them: named test_*.py
+# they were collected by pytest, asserted nothing, and called live endpoints.
 testpaths = ["testing"]
-norecursedirs = ["manual", ".venv", "__pycache__", ".api_cache", ".git"]
+norecursedirs = [".venv", "__pycache__", ".api_cache", ".git"]
 
 [tool.pyright]
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md

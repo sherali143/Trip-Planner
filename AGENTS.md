@@ -131,8 +131,8 @@ longer true and there is no `GROQ_API_KEY`.)
 python -m pytest -q          # 137 passed
 ```
 
-`testing/manual/` holds ad-hoc API probe scripts, excluded from collection —
-they hit live endpoints and one calls `exit()` at import.
+Every test carries real assertions. Ad-hoc probe scripts that asserted nothing
+and called live endpoints were removed rather than kept beside them.
 
 ## Still to do
 

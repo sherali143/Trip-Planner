@@ -1,3 +1,12 @@
+"""
+Output validation for generated itineraries.
+
+Language models drop days from long itineraries — asked for fourteen, they
+produce nine and stop. Prompt instructions ("write ALL days") do not reliably
+prevent it, so the day count is checked programmatically after generation and
+the shortfall is reported rather than hidden.
+"""
+
 import re
 import json
 from typing import Tuple, Optional, Callable, List

@@ -1,3 +1,14 @@
+"""
+Agent definitions for the production pipeline.
+
+Three agents, each of which exists because the step genuinely needs judgement:
+understanding a free-text request, and assembling a coherent day-by-day plan
+from retrieved data. Everything between those two — the actual data retrieval —
+is deterministic and is done in plain Python rather than by an agent.
+
+The six-agent variants used for the evaluation live in `comparison/`.
+"""
+
 from crewai import Agent
 from textwrap import dedent
 from typing import List, Optional

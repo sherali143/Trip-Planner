@@ -1,3 +1,18 @@
+"""
+The twenty evaluation scenarios.
+
+Chosen to span the axes that change an itinerary's difficulty rather than to be
+a uniform sample: trip length (3 to 14 nights), distance (short-haul Dubai to
+long-haul Tokyo), party size (solo to a family of four), destination price tier,
+multi-city routes, and budgets from comfortable down to deliberately impossible.
+
+The impossible ones (SC-05, SC-19) matter: an architecture that confidently
+plans a trip nobody could afford is failing, and only these scenarios expose it.
+
+Every architecture receives the identical string, so nothing in the comparison
+depends on how a request was phrased.
+"""
+
 SCENARIOS = [
     {
         "id": "SC-01",
