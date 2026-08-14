@@ -1,406 +1,550 @@
-"""Generate dissertation explanation DOCX"""
+"""
+Generate the project document: docs/AI_Trip_Planner_Project_Document.docx
 
-from docx import Document
-from docx.shared import Inches, Pt, Cm, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_TABLE_ALIGNMENT
+This is TECHNICAL DOCUMENTATION OF THE ARTEFACT — what was built, why, and what
+it measured. It is not the dissertation. It exists so the implementation and its
+evaluation can be understood and checked without reading the source.
+
+Every number comes from comparison/results/comparison_results.json and every
+figure from figures/. Nothing is typed by hand, so the document cannot drift
+from the system it describes. An earlier version hardcoded its headline
+figures — "5 LLM calls", "~230 seconds", "85% faster" — and all three turned out
+to be wrong once the LLM calls were actually instrumented.
+
+Run:  python docs/generate_docx.py
+"""
+
+import json
 import os
 
+from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Inches, Pt, RGBColor
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RESULTS_PATH = os.path.join(ROOT, "comparison", "results", "comparison_results.json")
+FIGURES = os.path.join(ROOT, "figures")
+OUTPUT = os.path.join(ROOT, "docs", "AI_Trip_Planner_Project_Document.docx")
+
+ACCENT = RGBColor(0x1F, 0x4E, 0x79)
+MUTED = RGBColor(0x52, 0x51, 0x4E)
+
 doc = Document()
+normal = doc.styles["Normal"]
+normal.font.name = "Calibri"
+normal.font.size = Pt(11)
+normal.paragraph_format.space_after = Pt(6)
 
-# ============================================
-# STYLES
-# ============================================
-style = doc.styles['Normal']
-font = style.font
-font.name = 'Calibri'
-font.size = Pt(11)
 
-def add_heading(text, level=1):
-    h = doc.add_heading(text, level=level)
-    return h
+# --------------------------------------------------------------- helpers
+def h(text, level=1):
+    doc.add_heading(text, level=level)
 
-def add_bold_para(text):
-    p = doc.add_paragraph()
-    run = p.add_run(text)
-    run.bold = True
-    return p
 
-def add_para(text):
+def para(text=""):
     return doc.add_paragraph(text)
 
-def add_bullet(text):
-    p = doc.add_paragraph(text, style='List Bullet')
+
+def bold(text):
+    p = doc.add_paragraph()
+    p.add_run(text).bold = True
     return p
 
-# Anchored to this file, not the working directory: the script lives in docs/
-# but the results live at the project root, so a CWD-relative path silently
-# found nothing and the document fell back to "NOT YET GENERATED".
-_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RESULTS_PATH = os.path.join(_ROOT, 'comparison', 'results', 'comparison_results.json')
+
+def bullet(text):
+    return doc.add_paragraph(text, style="List Bullet")
 
 
-def _load_results():
-    """
-    Read the measured comparison results.
+def numbered(text):
+    return doc.add_paragraph(text, style="List Number")
 
-    This document previously hardcoded its headline numbers ("5 LLM calls",
-    "~230 seconds", "85% faster"). They were estimates, and once the LLM calls
-    were actually instrumented they proved wrong — the 6-agent arm makes ~19-23
-    calls, not 5. Numbers typed into a document drift away from the code that
-    produced them, so they are now read from the results file and the document
-    refuses to invent them if the file is missing.
-    """
-    import json
+
+def caption(text):
+    p = doc.add_paragraph()
+    run = p.add_run(text)
+    run.italic = True
+    run.font.size = Pt(9)
+    run.font.color.rgb = MUTED
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    return p
+
+
+def table(headers, rows, widths=None):
+    t = doc.add_table(rows=1 + len(rows), cols=len(headers))
+    t.style = "Light Grid Accent 1"
+    for i, head in enumerate(headers):
+        cell = t.rows[0].cells[i]
+        cell.text = ""
+        run = cell.paragraphs[0].add_run(str(head))
+        run.bold = True
+    for r, row in enumerate(rows, start=1):
+        for c, value in enumerate(row):
+            t.rows[r].cells[c].text = str(value)
+    if widths:
+        for row in t.rows:
+            for cell, w in zip(row.cells, widths):
+                cell.width = Inches(w)
+    para()
+    return t
+
+
+def figure(name, cap, width=6.4):
+    path = os.path.join(FIGURES, name)
+    if not os.path.exists(path):
+        para(f"[figure missing: {name} — run python figures/make_diagrams.py]")
+        return
+    doc.add_picture(path, width=Inches(width))
+    doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+    caption(cap)
+
+
+def load_results():
     if not os.path.exists(RESULTS_PATH):
         return None
-    with open(RESULTS_PATH, encoding='utf-8') as fh:
+    with open(RESULTS_PATH, encoding="utf-8") as fh:
         return json.load(fh)
 
 
-
-def _arm_line(code):
-    """One-line measured summary for an arm, or an honest placeholder."""
-    data = _load_results()
-    arm = (data or {}).get('arms', {}).get(code)
-    if not arm:
-        return f'arm {code}: not yet measured'
-    return (f"{arm['avg_llm_calls']:.0f} LLM calls, "
-            f"{arm['avg_total_tokens']:,.0f} tokens, "
-            f"${arm['avg_cost_usd']:.4f}, {arm['avg_latency']:.0f}s per trip")
+RESULTS = load_results()
+ARMS = (RESULTS or {}).get("arms", {})
 
 
-def _results_table():
-    """Build the comparison table from measured data."""
-    data = _load_results()
-    if not data or 'arms' not in data:
-        return (
-            ['Metric', 'Status'],
-            [['Comparison results', 'NOT YET GENERATED — run: python -m comparison.run_comparison']],
-        )
+def arm(code, key, fmt="{:,.0f}"):
+    if code not in ARMS:
+        return "not measured"
+    return fmt.format(ARMS[code][key])
 
-    rows = []
-    for code in ('A', 'B', 'C', 'D'):
-        arm = data['arms'].get(code)
-        if not arm:
-            continue
-        rows.append([
-            f"{code} — {arm['name']}",
-            f"{arm['avg_llm_calls']:.0f}",
-            f"{arm['avg_total_tokens']:,.0f}",
-            f"${arm['avg_cost_usd']:.4f}",
-            f"{arm['avg_latency']:.0f}s",
-            f"{arm['avg_prices_grounded_pct']:.0f}%",
-        ])
-    return (
-        ['Architecture', 'LLM calls', 'Tokens', 'Cost', 'Time', 'Prices that are real'],
-        rows,
+
+# =====================================================================
+# TITLE
+# =====================================================================
+title = doc.add_heading("AI Trip Planner", level=0)
+sub = para()
+run = sub.add_run("A Multi-Agent Travel Planning System on the Model Context "
+                  "Protocol and a Typed Agent-to-Agent Protocol")
+run.bold = True
+run.font.size = Pt(13)
+run.font.color.rgb = ACCENT
+para("Project document — implementation and evaluation of the artefact.")
+
+if RESULTS:
+    prov = RESULTS.get("provenance", {})
+    ids = RESULTS.get("scenario_ids", [])
+    status = RESULTS.get("status", "unknown")
+    para(f"All measurements in this document were produced by "
+         f"{prov.get('model', 'the configured model')} across {len(ids)} evaluation "
+         f"scenario(s) ({', '.join(ids)}), recorded with the API layer in "
+         f"'{prov.get('api_mode', '?')}' mode. Result set status: {status}.")
+    if status != "complete" or len(ids) < 20:
+        p = para()
+        r = p.add_run(f"Note: {len(ids)} of 20 scenarios have been recorded so far. "
+                      f"Figures below are measurements of that subset, not of the "
+                      f"full scenario set.")
+        r.italic = True
+        r.font.color.rgb = MUTED
+else:
+    para("No measured results are available — run the evaluation to populate "
+         "this document.")
+
+doc.add_page_break()
+
+# =====================================================================
+# 1. PROBLEM STATEMENT
+# =====================================================================
+h("1. Problem statement", 1)
+
+para("Planning a short trip is a task people still do largely by hand. A "
+     "traveller with a destination, some dates and a budget must reconcile "
+     "live flight prices, hotel availability, opening times and a fixed total "
+     "spend — information that lives on several sites at once and changes while "
+     "they work. The task is tedious rather than difficult, which is exactly "
+     "the kind of task worth automating.")
+
+para("A single large language model is an obvious candidate and a poor one. "
+     "Asked to plan a trip, it will produce a fluent, confident itinerary "
+     "containing flights that do not exist at prices that were never quoted. "
+     "The TravelPlanner benchmark records a 0.6% final-pass rate for the best "
+     "single-LLM agent, with failures dominated by hallucinated venues, "
+     "fabricated prices and violated budget constraints (Xie et al., 2024).")
+
+bold("The three failure modes this project targets")
+table(
+    ["Failure mode", "What goes wrong", "How the design answers it"],
+    [
+        ["Context bloat",
+         "A single hotel API response can exceed 8 kB of raw JSON. Feed several "
+         "into one context and earlier reasoning is pushed out.",
+         "Tool results are distilled to the few options that matter before they "
+         "reach the model."],
+        ["Protocol fragility",
+         "A model asked to call an API freely emits malformed parameters.",
+         "Every tool call passes a schema before it can reach an external service."],
+        ["Semantic drift",
+         "Free text handed between cooperating agents degrades at each handoff.",
+         "Agents exchange typed, permission-validated messages, never prose."],
+    ],
+    widths=[1.3, 2.6, 2.5],
+)
+
+bold("Problem statement")
+para("Given a travel request in ordinary English, produce a day-by-day "
+     "itinerary in which every flight, hotel, activity and price is traceable "
+     "to data actually retrieved from a live source, within a total budget the "
+     "user controls — and determine what architecture delivers that at "
+     "acceptable cost.")
+
+# =====================================================================
+# 2. SCOPE
+# =====================================================================
+h("2. Scope", 1)
+
+table(
+    ["In scope", "Out of scope"],
+    [
+        ["English natural-language input", "Multilingual input"],
+        ["Three live APIs: flights, hotels, web search", "GDS systems (Sabre, Amadeus)"],
+        ["Twelve schema-validated MCP tools", "Booking or payment transactions"],
+        ["Typed A2A messaging between agents", "User accounts and authentication"],
+        ["Web (Streamlit) and command-line interfaces", "Native mobile applications"],
+        ["Retrospective evaluation over scripted scenarios", "Live user study"],
+        ["User-controlled budget allocation", "Currency conversion"],
+    ],
+    widths=[3.2, 3.2],
+)
+
+para("The system is a planning aid. It does not book anything, and the "
+     "interface states so.")
+
+# =====================================================================
+# 3. SOLUTION
+# =====================================================================
+h("3. The solution", 1)
+
+para("The system is organised in four layers. A conversational layer collects "
+     "the request; an extraction layer converts it to typed JSON; a retrieval "
+     "layer obtains real data through a Model Context Protocol (MCP) server; a "
+     "coordination layer assembles the itinerary from that data and nothing "
+     "else.")
+
+figure("fig_architecture.png",
+       "Figure 1 — System architecture. The MCP server is the only route to an "
+       "external API; every inter-agent message travels over the A2A protocol.")
+
+bold("3.1 The MCP server")
+para("A subprocess exposing twelve schema-validated tools over JSON-RPC on "
+     "stdio. Each tool declares its parameters, so a malformed call is rejected "
+     "before it can reach a paid external service. Responses pass through a "
+     "cache and a distillation stage on the way back.")
+
+figure("fig_mcp_lifecycle.png",
+       "Figure 2 — The six stages of a tool call. The cache sits in front of "
+       "the network, so a repeated query costs nothing.")
+
+bold("3.2 The A2A protocol")
+para("Agents never hand each other free text. Every message carries an "
+     "identifier, a sender, a receiver, one of six types, a priority, a "
+     "conversation identifier and a typed payload. A registry of agent cards "
+     "declares who may send what to whom, and a message that violates it is "
+     "rejected rather than delivered.")
+
+figure("fig_a2a_flow.png",
+       "Figure 3 — The six A2A messages exchanged during one trip request.")
+
+para("This layer is identical in every architecture evaluated below. That is "
+     "deliberate: holding the protocol constant is what allows the differences "
+     "measured later to be attributed to the retrieval strategy rather than to "
+     "how components communicate.")
+
+# =====================================================================
+# 4. APPROACHES
+# =====================================================================
+h("4. Approaches evaluated", 1)
+
+para("The proposal specified a six-agent architecture. Once that was built and "
+     "instrumented, most of its LLM calls turned out to be spent on data "
+     "retrieval rather than on reasoning. Rather than assert that a smaller "
+     "design is better, four architectures were built and measured against the "
+     "same requests.")
+
+figure("fig_four_arms.png",
+       "Figure 4 — The four architectures. Same request, same APIs, same "
+       "protocol; only the retrieval layer differs.")
+
+bold("Why four rather than two")
+para("Comparing the three-agent design only against the naive six-agent build "
+     "would invite an obvious objection: that the multi-agent arm lost because "
+     "it was configured badly, not because the architecture is worse. Arm C "
+     "removes that objection by implementing three commitments the proposal "
+     "made that the first build never did — distilled tool output, concurrent "
+     "specialists, and distillation as a stage of the MCP lifecycle. Arm A, a "
+     "single model with no tools, anchors the other end and shows what the "
+     "tool layer buys.")
+
+bold("4.1 Pros and cons")
+table(
+    ["Arm", "Strengths", "Weaknesses"],
+    [
+        ["A — Single LLM",
+         "Simplest possible; one request; no infrastructure.",
+         "No access to real data. Cites venues and prices that were never "
+         "retrieved, which is the failure this project exists to avoid."],
+        ["B — Six agents, naive",
+         "Full agent autonomy: a specialist can re-search when a result "
+         "disappoints. Faithful to the proposal's agent decomposition.",
+         "Each specialist carries up to eight tool schemas, re-sent on every "
+         "reasoning step. Raw API payloads enter the context. Highest cost of "
+         "the four on every measure."],
+        ["C — Six agents, tuned",
+         "Keeps agent autonomy while removing most of the cost. Specialists run "
+         "concurrently. Demonstrates that the multi-agent penalty is largely an "
+         "implementation artefact.",
+         "Still spends several LLM calls deciding which tool to use — work that "
+         "involves no judgement. Slower than direct execution."],
+        ["D — Three agents, direct API",
+         "LLM used only where judgement is required: understanding the request "
+         "and assembling the plan. Fewest calls, lowest latency. Retrieval is "
+         "deterministic and testable.",
+         "Cannot adapt its search: if results disappoint, it cannot widen the "
+         "dates and try again. That autonomy is genuinely lost."],
+    ],
+    widths=[1.2, 2.6, 2.6],
+)
+
+# =====================================================================
+# 5. SUPERVISOR-REQUESTED ENHANCEMENT
+# =====================================================================
+h("5. Enhancement: user-controlled budget allocation", 1)
+
+para("Following supervisor feedback, control over how the budget is divided "
+     "was moved from the system to the user.")
+
+bold("The problem with the original behaviour")
+para("The system applied one fixed split to every trip — flights 35%, "
+     "accommodation 35%, activities 20%, meals 10% — written into seven places "
+     "in the codebase, with no source behind the figures and no way for a user "
+     "to change them.")
+
+para("That split is also wrong for most trips, because the two largest "
+     "categories scale on different axes. Airfare is charged per person and set "
+     "by distance; it does not care how many nights are stayed. Accommodation "
+     "is charged per night and normally shared between travellers; it does not "
+     "care how far anyone flew. A three-night trip to a nearby city and a "
+     "fourteen-night long-haul trip cannot sensibly use the same percentages.")
+
+bold("What was implemented")
+table(
+    ["Before", "After"],
+    [
+        ["One fixed split for every trip",
+         "A split derived from what the trip's own components actually cost"],
+        ["Written into seven places",
+         "One module, with the cost model as the single source"],
+        ["Never explained to the user",
+         "Each category explained, with the reasoning for the suggested figures"],
+        ["No way to change it",
+         "Accepts percentages, named categories, partial input, or cash amounts"],
+        ["Budget feasibility judged by a fixed formula ignoring destination",
+         "Feasibility judged against the estimated cost of that specific trip"],
+    ],
+    widths=[3.2, 3.2],
+)
+
+para("Because the suggestion is derived rather than tuned, it responds to the "
+     "trip. A two-night trip to Dubai puts roughly a third of the budget on "
+     "flights; a fourteen-night trip to the same city puts under a fifth there, "
+     "because the one-off airfare is spread across far more nights.")
+
+bold("Feasibility, and a floor that is genuinely a floor")
+para("The previous check applied the same threshold regardless of destination, "
+     "so a modest budget was judged identically for a nearby city and a "
+     "long-haul one — and both were accepted, meaning the impossible trip "
+     "produced a confident but fictional itinerary. Cost is now estimated for "
+     "the specific destination, and a budget below the true minimum is refused "
+     "with an explanation of the shortfall and concrete alternatives. Anything "
+     "above that floor proceeds: a tight budget is a legitimate choice and is "
+     "warned about, not blocked.")
+
+# =====================================================================
+# 6. RESULTS
+# =====================================================================
+h("6. Measured results", 1)
+
+if not RESULTS:
+    para("No results recorded. Run: python -m comparison.run_comparison")
+else:
+    para("Every LLM request is counted through provider callbacks at runtime; "
+         "none of these figures is an estimate. Costs and latencies are means "
+         "over the recorded scenarios.")
+
+    table(
+        ["Architecture", "LLM calls", "Tokens", "Cost (USD)", "Time", "Real prices"],
+        [[f"{c} — {ARMS[c]['name']}",
+          arm(c, "avg_llm_calls"),
+          arm(c, "avg_total_tokens"),
+          arm(c, "avg_cost_usd", "${:,.4f}"),
+          arm(c, "avg_latency", "{:,.0f}s"),
+          arm(c, "avg_prices_grounded_pct", "{:,.0f}%")]
+         for c in ("A", "B", "C", "D") if c in ARMS],
+        widths=[1.9, 0.9, 0.9, 1.0, 0.7, 0.9],
     )
 
+    figure("fig_efficiency.png",
+           "Figure 5 — Cost of each architecture across four measures. "
+           "Presented as separate panels because the quantities share no scale.")
 
-def _results_provenance():
-    """A one-line statement of where the numbers came from."""
-    data = _load_results()
-    if not data:
-        return 'No measured results available — run the comparison to populate this section.'
-    prov = data.get('provenance', {})
-    ids = data.get('scenario_ids') or []
-    return (
-        f"Measured on {len(ids)} scenario(s) ({', '.join(ids)}) using "
-        f"{prov.get('model', 'unknown model')}, API mode '{prov.get('api_mode', '?')}'. "
-        f"Every LLM request was counted via LiteLLM callbacks rather than estimated. "
-        f"'Prices that are real' is the share of prices quoted in the itinerary that "
-        f"match a fare or nightly rate actually returned by the APIs — the tool-less "
-        f"baseline scores 0%, having invented every figure it printed."
-    )
+    bold("6.1 Tuning accounts for most of the multi-agent penalty")
+    para("Arms B and C contain the same six agents and reach the same APIs. "
+         "Only the prompt economics differ: one narrow tool per specialist "
+         "instead of up to eight, distilled results instead of raw payloads, "
+         "and a cap on reasoning iterations.")
 
+    figure("fig_tuning_effect.png",
+           "Figure 6 — Effect of tuning alone, with the architecture unchanged.")
 
-def add_table(headers, rows):
-    table = doc.add_table(rows=1+len(rows), cols=len(headers))
-    table.style = 'Light Grid Accent 1'
-    table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    for i, h in enumerate(headers):
-        table.rows[0].cells[i].text = h
-    for r, row in enumerate(rows):
-        for c, val in enumerate(row):
-            table.rows[r+1].cells[c].text = str(val)
-    return table
+    para("This matters for the conclusion. Most of the cost difference between "
+         "the naive multi-agent build and direct execution is an implementation "
+         "artefact, not a property of multi-agent design. Compared against the "
+         "tuned arm rather than the naive one, direct execution still wins "
+         "clearly on call count and latency, but only modestly on cost.")
 
-# ============================================
-# PAGE 1: PROJECT OVERVIEW
-# ============================================
-add_heading('AI Trip Planner — Project Overview', level=0)
+    bold("6.2 Cost alone would rank the worst system first")
+    para("The single-LLM arm is inexpensive precisely because it retrieves "
+         "nothing. Reporting its cost without reporting what it produced would "
+         "invert the conclusion, so each itinerary is also scored on whether "
+         "the prices it quotes match fares and rates actually returned by the "
+         "APIs.")
 
-add_para('')
-add_bold_para('What is this project?')
-add_para(
-    'This is an AI-powered trip planner that creates complete travel itineraries. '
-    'You tell it where you want to go, when, and your budget — and it produces '
-    'a day-by-day plan with flights, hotels, attractions, and restaurants.'
-)
+    figure("fig_groundedness.png",
+           "Figure 7 — Share of quoted prices traceable to retrieved data.")
 
-add_bold_para('Scope')
-add_bullet('Takes user input in plain English (e.g., "Plan a trip to Istanbul for 4 nights")')
-add_bullet('Fetches real-time data from live APIs — flights (fly-scraper), hotels (Booking.com), attractions and restaurants (Serper web search)')
-add_bullet('Uses AI agents (powered by Google Gemini) to understand requests and assemble itineraries')
-add_bullet('Runs in two modes: Terminal (CLI) and Web UI (Streamlit)')
-add_bullet('Built as a dissertation project comparing two architectures')
+    a_pct = ARMS.get("A", {}).get("avg_prices_grounded_pct")
+    if a_pct is not None:
+        para(f"The tool-less arm scores {a_pct:.0f}%. Every price it printed was "
+             f"invented — the hallucination failure described in the literature, "
+             f"measured directly rather than assumed.")
 
-add_bold_para('Technology Stack')
-add_table(
-    ['Component', 'Technology'],
+    bold("6.3 Interpreting the two groundedness signals")
+    para("Price matching is the robust signal: landing within 2% of a real "
+         "quoted fare is not something prior knowledge delivers. Name matching "
+         "is weaker and is reported only as supporting detail — a model with no "
+         "tool access can still name a real airline by guessing the obvious "
+         "carrier for a route, which is exactly what the tool-less arm did.")
+
+# =====================================================================
+# 7. REPRODUCIBILITY
+# =====================================================================
+h("7. Reproducibility", 1)
+
+para("Every HTTP response the evaluation depends on is recorded and committed "
+     "to the repository. The entire evaluation can therefore be re-run by "
+     "anyone, producing identical numbers, with no API keys at all:")
+
+para("    TRIP_PLANNER_API_MODE=replay python -m comparison.run_comparison")
+
+table(
+    ["Property", "How it is guaranteed"],
     [
-        ['AI Agents', 'CrewAI + Google Gemini 2.5 Flash (via LiteLLM)'],
-        ['Agent Communication', 'A2A Protocol (custom implementation)'],
-        ['Tool Integration', 'MCP Server (Model Context Protocol)'],
-        ['Flight Data', 'fly-scraper API (via RapidAPI)'],
-        ['Hotel Data', 'Booking.com API (via RapidAPI)'],
-        ['Web Search', 'Serper API'],
-        ['User Interface', 'Terminal (CLI) + Streamlit (Web)'],
-        ['Cost', '$0 — all APIs have free tiers'],
-    ]
+        ["Numbers cannot drift from the data",
+         "This document and every figure are generated from the results file."],
+        ["Results reproduce without credentials",
+         "Recorded API responses are committed; replay mode never touches the network."],
+        ["Errors are never mistaken for data",
+         "Only successful responses are cached, so a quota failure is never stored."],
+        ["No credentials reach disk",
+         "Request headers are excluded from both the cache key and the stored file."],
+        ["A run cannot exhaust a monthly allowance",
+         "Live calls and LLM requests are both capped, and runs stop between scenarios."],
+        ["An interrupted run loses nothing",
+         "Results are checkpointed per scenario; a re-run reuses what is recorded."],
+    ],
+    widths=[2.6, 3.8],
 )
 
-doc.add_page_break()
+# =====================================================================
+# 8. STRUCTURE
+# =====================================================================
+h("8. Repository structure", 1)
 
-# ============================================
-# PAGE 2: FIRST APPROACH — 6 AGENTS
-# ============================================
-add_heading('First Approach — 6-Agent Architecture (Original Proposal)', level=0)
-add_para('')
-
-add_para(
-    'This was the original architecture proposed in the dissertation. It uses '
-    '6 AI agents, where each agent is powered by an LLM (Gemini). Every agent '
-    'thinks, reasons, and uses tools to fetch data.'
-)
-
-add_bold_para('The 6 Agents and Their Jobs')
-
-add_table(
-    ['Agent Name', 'What It Does'],
+table(
+    ["Location", "Contents"],
     [
-        ['1. Conversational Agent', 'Asks the user 8 questions one-by-one (destination, dates, budget, interests, etc.) until all information is collected'],
-        ['2. Preferences Extractor', 'Reads the conversation and extracts structured data like origin, destination, dates, budget as JSON'],
-        ['3. Flight Search Agent', 'Has a tool to search flights. It THINKS about what tool to use, CALLS the API, READS the result, and gives flight recommendations'],
-        ['4. Hotel Search Agent', 'Same pattern — thinks, picks a hotel search tool, calls Booking.com API, reads results, recommends hotels'],
-        ['5. Attractions Agent', 'Searches for attractions and restaurants using Serper web search, same think-call-read pattern'],
-        ['6. Itinerary Coordinator', 'Reads all the data from above 5 agents and assembles a complete day-by-day itinerary'],
-    ]
+        ["src/", "Application code — orchestrator, agents, tasks, interfaces"],
+        ["src/comms/", "A2A protocol: message envelope, agent registry, priority queue"],
+        ["src/server/", "MCP server — twelve schema-validated tools over JSON-RPC"],
+        ["src/tools/", "Tool wrappers exposed to agents"],
+        ["src/core/", "Caching, measurement, retry policy, budget and cost models"],
+        ["src/ui/", "Streamlit interface"],
+        ["comparison/", "The experiment: four architectures, scenarios, metrics, results"],
+        ["testing/", "Automated test suite"],
+        ["figures/", "Generated charts and diagrams, with their generators"],
+        ["demos/", "Walkthrough scripts for demonstration"],
+        ["docs/", "Proposal, assignment brief, this document and its generator"],
+        [".api_cache/", "Recorded API responses, committed for reproducibility"],
+    ],
+    widths=[1.7, 4.7],
 )
 
-add_para('')
-add_bold_para('How It Works (Step by Step)')
-add_para('1. User types a request like "Plan a trip to Istanbul"')
-add_para('2. Conversational Agent asks 8 questions (where from, dates, budget, etc.) — each question is 1 LLM call')
-add_para('3. Preferences Extractor reads the conversation and converts it to JSON — 1 LLM call')
-add_para('4. Flight Search Agent uses a CrewAI tool to call the fly-scraper API. The LLM must decide which tool to use, call it, then read the result — this takes multiple LLM calls due to the ReAct (Reasoning + Acting) loop')
-add_para('5. Hotel Search Agent does the same for hotels — another ReAct loop with multiple LLM calls')
-add_para('6. Attractions Agent does the same for attractions and restaurants — another ReAct loop')
-add_para('7. Itinerary Coordinator reads all outputs and writes the final itinerary — 1 LLM call')
-
-add_para('')
-add_bold_para('The Problem with This Approach')
-add_bullet('Each search agent spends LLM calls deciding which tool to use and reading the output. Measurement showed 83% of this arm’s tokens are PROMPT tokens — context and tool schemas re-sent on every ReAct iteration.')
-add_bullet('The ReAct loops cause errors — LLMs often mis-parse tool outputs and retry')
-add_bullet('A simple task like "search for hotels" takes 30-60 seconds because the LLM is thinking instead of just calling the API')
-add_bullet(f'Measured cost per trip: {_arm_line("B")} (see the comparison table for all four architectures)')
-add_bullet('The ablation study skips the conversational agent for fair comparison — both architectures benchmark against the same extraction + data + coordinator flow')
-
-doc.add_page_break()
-
-# ============================================
-# PAGE 3: A2A PROTOCOL
-# ============================================
-add_heading('A2A Protocol — Agent-to-Agent Communication', level=0)
-add_para('')
-add_para(
-    'A2A (Agent-to-Agent) is a communication protocol that lets agents send '
-    'structured messages to each other. Think of it like email between agents — '
-    'each message has a sender, receiver, type, and content.'
-)
-
-add_bold_para('How A2A Works')
-add_bullet('8 Agent Cards are registered: conversational_agent, preferences_extractor, itinerary_coordinator, flight_data_provider, hotel_data_provider, attraction_data_provider, restaurant_data_provider, and user')
-add_bullet('Each card defines: who it can send to, who it can receive from, what data it expects, and what data it returns')
-add_bullet('When Agent A wants to send data to Agent B, the protocol checks if that communication is allowed by the registry')
-add_bullet('Every trip generates 6 A2A messages — this message flow is displayed at the end for the dissertation')
-
-add_para('')
-add_bold_para('Example A2A Message Flow for One Trip:')
-add_table(
-    ['#', 'From', 'To', 'Type', 'Content'],
+bold("Entry points")
+table(
+    ["Command", "Purpose"],
     [
-        ['1', 'preferences_extractor', 'itinerary_coordinator', 'REQUEST', 'Extracted JSON preferences'],
-        ['2', 'flight_data_provider', 'itinerary_coordinator', 'RESPONSE', 'Flight search results'],
-        ['3', 'hotel_data_provider', 'itinerary_coordinator', 'RESPONSE', 'Hotel search results'],
-        ['4', 'attraction_data_provider', 'itinerary_coordinator', 'RESPONSE', 'Attraction search results'],
-        ['5', 'restaurant_data_provider', 'itinerary_coordinator', 'RESPONSE', 'Restaurant search results'],
-        ['6', 'itinerary_coordinator', 'user', 'RESPONSE', 'Final itinerary'],
-    ]
+        ["python run_cli.py", "Interactive planner in the terminal"],
+        ["python run_web.py", "Streamlit web interface"],
+        ["python demos/demo_comparison.py", "All four architectures side by side"],
+        ["python -m comparison.run_comparison", "The full evaluation"],
+        ["python -m pytest", "Test suite"],
+        ["python figures/make_charts.py", "Regenerate results charts"],
+        ["python docs/generate_docx.py", "Regenerate this document"],
+    ],
+    widths=[2.8, 3.6],
 )
 
-add_para('')
-add_para(
-    'Important: The A2A protocol is the SAME in both approaches (6-agent and 3-agent). '
-    'The message flow, registry, and validation remain identical. Only the data-fetching '
-    'layer changes — whether an LLM agent or a direct Python function sends the message.'
-)
+# =====================================================================
+# 9. LIMITATIONS
+# =====================================================================
+h("9. Known limitations", 1)
 
-doc.add_page_break()
+para("Stated here rather than left to be discovered.")
 
-# ============================================
-# PAGE 4: MCP
-# ============================================
-add_heading('MCP — Model Context Protocol', level=0)
-add_para('')
-add_para(
-    'MCP (Model Context Protocol) is a standard way to give AI agents access to '
-    'external tools like APIs. Think of it as "USB-C for AI" — a universal connector '
-    'that lets any AI model use any tool.'
-)
-
-add_bold_para('How MCP is Set Up in This Project')
-add_bullet('An MCP Server runs at src/server/mcp_server.py — it listens for tool requests over stdio (standard input/output)')
-add_bullet('12 tools are registered: search flights, search hotels, search accommodations, search car rentals, search web, search attractions, search restaurants, calculator, search hotel destination, search hotels by ID, get hotel reviews, get nearby attractions')
-add_bullet('The MCP server communicates using JSON-RPC format: a request comes in, the server does the work, and sends back the result')
-add_bullet('MCP Tool wrappers are at src/tools/mcp_tools.py — these wrap the MCP server calls into LangChain StructuredTool format that CrewAI agents can use')
-
-add_para('')
-add_bold_para('MCP in the 6-Agent Approach')
-add_bullet('Search agents (Flight, Hotel, Attraction) use MCP tools via CrewAI')
-add_bullet('The agent says "I need to use the search_flights tool", CrewAI calls the MCP tool wrapper, which sends a JSON-RPC request to the MCP server, which calls the actual API, and returns the result')
-add_bullet('This is slow because the LLM has to think about which tool to use at each step')
-
-add_para('')
-add_bold_para('MCP in the 3-Agent Approach')
-add_bullet('The MCP server still exists and works — but the production flow BYPASSES it')
-add_bullet('Instead of going through the MCP protocol layer, the code calls the Python functions directly (e.g., _call_fly_scraper_api())')
-add_bullet('The MCP server is kept for the baseline comparison and for the coordinator agents tool access')
-
-doc.add_page_break()
-
-# ============================================
-# PAGE 5: SECOND APPROACH — 3 AGENTS
-# ============================================
-add_heading('Second Approach — 3-Agent + Direct API (Optimized)', level=0)
-add_para('')
-add_para(
-    'This is the improved architecture. The key insight: data fetching (calling APIs) '
-    'does not need an LLM. A 3-line Python function can call an API faster and more '
-    'reliably than an AI agent thinking about it. So we removed the 3 search agents '
-    'and replaced them with direct Python function calls.'
-)
-
-add_bold_para('The 3 Agents in the Optimized Demo')
-add_table(
-    ['Agent Name', 'What It Does', 'LLM Calls'],
+table(
+    ["Limitation", "Detail"],
     [
-        ['1. Preferences Extractor', 'Reads the user request and extracts structured JSON (origin, destination, dates, budget, interests)', '1 call'],
-        ['2. Itinerary Coordinator', 'Takes all the data (flights, hotels, attractions, restaurants) and assembles a complete day-by-day itinerary', '1 call'],
-    ]
+        ["Scenario coverage",
+         f"{len((RESULTS or {}).get('scenario_ids', []))} of 20 scenarios recorded "
+         f"so far. Reported figures describe that subset."],
+        ["Run-to-run variance",
+         "The naive multi-agent arm varied between 19 and 23 LLM calls on "
+         "identical input, reflecting the non-determinism of iterative reasoning "
+         "loops. Figures are single-run measurements."],
+        ["Destination price data",
+         "Cost estimation uses a curated table of roughly sixty cities. "
+         "Unrecognised destinations receive mid-tier defaults, and the system "
+         "says so rather than presenting them as derived."],
+        ["Groundedness by name",
+         "Matching venue and airline names is weak evidence, since well-known "
+         "names can be guessed. Price matching carries the claim."],
+        ["Evaluation design",
+         "Scripted scenarios rather than a live user study, which limits "
+         "external validity."],
+    ],
+    widths=[1.8, 4.6],
 )
 
-add_para('')
-add_bold_para('Note: The production CLI (run_cli.py) also has a Conversational Agent that asks 8 questions before extraction — making it 3 agents in the full pipeline. The optimized demo skips conversation for direct extraction.')
+# =====================================================================
+# REFERENCES
+# =====================================================================
+h("References", 1)
+para("Anthropic (2024) Model Context Protocol Specification. "
+     "Available at: https://modelcontextprotocol.io")
+para("Xie, J., Zhang, K., Chen, J., Zhu, T., Lou, R., Tian, Y., Xiao, Y. and "
+     "Su, Y. (2024) 'TravelPlanner: A Benchmark for Real-World Planning with "
+     "Language Agents', ICML 2024.")
+para("CrewAI (2024) CrewAI Documentation: Agents, Tasks and Crews. "
+     "Available at: https://docs.crewai.com")
 
-add_para('')
-add_bold_para('What Changed?')
-
-add_table(
-    ['Before (6-Agent)', 'After (3-Agent)'],
-    [
-        ['Flight Search Agent (LLM decides tool, calls API, parses result)', '_call_fly_scraper_api() — direct Python function (no LLM)'],
-        ['Hotel Search Agent (LLM decides tool, calls API, parses result)', 'search_hotels_comprehensive() — direct Python function (no LLM)'],
-        ['Attractions Agent (LLM decides tool, calls API, parses result)', 'search_attractions() — direct Python function (no LLM)'],
-        ['Conversational Agent (8 questions, 8 LLM calls)', 'Removed in optimized demo — goes straight to extraction'],
-        [_arm_line('B'), _arm_line('D')],
-        ['Frequent parse errors in ReAct loops', 'No parse errors — Python handles data directly'],
-    ]
-)
-
-add_para('')
-add_bold_para('How It Works (Step by Step)')
-add_para('1. User request goes directly to Preferences Extractor — 1 LLM call extracts JSON')
-add_para('2. Python code calls four APIs directly in sequence (no LLM involved):')
-add_bullet('_call_fly_scraper_api() — gets flight data')
-add_bullet('search_hotels_comprehensive() — gets hotel data')
-add_bullet('search_attractions() — gets attraction data')
-add_bullet('search_restaurants() — gets restaurant data')
-add_para('3. All data is combined and sent to Itinerary Coordinator — 1 LLM call to assemble the final itinerary')
-add_para('4. A2A messages are still sent between all providers and coordinator (same protocol, same registry)')
-
-doc.add_page_break()
-
-# ============================================
-# PAGE 6: COMPARISON & BENEFITS
-# ============================================
-add_heading('Comparison — Why the 3-Agent Approach is Better', level=0)
-add_para('')
-
-add_table(*_results_table())
-add_para('')
-add_para(_results_provenance())
-
-add_para('')
-add_bold_para('The Research Insight')
-add_para(
-    'The A2A multi-agent protocol is valuable — it provides clear message tracing, '
-    'permission validation, and structured communication between components. But '
-    'putting LLMs in the loop for deterministic API calls is wasteful. '
-    'The optimized approach keeps the A2A protocol visible for the dissertation '
-    'while removing LLM overhead from data fetching.'
-)
-
-add_para('')
-add_bold_para('What This Proves')
-add_bullet('Multi-agent architectures can be decoupled from the execution layer')
-add_bullet('LLMs should only be used where reasoning adds value (understanding requests, assembling itineraries)')
-add_bullet('Deterministic tasks (API calls) should use deterministic code (Python functions)')
-add_bullet('The same A2A protocol works with both architectures — proving the protocol is independent of how data is fetched')
-
-doc.add_page_break()
-
-# ============================================
-# PAGE 7: FILE STRUCTURE
-# ============================================
-add_heading('Project File Structure — What Each File Does', level=0)
-add_para('')
-
-add_table(
-    ['File', 'Purpose'],
-    [
-        ['run_cli.py', 'PRODUCTION CLI — Interactive Q&A. Prompts user for trip request, calls orchestrator, prints itinerary.'],
-        ['run_web.py', 'PRODUCTION WEB — Streamlit web interface for trip planning.'],
-        ['demo_6agent_explained.py', 'EDUCATIONAL DEMO — Explains 6-agent architecture with MCP & A2A protocol details at each step. Auto-run.'],
-        ['demo_3agent_explained.py', 'EDUCATIONAL DEMO — Explains 3-agent + Direct API architecture with MCP & A2A details. Auto-run.'],
-        ['demo_comparison.py', 'COMPARISON — Runs both architectures back-to-back on same input. Shows side-by-side metrics table.'],
-        ['run_6agent.py', 'EXECUTION — Runs 6 agents one-by-one (conversational → extractor → flight → hotel → attractions → coordinator) showing each agent call and raw output live.'],
-        ['run_3agent.py', 'EXECUTION — Runs extraction, 4 direct API calls (showing each response), then coordinator.'],
-        ['generate_docx.py', 'Generates this DOCX document. Run: python generate_docx.py'],
-        ['src/agents.py', 'Defines the 3 AI agents: conversational_agent (asks questions), preferences_extractor (parses JSON), itinerary_coordinator (assembles itinerary).'],
-        ['src/tasks.py', 'Defines the 3 tasks that the agents perform. Each task has a description and expected output format.'],
-        ['src/orchestrator.py', 'The main engine. Contains plan_trip() and plan_trip_from_transcript() which control the entire flow: conversation → extraction → API calls → coordination.'],
-        ['src/comms/registry.py', 'A2A Agent Registry — defines 8 agent cards with their communication permissions (who can send to whom).'],
-        ['src/comms/protocol.py', 'A2A Protocol implementation — message creation, validation, sending, history tracking.'],
-        ['src/tools/mcp_tools.py', 'API wrapper functions that call external APIs (fly-scraper for flights, Booking.com for hotels, Serper for web search). Also wraps them as LangChain tools.'],
-        ['src/tools/__init__.py', 'Exports all tools so agents can import them easily.'],
-        ['src/server/mcp_server.py', 'MCP Server implementation. Runs over stdio, listens for JSON-RPC requests, calls APIs, returns results. 1155 lines.'],
-        ['src/core/validators.py', 'Validates that the itinerary has the correct number of days and adds notices if days are missing.'],
-        ['src/core/cache.py', 'Caches API responses to avoid duplicate calls.'],
-        ['src/core/resilience.py', 'Retry logic for failed API calls.'],
-        ['src/ui/app.py', 'Streamlit web app pages — chat input, itinerary display, comparison view.'],
-        ['comparison/architecture_6agent.py', '6-agent baseline architecture for ablation study. Has 6 agents with MCP tools.'],
-        ['comparison/architecture_3agent.py', '3-agent optimized architecture wrapper for comparison. Uses direct API calls.'],
-        ['comparison/scenarios.py', '20 test scenarios with different destinations, budgets, trip lengths.'],
-        ['comparison/run_comparison.py', 'Runs all 20 scenarios on both architectures, aggregates metrics, saves to JSON.'],
-        ['.env', 'API keys file (GOOGLE_API_KEY, RAPIDAPI_KEY, SERPER_API_KEY, GEMINI_API_KEY). Not committed to git.'],
-        ['AGENTS.md', 'Session tracking document — what was done, current state, next steps.'],
-        ['pyproject.toml', 'Project dependencies — CrewAI 0.86.0, LiteLLM, Streamlit, LangChain, MCP SDK, Pydantic, Requests, etc.'],
-    ]
-)
-
-# Save
-output_path = os.path.join(os.path.dirname(__file__), 'Dissertation_Project_Explanation.docx')
-doc.save(output_path)
-print(f'Document saved to: {output_path}')
+doc.save(OUTPUT)
+print(f"Document saved to: {OUTPUT}")
+if RESULTS:
+    ids = RESULTS.get("scenario_ids", [])
+    print(f"  results: {len(ids)} scenario(s), status={RESULTS.get('status')}")
+print(f"  figures embedded from: {FIGURES}")

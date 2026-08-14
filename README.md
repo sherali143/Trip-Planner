@@ -70,7 +70,7 @@ TRIP_PLANNER_API_MODE=replay python -m comparison.run_comparison SC-01
 | `python demos/demo_6agent_explained.py` | Arm B step by step, with MCP and A2A narrated |
 | `python demos/demo_3agent_explained.py` | Arm D step by step, showing where the LLM was removed |
 | `python -m comparison.run_comparison` | Full evaluation, all 20 scenarios |
-| `python docs/generate_docx.py` | Rebuild the dissertation document from results |
+| `python docs/generate_docx.py` | Rebuild the project document from results |
 | `python -m pytest` | Test suite (148 tests) |
 | `python figures/make_charts.py` | Regenerate results charts |
 | `python figures/make_diagrams.py` | Regenerate architecture diagrams |
@@ -145,10 +145,9 @@ trip_planner/
 │   ├── make_charts.py          # Results charts, read from results JSON
 │   └── make_diagrams.py        # Architecture and flow diagrams
 ├── demos/                      # Three walkthrough scripts for the viva
-├── docs/                       # Proposal, project document, its generator
+├── docs/                       # Proposal, brief, project document, dev notes
 ├── .api_cache/                 # Recorded API responses (committed)
-├── run_cli.py, run_web.py      # Entry points
-└── AGENTS.md                   # Working notes, gotchas, current state
+└── run_cli.py, run_web.py      # Entry points
 ```
 
 ---
@@ -202,4 +201,4 @@ auto-generated dissertation document, Streamlit UI.
 Remaining: record the other 19 scenarios (batched across quota resets), then
 re-run `docs/generate_docx.py`.
 
-See `AGENTS.md` for detailed working notes.
+See `docs/DEVELOPMENT_NOTES.md` for detailed working notes, and `docs/AI_Trip_Planner_Project_Document.docx` for the full project document.

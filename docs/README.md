@@ -4,8 +4,9 @@
 |---|---|
 | `AI_Trip_Planner_Proposal.pdf` | The submitted project proposal (Assessment 1) |
 | `CMP7200_Assignment_Brief.pdf` | The module assignment brief and marking criteria |
-| `Dissertation_Project_Explanation.docx` | Generated project document — architecture, decisions, measured results |
+| `AI_Trip_Planner_Project_Document.docx` | Generated project document — problem, scope, approaches, results, figures |
 | `generate_docx.py` | Generates the above |
+| `DEVELOPMENT_NOTES.md` | Working notes: current state, gotchas, quota rules |
 
 ## Regenerating the project document
 
