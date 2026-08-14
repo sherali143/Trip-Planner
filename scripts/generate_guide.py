@@ -623,7 +623,8 @@ bold("What each file does — demonstration, generation, tests")
 table(
     ["File", "Responsibility"],
     [
-        ["demos/demo_approach.py", "Runs one architecture, narrated"],
+        ["demos/run_approach_*.py", "Runs one architecture each, narrated"],
+        ["demos/demo_approach.py", "Shared presentation logic for those four"],
         ["demos/demo_comparison.py", "Runs all four side by side"],
         ["scripts/generate_guide.py", "Generates this document"],
         ["scripts/make_charts.py", "Generates the results charts"],

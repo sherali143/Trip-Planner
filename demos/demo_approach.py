@@ -110,9 +110,20 @@ def banner(text):
     print(f"\n{RULE}\n  {text}\n{RULE}")
 
 
-def main():
+def main(code=None):
+    """
+    Run one arm.
+
+    `code` is supplied by the per-approach wrapper scripts
+    (run_approach_a_single_llm.py and friends). When it is None the arm is
+    taken from the command line instead, so this file stays usable directly.
+    """
     args = [a for a in _sys.argv[1:]]
-    code = (args[0].upper() if args else "").strip()
+    if code is None:
+        code = (args[0].upper() if args else "").strip()
+    else:
+        # A wrapper fixed the arm, so any argument is the request text.
+        args = [code] + args
     if code not in APPROACHES:
         print(__doc__)
         print("Choose one of: " + ", ".join(f"{k} ({v['name']})"

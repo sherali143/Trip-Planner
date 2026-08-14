@@ -36,8 +36,8 @@ are the comparison the dissertation rests on, not because anything ships them.
 | `python run_cli.py` | **D** — 3 agents + direct API |
 | `python run_web.py` | **D** — 3 agents + direct API |
 | `python demos/demo_comparison.py` | all four, side by side |
-| `python demos/demo_approach.py B` | **B** alone, narrated |
-| `python demos/demo_approach.py D` | **D** alone, narrated |
+| `python demos/run_approach_b_six_agent_naive.py` | **B** alone |
+| `python demos/run_approach_d_three_agent_direct.py` | **D** alone |
 | `python -m comparison.run_comparison` | all four, across the scenarios |
 
 ### Measured results (SC-01, all four arms)
@@ -83,7 +83,7 @@ TRIP_PLANNER_API_MODE=replay python -m comparison.run_comparison SC-01
 | `python run_cli.py` | Interactive terminal planner |
 | `python run_web.py` | Streamlit web UI (localhost:8501) |
 | `python demos/demo_comparison.py --no-pause` | Viva demo: all four arms side by side |
-| `python demos/demo_approach.py A\|B\|C\|D` | One approach in isolation, narrated |
+| `python demos/run_approach_a_single_llm.py` | Approach A alone (and `_b_`, `_c_`, `_d_`) |
 | `python -m comparison.run_comparison` | Full evaluation, all 20 scenarios |
 | `python scripts/generate_guide.py` | Rebuild the project document from results |
 | `python -m pytest` | Test suite (149 tests) |
