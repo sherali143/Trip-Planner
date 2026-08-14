@@ -86,6 +86,20 @@ for code, name, runner in ARMS:
         continue
 
     r = results[code]
+    # The arms catch their own exceptions and return success=False rather than
+    # raising, so without this an unavailable provider prints "Completed ...
+    # 0 LLM calls" and looks like a successful run of a very cheap arm.
+    if not r.get("success"):
+        error = str(r.get("error", "no error recorded"))
+        print(f"\n  DID NOT COMPLETE — {error[:200]}")
+        if "ip address restriction" in error.lower():
+            print("  The API key is restricted to specific IP addresses; this "
+                  "machine is not on the list.")
+        elif "spending cap" in error.lower() or "billing" in error.lower():
+            print("  The LLM provider has stopped accepting requests for this "
+                  "billing period.")
+        continue
+
     print(f"\n  Completed in {r.get('latency', 0):.1f}s | "
           f"{r.get('llm_calls', 0)} LLM calls | {r.get('total_tokens', 0):,} tokens")
 
@@ -103,17 +117,29 @@ print(head)
 print("  " + "-" * (len(head) - 2))
 for code, name, _ in ARMS:
     r = results.get(code) or {}
+    label = f"{code} — {name}"
+    if not r.get("success"):
+        # A row of zeros would read as a real measurement.
+        print(f"  {label:<34}{'did not complete':>41}")
+        continue
     grounded = (r.get("groundedness") or {}).get("prices_grounded_pct")
-    print(f"  {code + ' — ' + name:<34}"
+    print(f"  {label:<34}"
           f"{r.get('llm_calls', 0):>5}"
           f"{r.get('total_tokens', 0):>10,}"
           f"{r.get('cost_usd', 0):>10.5f}"
           f"{r.get('latency', 0):>8.1f}"
           f"{(f'{grounded:.0f}%' if grounded is not None else 'n/a'):>8}")
 
-print("\n  'Real $' = share of prices quoted in the itinerary that match a fare or")
-print("  nightly rate the APIs actually returned. The tool-less arm scores 0%:")
-print("  every figure it printed was invented.")
+print("\n  'Real $' = share of prices quoted in the itinerary that match a fare")
+print("  or nightly rate the APIs actually returned.")
+
+# Report what THIS run measured rather than asserting a remembered result — if
+# the run did not complete, the claim would otherwise be made with no data.
+_a = (results.get("A") or {}).get("groundedness") or {}
+if _a.get("prices_quoted"):
+    print(f"\n  Arm A quoted {_a['prices_quoted']} prices and matched "
+          f"{_a['prices_grounded']} of them ({_a['prices_grounded_pct']:.0f}%).")
+    print("  It calls no API, so it has nothing real to cite.")
 
 d, c = results.get("D") or {}, results.get("C") or {}
 if d.get("llm_calls") and c.get("llm_calls"):
