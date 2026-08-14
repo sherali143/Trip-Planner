@@ -2,6 +2,24 @@
 
 The dissertation report belongs here.
 
+## Files here
+
+| File | What it is |
+|---|---|
+| `Dissertation_TEMPLATE.docx` | **Start here.** A formatted Word shell: 7 chapters, 36 sections, all 7 figures already placed, 11 pt / 1.5 spacing as the brief requires. Write directly into it. |
+| `REPORT_OUTLINE.md` | The same structure in plain text, with the word budget and evidence map |
+
+## Using the template
+
+Open `Dissertation_TEMPLATE.docx` and save it under your own filename. Each
+section carries a grey italic **GUIDANCE** box saying what belongs there and
+which artefact supports it, followed by a `[placeholder]` to type into. Delete
+the guidance boxes as you go — 42 of them, and none should survive to
+submission.
+
+Regenerate the template with `python scripts/generate_report_template.py`. Doing
+so overwrites `Dissertation_TEMPLATE.docx`, so work in a renamed copy.
+
 `REPORT_OUTLINE.md` is a planning aid: chapter structure, what each section has
 to contain to satisfy the published marking criteria, which evidence in this
 repository supports it, and a word budget that sums to 12,000. It contains no
