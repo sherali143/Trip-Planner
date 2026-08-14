@@ -32,7 +32,7 @@ from matplotlib.ticker import FuncFormatter, MaxNLocator
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 RESULTS = os.path.join(ROOT, "comparison", "results", "comparison_results.json")
-OUT = HERE
+OUT = os.path.join(ROOT, "figures")
 
 # From the validated reference palette (light mode).
 BLUE = "#2a78d6"          # categorical slot 1 — the single series hue

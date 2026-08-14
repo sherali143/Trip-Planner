@@ -79,7 +79,7 @@ def new_canvas(w, h, title, subtitle=None):
 
 
 def save(fig, name):
-    path = os.path.join(HERE, name)
+    path = os.path.join(ROOT, "figures", name)
     fig.savefig(path, dpi=200, bbox_inches="tight", pad_inches=0.25)
     plt.close(fig)
     print("wrote", os.path.relpath(path, ROOT))

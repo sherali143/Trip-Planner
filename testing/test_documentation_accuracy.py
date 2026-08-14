@@ -32,8 +32,18 @@ ALL_TEXT = "\n".join(DOCS.values())
 
 def test_documentation_exists_for_every_package():
     """Each top-level folder explains itself."""
-    for folder in ("src", "comparison", "testing", "demos", "docs", "figures"):
+    for folder in ("src", "comparison", "testing", "demos", "figures",
+                   "scripts", "proposal", "report", "deploy"):
         assert (ROOT / folder / "README.md").exists(), f"{folder}/ has no README"
+
+
+def test_the_project_guide_exists():
+    """PROJECT_GUIDE.docx is the single entry document; it must be present."""
+    guide = ROOT / "PROJECT_GUIDE.docx"
+    assert guide.exists(), (
+        "PROJECT_GUIDE.docx is missing — regenerate with "
+        "python scripts/generate_guide.py"
+    )
 
 
 def test_every_python_file_has_a_module_docstring():

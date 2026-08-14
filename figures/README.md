@@ -3,8 +3,8 @@
 Generated, not hand-drawn. Regenerate after any evaluation run:
 
 ```bash
-python figures/make_charts.py     # results charts — read from the results JSON
-python figures/make_diagrams.py   # architecture and flow diagrams
+python scripts/make_charts.py     # results charts — read from the results JSON
+python scripts/make_diagrams.py   # architecture and flow diagrams
 ```
 
 ## Results charts — `make_charts.py`

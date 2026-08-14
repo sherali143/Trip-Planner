@@ -85,10 +85,10 @@ TRIP_PLANNER_API_MODE=replay python -m comparison.run_comparison SC-01
 | `python demos/demo_comparison.py --no-pause` | Viva demo: all four arms side by side |
 | `python demos/demo_approach.py A\|B\|C\|D` | One approach in isolation, narrated |
 | `python -m comparison.run_comparison` | Full evaluation, all 20 scenarios |
-| `python docs/generate_docx.py` | Rebuild the project document from results |
-| `python -m pytest` | Test suite (148 tests) |
-| `python figures/make_charts.py` | Regenerate results charts |
-| `python figures/make_diagrams.py` | Regenerate architecture diagrams |
+| `python scripts/generate_guide.py` | Rebuild the project document from results |
+| `python -m pytest` | Test suite (149 tests) |
+| `python scripts/make_charts.py` | Regenerate results charts |
+| `python scripts/make_diagrams.py` | Regenerate architecture diagrams |
 
 ---
 
@@ -135,40 +135,42 @@ then replay all 20 for free.
 ```
 trip_planner/
 │
-├── src/                     APPLICATION CODE
+├── PROJECT_GUIDE.docx       THE PROJECT GUIDE — read this first
+├── setup.bat                one-command setup
+├── run_cli.py               plan a trip in the terminal
+├── run_web.py               plan a trip in the browser
+│
+├── src/                     MAIN APPLICATION CODE
+│   ├── orchestrator.py        the production workflow
 │   ├── agents.py              the three agents that need an LLM
 │   ├── tasks.py               their task definitions and prompts
-│   ├── orchestrator.py        the production workflow
-│   ├── comms/                 A2A protocol — envelope, registry, queue
+│   ├── comms/                 A2A protocol
 │   ├── server/                MCP server — 12 schema-validated tools
 │   ├── tools/                 tool wrappers exposed to agents
 │   ├── core/                  caching, measurement, retry, budget, cost
 │   └── ui/                    Streamlit interface
 │
 ├── comparison/              THE EVALUATION
-│   ├── architecture_*.py      the four approaches (A, B, C, D)
+│   ├── arm_a_single_llm.py          arm A
+│   ├── arm_b_six_agent_naive.py     arm B
+│   ├── arm_c_six_agent_tuned.py     arm C
+│   ├── arm_d_three_agent_direct.py  arm D
 │   ├── scenarios.py           20 evaluation scenarios
 │   ├── metrics.py             groundedness scoring
 │   ├── run_comparison.py      the runner
-│   └── results/               measured results (committed)
+│   └── results/               measured results
 │
-├── docs/                    PROPOSAL AND REPORTS
-│   ├── AI_Trip_Planner_Proposal.pdf
-│   ├── CMP7200_Assignment_Brief.pdf
-│   ├── AI_Trip_Planner_Project_Document.docx
-│   ├── generate_docx.py       regenerates the document from results
-│   └── DEVELOPMENT_NOTES.md
+├── demos/                   DEMONSTRATION
+│   ├── demo_approach.py       one architecture, narrated
+│   └── demo_comparison.py     all four, side by side
 │
-├── demos/                   demo_approach.py (one arm) + demo_comparison.py (all four)
+├── proposal/                proposal + assignment brief
+├── report/                  the dissertation report
+├── scripts/                 generators for the guide and figures
 ├── figures/                 7 generated charts and diagrams
-├── testing/                 148 automated tests
-├── deploy/                  Dockerfile and compose
-├── .api_cache/              recorded API responses (committed)
-│
-├── setup.bat                one-command setup
-├── run_cli.py               plan a trip in the terminal
-├── run_web.py               plan a trip in the browser
-└── requirements.txt         pinned dependencies
+├── testing/                 149 automated tests
+├── deploy/                  Docker
+└── .api_cache/              recorded API responses (committed)
 ```
 
 ---
@@ -220,6 +222,6 @@ Working: all four arms, all APIs, MCP server, A2A protocol, test suite,
 auto-generated dissertation document, Streamlit UI.
 
 Remaining: record the other 19 scenarios (batched across quota resets), then
-re-run `docs/generate_docx.py`.
+re-run `scripts/generate_guide.py`.
 
-See `docs/DEVELOPMENT_NOTES.md` for detailed working notes, and `docs/AI_Trip_Planner_Project_Document.docx` for the full project document.
+See `scripts/DEVELOPMENT_NOTES.md` for detailed working notes, and `PROJECT_GUIDE.docx` for the full project document.

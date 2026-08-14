@@ -128,7 +128,7 @@ longer true and there is no `GROQ_API_KEY`.)
 ## Tests
 
 ```bash
-python -m pytest -q          # 148 passed
+python -m pytest -q          # 149 passed
 ```
 
 Every test carries real assertions. Ad-hoc probe scripts that asserted nothing
@@ -137,5 +137,5 @@ and called live endpoints were removed rather than kept beside them.
 ## Still to do
 
 1. Record the remaining 19 scenarios (batch across quota resets)
-2. Regenerate `docs/Dissertation_Project_Explanation.docx` — run `python docs/generate_docx.py`
+2. Regenerate `docs/Dissertation_Project_Explanation.docx` — run `python scripts/generate_guide.py`
 3. Consider running each scenario 3x — arm B varied 19-23 calls between runs

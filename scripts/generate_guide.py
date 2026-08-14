@@ -1,5 +1,5 @@
 """
-Generate the project document: docs/AI_Trip_Planner_Project_Document.docx
+Generate PROJECT_GUIDE.docx in the project root.
 
 This is TECHNICAL DOCUMENTATION OF THE ARTEFACT — what was built, why, and what
 it measured. It is not the dissertation. It exists so the implementation and its
@@ -11,7 +11,7 @@ from the system it describes. An earlier version hardcoded its headline
 figures — "5 LLM calls", "~230 seconds", "85% faster" — and all three turned out
 to be wrong once the LLM calls were actually instrumented.
 
-Run:  python docs/generate_docx.py
+Run:  python scripts/generate_guide.py
 """
 
 import json
@@ -24,7 +24,7 @@ from docx.shared import Inches, Pt, RGBColor
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS_PATH = os.path.join(ROOT, "comparison", "results", "comparison_results.json")
 FIGURES = os.path.join(ROOT, "figures")
-OUTPUT = os.path.join(ROOT, "docs", "AI_Trip_Planner_Project_Document.docx")
+OUTPUT = os.path.join(ROOT, "PROJECT_GUIDE.docx")
 
 ACCENT = RGBColor(0x1F, 0x4E, 0x79)
 MUTED = RGBColor(0x52, 0x51, 0x4E)
@@ -91,7 +91,7 @@ def table(headers, rows, widths=None):
 def figure(name, cap, width=6.4):
     path = os.path.join(FIGURES, name)
     if not os.path.exists(path):
-        para(f"[figure missing: {name} — run python figures/make_diagrams.py]")
+        para(f"[figure missing: {name} — run python scripts/make_diagrams.py]")
         return
     doc.add_picture(path, width=Inches(width))
     doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -463,46 +463,182 @@ table(
 # =====================================================================
 # 8. STRUCTURE
 # =====================================================================
-h("8. Repository structure", 1)
+h("8. Issues encountered and how they were resolved", 1)
+
+para("Recorded because several of these shaped the design, and because a "
+     "failure that is silent deserves more attention than one that is loud.")
+
+table(
+    ["Issue", "Why it mattered", "Resolution"],
+    [
+        ["Flight search returned nothing, always",
+         "The provider is a two-phase API: the search endpoint only starts a "
+         "search and returns a session identifier. Reading its first response "
+         "as final yields an empty list every time, with HTTP 200 and no error.",
+         "Poll the completion endpoint using the session identifier."],
+        ["Every itinerary carried the wrong outbound date",
+         "The provider expects camelCase date parameters. The snake_case forms "
+         "are accepted, answered with HTTP 200 and silently ignored, so the "
+         "system searched a default date about a week out while appearing to "
+         "work correctly.",
+         "Identified the accepted names by sending a distinct date under each "
+         "candidate in a single request and decoding which one came back."],
+        ["All twelve MCP tools failed silently",
+         "The MCP server runs as a subprocess, so the project root was not on "
+         "its import path. Every tool call returned Connection lost, and the "
+         "agents produced itineraries from model knowledge instead. The "
+         "failure looked like success.",
+         "The server sets up its import path before loading project modules."],
+        ["Reported LLM cost was assumed, not measured",
+         "The harness counted tasks rather than requests, and one script "
+         "incremented its counter with a literal simulated comment. The "
+         "reported figure understated the real cost roughly fourfold.",
+         "Every request is now instrumented through provider callbacks, "
+         "capturing tokens, cost and latency."],
+        ["A quota error was indistinguishable from an empty result",
+         "A failed flight search reported success with an empty list, so one "
+         "architecture invented flights from it while another logged a real "
+         "error, making their success rates incomparable.",
+         "Failures are reported as failures."],
+        ["The evaluation could not be run at all",
+         "The travel APIs allow 30 and 50 requests per month. One pass over "
+         "twenty scenarios across four architectures needs far more.",
+         "Record and replay caching: one pass records, later passes replay for "
+         "free and deterministically."],
+        ["An interrupted run lost everything it had paid for",
+         "Results were written once at the end, so a run stopped at scenario "
+         "fifteen discarded fifteen scenarios worth of spent quota.",
+         "Results are checkpointed after each scenario and reused on re-run."],
+        ["The API key was printed to the console",
+         "The LLM provider carries its key in the request URL, and the HTTP "
+         "client logs request URLs at INFO level.",
+         "Third-party log levels are raised before any request is made."],
+    ],
+    widths=[1.5, 2.6, 2.3],
+)
+
+para("A pattern runs through these. The costly failures were the quiet ones: "
+     "wrong dates behind a 200 response, dead tools producing plausible "
+     "itineraries, a cost figure that was never actually measured. Each was "
+     "found by checking output against reality rather than by reading code, "
+     "which is why the evaluation now scores groundedness instead of assuming "
+     "that retrieved data was used.")
+
+h("9. What the implementation delivers", 1)
+
+table(
+    ["Capability", "What it means in practice"],
+    [
+        ["Itineraries grounded in retrieved data",
+         "Prices and venues trace back to an API response. The tool-less "
+         "baseline matches none of its prices to anything real; the "
+         "tool-using architectures match the majority."],
+        ["A measured architectural comparison",
+         "Four architectures on identical requests with cost counted rather "
+         "than estimated, which is the evidence the design decision rests on."],
+        ["Budget control held by the user",
+         "The split is derived from what this particular trip costs, "
+         "explained, and then replaced by whatever the user prefers."],
+        ["Honest refusal",
+         "A budget below what the destination actually costs is refused with "
+         "the shortfall and workable alternatives, rather than answered with "
+         "a plan nobody could book."],
+        ["Reproducible results",
+         "The evaluation re-runs from recorded responses and produces "
+         "identical numbers with no API keys."],
+        ["Bounded operating cost",
+         "Live calls and LLM requests are both capped, and runs stop between "
+         "whole scenarios, so no single run can exhaust a monthly allowance."],
+        ["Documentation that cannot drift",
+         "This document and every figure are generated from the results file, "
+         "and a test fails when the written documentation stops matching the "
+         "code."],
+    ],
+    widths=[2.0, 4.4],
+)
+
+h("10. Repository structure", 1)
 
 table(
     ["Location", "Contents"],
     [
-        ["src/", "Application code — orchestrator, agents, tasks, interfaces"],
-        ["src/comms/", "A2A protocol: message envelope, agent registry, priority queue"],
-        ["src/server/", "MCP server — twelve schema-validated tools over JSON-RPC"],
-        ["src/tools/", "Tool wrappers exposed to agents"],
-        ["src/core/", "Caching, measurement, retry policy, budget and cost models"],
-        ["src/ui/", "Streamlit interface"],
-        ["comparison/", "The experiment: four architectures, scenarios, metrics, results"],
+        ["PROJECT_GUIDE.docx", "This document"],
+        ["setup.bat", "One-command setup: environment, dependencies, verification"],
+        ["run_cli.py", "Plan a trip in the terminal"],
+        ["run_web.py", "Plan a trip in the browser"],
+        ["src/", "Application code"],
+        ["comparison/", "The evaluation: architectures, scenarios, metrics, results"],
+        ["demos/", "Scripts for demonstrating the system"],
         ["testing/", "Automated test suite"],
-        ["figures/", "Generated charts and diagrams, with their generators"],
-        ["demos/", "Walkthrough scripts for demonstration"],
-        ["docs/", "Proposal, assignment brief, this document and its generator"],
+        ["scripts/", "Generators for this document and the figures"],
+        ["figures/", "Generated charts and diagrams"],
+        ["proposal/", "Project proposal and assignment brief"],
+        ["report/", "Dissertation report"],
+        ["deploy/", "Container definition"],
         [".api_cache/", "Recorded API responses, committed for reproducibility"],
     ],
     widths=[1.7, 4.7],
 )
 
-bold("Entry points")
+bold("What each file does — application code")
 table(
-    ["Command", "Purpose"],
+    ["File", "Responsibility"],
     [
-        ["python run_cli.py", "Interactive planner in the terminal"],
-        ["python run_web.py", "Streamlit web interface"],
-        ["python demos/demo_comparison.py", "All four architectures side by side"],
-        ["python -m comparison.run_comparison", "The full evaluation"],
-        ["python -m pytest", "Test suite"],
-        ["python figures/make_charts.py", "Regenerate results charts"],
-        ["python docs/generate_docx.py", "Regenerate this document"],
+        ["src/orchestrator.py", "The production workflow, end to end"],
+        ["src/agents.py", "The three agents that require an LLM"],
+        ["src/tasks.py", "Their task definitions and prompts"],
+        ["src/comms/protocol.py", "A2A message envelope and priority queue"],
+        ["src/comms/registry.py", "Agent cards: who may send what to whom"],
+        ["src/server/mcp_server.py", "MCP server, twelve tools over JSON-RPC"],
+        ["src/tools/mcp_tools.py", "Tool wrappers for agents, plus direct HTTP calls"],
+        ["src/core/http_cache.py", "Record and replay caching, live-call ceiling"],
+        ["src/core/llm_metrics.py", "Counts real LLM requests, tokens and cost"],
+        ["src/core/resilience.py", "Whether a provider refusal is worth retrying"],
+        ["src/core/budget.py", "Derives and applies the budget split"],
+        ["src/core/trip_cost.py", "Estimates trip cost and sets the feasibility floor"],
+        ["src/core/validators.py", "Checks the itinerary contains every day it should"],
+        ["src/core/log_setup.py", "Keeps the API key out of the console"],
+        ["src/ui/app.py", "Streamlit interface"],
     ],
-    widths=[2.8, 3.6],
+    widths=[2.1, 4.3],
 )
 
-# =====================================================================
-# 9. LIMITATIONS
-# =====================================================================
-h("9. Known limitations", 1)
+bold("What each file does — evaluation")
+table(
+    ["File", "Responsibility"],
+    [
+        ["comparison/arm_a_single_llm.py", "Arm A, one LLM call, no tools"],
+        ["comparison/arm_b_six_agent_naive.py", "Arm B, six agents as first built"],
+        ["comparison/arm_c_six_agent_tuned.py", "Arm C, six agents as specified"],
+        ["comparison/arm_d_three_agent_direct.py", "Arm D, three agents, direct retrieval"],
+        ["comparison/distilled_tools.py", "Compact tool wrappers used by arm C"],
+        ["comparison/scenarios.py", "The twenty evaluation scenarios"],
+        ["comparison/metrics.py", "Groundedness scoring"],
+        ["comparison/run_comparison.py", "Runs the arms, checkpoints, aggregates"],
+    ],
+    widths=[2.5, 3.9],
+)
+
+bold("What each file does — demonstration, generation, tests")
+table(
+    ["File", "Responsibility"],
+    [
+        ["demos/demo_approach.py", "Runs one architecture, narrated"],
+        ["demos/demo_comparison.py", "Runs all four side by side"],
+        ["scripts/generate_guide.py", "Generates this document"],
+        ["scripts/make_charts.py", "Generates the results charts"],
+        ["scripts/make_diagrams.py", "Generates the architecture diagrams"],
+        ["testing/test_budget_allocation.py", "Budget splitting and user input"],
+        ["testing/test_trip_cost.py", "Cost estimation and feasibility"],
+        ["testing/test_calculator.py", "The safe arithmetic evaluator"],
+        ["testing/test_itinerary_validator.py", "Itinerary day-count validation"],
+        ["testing/test_budget_validation.py", "Budget parsing"],
+        ["testing/test_documentation_accuracy.py", "That documentation matches the code"],
+    ],
+    widths=[2.5, 3.9],
+)
+
+h("11. Known limitations", 1)
 
 para("Stated here rather than left to be discovered.")
 
