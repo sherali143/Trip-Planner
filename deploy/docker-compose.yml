@@ -1,11 +1,15 @@
 services:
   trip-planner:
-    build: .
+    # Build context is the project root, one level up, because the
+    # image needs src/, comparison/ and .api_cache/ — not just this folder.
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
     container_name: ai-trip-planner
     ports:
       - "8501:8501"
     env_file:
-      - .env
+      - ../.env
     environment:
       # Replay recorded API responses by default. The flight and hotel free
       # tiers are monthly and tiny (30 and 50 calls), so a container restart
@@ -17,5 +21,5 @@ services:
       # newly recorded calls persist to the host. The previous mount pointed
       # at ./.cache, which no longer exists — it was the old QueryCache
       # directory, removed when caching moved to the HTTP layer.
-      - ./.api_cache:/app/.api_cache
+      - ../.api_cache:/app/.api_cache
     restart: unless-stopped

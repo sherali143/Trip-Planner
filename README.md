@@ -24,6 +24,22 @@ a fair baseline rather than a straw man.
 | **C** | 6 agents, tuned — the proposal as designed | `comparison/architecture_6agent_optimized.py` |
 | **D** | 3 agents + direct API calls | `comparison/architecture_3agent.py` |
 
+### Which approach the system actually runs
+
+The four architectures above exist **for the evaluation**. The production
+system — `run_cli.py` and `run_web.py` — runs **arm D**: three agents with
+direct API retrieval. Arms A, B and C are built and kept runnable because they
+are the comparison the dissertation rests on, not because anything ships them.
+
+| Command | Approach used |
+|---|---|
+| `python run_cli.py` | **D** — 3 agents + direct API |
+| `python run_web.py` | **D** — 3 agents + direct API |
+| `python demos/demo_comparison.py` | all four, side by side |
+| `python demos/demo_6agent_explained.py` | **B** in detail |
+| `python demos/demo_3agent_explained.py` | **D** in detail |
+| `python -m comparison.run_comparison` | all four, across the scenarios |
+
 ### Measured results (SC-01, all four arms)
 
 | Arm | LLM calls | Tokens | Cost | Time | Prices that are real |
@@ -119,35 +135,41 @@ then replay all 20 for free.
 
 ```
 trip_planner/
-├── src/
-│   ├── agents.py               # CrewAI agent definitions
-│   ├── tasks.py                # Task definitions
-│   ├── orchestrator.py         # Main workflow (CLI + web)
-│   ├── comms/                  # A2A protocol: envelope, registry, priority queue
-│   ├── core/
-│   │   ├── http_cache.py       # Record/replay + quota guard
-│   │   ├── llm_metrics.py      # Real LLM call/token/cost measurement
-│   │   ├── resilience.py       # Retry with backoff
-│   │   ├── validators.py       # Itinerary day-count validation
-│   │   └── log_setup.py        # Keeps the Gemini key out of logs
-│   ├── server/mcp_server.py    # MCP server — 12 tools over JSON-RPC/stdio
-│   ├── tools/mcp_tools.py      # CrewAI tool wrappers + direct API calls
-│   └── ui/app.py               # Streamlit interface
-├── comparison/
-│   ├── architecture_*.py       # The four arms
-│   ├── distilled_tools.py      # Compact tool output for arm C
-│   ├── metrics.py              # Groundedness / bookability scoring
-│   ├── scenarios.py            # 20 evaluation scenarios
-│   ├── run_comparison.py       # Evaluation runner
-│   └── results/                # Measured results (committed)
-├── testing/                    # Test suite — 148 tests, all with assertions
-├── figures/                    # Generated charts and diagrams
-│   ├── make_charts.py          # Results charts, read from results JSON
-│   └── make_diagrams.py        # Architecture and flow diagrams
-├── demos/                      # Three walkthrough scripts for the viva
-├── docs/                       # Proposal, brief, project document, dev notes
-├── .api_cache/                 # Recorded API responses (committed)
-└── run_cli.py, run_web.py      # Entry points
+│
+├── src/                     APPLICATION CODE
+│   ├── agents.py              the three agents that need an LLM
+│   ├── tasks.py               their task definitions and prompts
+│   ├── orchestrator.py        the production workflow
+│   ├── comms/                 A2A protocol — envelope, registry, queue
+│   ├── server/                MCP server — 12 schema-validated tools
+│   ├── tools/                 tool wrappers exposed to agents
+│   ├── core/                  caching, measurement, retry, budget, cost
+│   └── ui/                    Streamlit interface
+│
+├── comparison/              THE EVALUATION
+│   ├── architecture_*.py      the four approaches (A, B, C, D)
+│   ├── scenarios.py           20 evaluation scenarios
+│   ├── metrics.py             groundedness scoring
+│   ├── run_comparison.py      the runner
+│   └── results/               measured results (committed)
+│
+├── docs/                    PROPOSAL AND REPORTS
+│   ├── AI_Trip_Planner_Proposal.pdf
+│   ├── CMP7200_Assignment_Brief.pdf
+│   ├── AI_Trip_Planner_Project_Document.docx
+│   ├── generate_docx.py       regenerates the document from results
+│   └── DEVELOPMENT_NOTES.md
+│
+├── demos/                   3 walkthrough scripts for demonstration
+├── figures/                 7 generated charts and diagrams
+├── testing/                 148 automated tests
+├── deploy/                  Dockerfile and compose
+├── .api_cache/              recorded API responses (committed)
+│
+├── setup.bat                one-command setup
+├── run_cli.py               plan a trip in the terminal
+├── run_web.py               plan a trip in the browser
+└── requirements.txt         pinned dependencies
 ```
 
 ---
