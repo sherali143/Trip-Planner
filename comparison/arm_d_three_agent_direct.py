@@ -34,7 +34,7 @@ def _make_coordinator():
     )
 
 
-def plan_trip_optimized(user_input: str, scenario_id: str = "optimized") -> dict:
+def run_three_agent_direct(user_input: str, scenario_id: str = "optimized") -> dict:
     """
     Run optimized 3-agent + direct API architecture.
     Phase 1: Extraction (LLM)
@@ -92,7 +92,7 @@ def _run_optimized(user_input, agents_class, coordinator, start, errors) -> dict
         t1 = time.time()
 
     except Exception as e:
-        return {"arch": "architecture_3agent", "success": False, "error": str(e),
+        return {"arch": "arm_d_three_agent_direct", "success": False, "error": str(e),
                 "latency": time.time() - start}
 
     # Parse extraction JSON
@@ -208,13 +208,13 @@ RESTAURANTS:
         )
         result = str(kickoff_with_retry(coord_crew))
     except Exception as e:
-        return {"arch": "architecture_3agent", "success": False,
+        return {"arch": "arm_d_three_agent_direct", "success": False,
                 "extraction": extraction_result[:300], "error": str(e),
                 "latency": time.time() - start}
 
     end = time.time()
     return {
-        "arch": "architecture_3agent",
+        "arch": "arm_d_three_agent_direct",
         "success": True,
         "result": result,
         "extraction": extraction_result[:500],

@@ -40,7 +40,7 @@ Include:
 Give specific names, times and prices."""
 
 
-def plan_trip_single_llm(user_input: str, scenario_id: str = "single") -> dict:
+def run_single_llm(user_input: str, scenario_id: str = "single") -> dict:
     """Run the single-LLM baseline. Returns the same metrics dict shape as the other arms."""
     start = time.time()
     model = os.getenv("GEMINI_MODEL", "gemini/gemini-2.5-flash")
@@ -63,7 +63,7 @@ def _run(user_input: str, model: str, start: float) -> dict:
         try:
             response = completion(model=model, messages=messages)
             return {
-                "arch": "architecture_single_llm",
+                "arch": "arm_a_single_llm",
                 "success": True,
                 "result": response.choices[0].message.content or "",
                 # No extraction step exists in this arm; the model is handed the
@@ -80,7 +80,7 @@ def _run(user_input: str, model: str, start: float) -> dict:
             time.sleep(12 * (2 ** attempt))
 
     return {
-        "arch": "architecture_single_llm",
+        "arch": "arm_a_single_llm",
         "success": False,
         "error": str(last_error),
         "latency": time.time() - start,

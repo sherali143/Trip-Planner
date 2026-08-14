@@ -100,7 +100,7 @@ class BaselineAgents:
         )
 
 
-def plan_trip_baseline(user_input: str, scenario_id: str = "baseline") -> dict:
+def run_six_agent_naive(user_input: str, scenario_id: str = "baseline") -> dict:
     """
     Run the 6-agent baseline. Returns metrics dict.
 
@@ -155,7 +155,7 @@ def _run_baseline(user_input: str, agents, start, errors) -> dict:
         extraction_result = str(kickoff_with_retry(extract_crew))
         t2 = time.time()
     except Exception as e:
-        return {"arch": "architecture_6agent", "success": False, "error": str(e),
+        return {"arch": "arm_b_six_agent_naive", "success": False, "error": str(e),
                 "latency": time.time() - start}
 
     try:
@@ -217,13 +217,13 @@ def _run_baseline(user_input: str, agents, start, errors) -> dict:
         result = kickoff_with_retry(main_crew)
     except Exception as e:
         errors.append(str(e))
-        return {"arch": "architecture_6agent", "success": False,
+        return {"arch": "arm_b_six_agent_naive", "success": False,
                 "extraction": extraction_result[:300], "error": str(e),
                 "latency": time.time() - start}
 
     total = time.time() - start
     return {
-        "arch": "architecture_6agent",
+        "arch": "arm_b_six_agent_naive",
         "success": True,
         "result": str(result),
         "extraction": extraction_result[:500],

@@ -16,10 +16,10 @@ the comparison is not against a straw man.
 
 | Arm | File | What it is |
 |---|---|---|
-| A | `comparison/architecture_single_llm.py` | One LLM call, no agents, no tools |
-| B | `comparison/architecture_6agent.py` | 6 agents, naive config (as first built) |
-| C | `comparison/architecture_6agent_optimized.py` | 6 agents, tuned — the proposal as designed |
-| D | `comparison/architecture_3agent.py` | 3 agents + direct API calls |
+| A | `comparison/arm_a_single_llm.py` | One LLM call, no agents, no tools |
+| B | `comparison/arm_b_six_agent_naive.py` | 6 agents, naive config (as first built) |
+| C | `comparison/arm_c_six_agent_tuned.py` | 6 agents, tuned — the proposal as designed |
+| D | `comparison/arm_d_three_agent_direct.py` | 3 agents + direct API calls |
 
 Run them: `python -m comparison.run_comparison` (add `SC-01 SC-04` to filter).
 Results land in `comparison/results/comparison_results.json`.

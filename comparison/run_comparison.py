@@ -1,6 +1,24 @@
 """
-Comparison Runner: runs both baseline (6-agent) and optimized (3-agent + direct API)
-on all test scenarios, collects metrics, and saves results.
+The evaluation runner.
+
+Puts the same request through all four architectures, measures what each one
+costs and whether what it produced was real, and writes the result to
+`results/comparison_results.json`.
+
+    python -m comparison.run_comparison             # every scenario
+    python -m comparison.run_comparison SC-01       # one scenario
+    python -m comparison.run_comparison SC-01 --force   # redo a recorded one
+
+Two properties matter more than they look:
+
+  Runs are RESUMABLE. Results are checkpointed after each scenario and a re-run
+  reuses what is already recorded. A full four-arm pass costs roughly 620 LLM
+  requests, so a run stopped at scenario 15 must not discard the fifteen it has
+  already paid for.
+
+  Runs are BOUNDED. TRIP_PLANNER_MAX_LLM_CALLS and TRIP_PLANNER_MAX_LIVE_CALLS
+  stop the run between whole scenarios rather than part way through one, since
+  a half-finished scenario spends quota without producing a usable row.
 """
 
 import os, sys, json, time, traceback
@@ -17,10 +35,10 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"), override=True)
 
 from comparison.scenarios import SCENARIOS
-from comparison.architecture_6agent import plan_trip_baseline
-from comparison.architecture_3agent import plan_trip_optimized
-from comparison.architecture_6agent_optimized import plan_trip_optimized_6agent
-from comparison.architecture_single_llm import plan_trip_single_llm
+from comparison.arm_b_six_agent_naive import run_six_agent_naive
+from comparison.arm_d_three_agent_direct import run_three_agent_direct
+from comparison.arm_c_six_agent_tuned import run_six_agent_tuned
+from comparison.arm_a_single_llm import run_single_llm
 from comparison.metrics import score_groundedness
 from src.core.http_cache import cache_summary, get_mode
 from src.core.llm_metrics import BUDGET
@@ -28,10 +46,10 @@ from src.core.llm_metrics import BUDGET
 # Ordered least-to-most engineered so the results table reads as a progression:
 # no tools at all -> naive multi-agent -> tuned multi-agent -> direct execution.
 ARMS = [
-    ("A", "SINGLE LLM", plan_trip_single_llm),
-    ("B", "6 AGENTS (naive)", plan_trip_baseline),
-    ("C", "6 AGENTS (optimised)", plan_trip_optimized_6agent),
-    ("D", "3 AGENTS (direct API)", plan_trip_optimized),
+    ("A", "SINGLE LLM", run_single_llm),
+    ("B", "6 AGENTS (naive)", run_six_agent_naive),
+    ("C", "6 AGENTS (optimised)", run_six_agent_tuned),
+    ("D", "3 AGENTS (direct API)", run_three_agent_direct),
 ]
 
 

@@ -57,17 +57,17 @@ if get_mode() != "replay":
     print("           Re-run with TRIP_PLANNER_API_MODE=replay to use recordings.")
 
 # Imported lazily-ish but together, so an import error surfaces before any run.
-from comparison.architecture_single_llm import plan_trip_single_llm
-from comparison.architecture_6agent import plan_trip_baseline
-from comparison.architecture_6agent_optimized import plan_trip_optimized_6agent
-from comparison.architecture_3agent import plan_trip_optimized
+from comparison.arm_a_single_llm import run_single_llm
+from comparison.arm_b_six_agent_naive import run_six_agent_naive
+from comparison.arm_c_six_agent_tuned import run_six_agent_tuned
+from comparison.arm_d_three_agent_direct import run_three_agent_direct
 from comparison.metrics import score_groundedness
 
 ARMS = [
-    ("A", "SINGLE LLM (no agents, no tools)", plan_trip_single_llm),
-    ("B", "6 AGENTS — naive", plan_trip_baseline),
-    ("C", "6 AGENTS — tuned", plan_trip_optimized_6agent),
-    ("D", "3 AGENTS + direct API", plan_trip_optimized),
+    ("A", "SINGLE LLM (no agents, no tools)", run_single_llm),
+    ("B", "6 AGENTS — naive", run_six_agent_naive),
+    ("C", "6 AGENTS — tuned", run_six_agent_tuned),
+    ("D", "3 AGENTS + direct API", run_three_agent_direct),
 ]
 
 results = {}

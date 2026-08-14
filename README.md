@@ -19,10 +19,10 @@ a fair baseline rather than a straw man.
 
 | Arm | Architecture | File |
 |---|---|---|
-| **A** | Single LLM — no agents, no tools | `comparison/architecture_single_llm.py` |
-| **B** | 6 agents, naive (as first built) | `comparison/architecture_6agent.py` |
-| **C** | 6 agents, tuned — the proposal as designed | `comparison/architecture_6agent_optimized.py` |
-| **D** | 3 agents + direct API calls | `comparison/architecture_3agent.py` |
+| **A** | Single LLM — no agents, no tools | `comparison/arm_a_single_llm.py` |
+| **B** | 6 agents, naive (as first built) | `comparison/arm_b_six_agent_naive.py` |
+| **C** | 6 agents, tuned — the proposal as designed | `comparison/arm_c_six_agent_tuned.py` |
+| **D** | 3 agents + direct API calls | `comparison/arm_d_three_agent_direct.py` |
 
 ### Which approach the system actually runs
 
@@ -36,8 +36,8 @@ are the comparison the dissertation rests on, not because anything ships them.
 | `python run_cli.py` | **D** — 3 agents + direct API |
 | `python run_web.py` | **D** — 3 agents + direct API |
 | `python demos/demo_comparison.py` | all four, side by side |
-| `python demos/demo_6agent_explained.py` | **B** in detail |
-| `python demos/demo_3agent_explained.py` | **D** in detail |
+| `python demos/demo_approach.py B` | **B** alone, narrated |
+| `python demos/demo_approach.py D` | **D** alone, narrated |
 | `python -m comparison.run_comparison` | all four, across the scenarios |
 
 ### Measured results (SC-01, all four arms)
@@ -83,8 +83,7 @@ TRIP_PLANNER_API_MODE=replay python -m comparison.run_comparison SC-01
 | `python run_cli.py` | Interactive terminal planner |
 | `python run_web.py` | Streamlit web UI (localhost:8501) |
 | `python demos/demo_comparison.py --no-pause` | Viva demo: all four arms side by side |
-| `python demos/demo_6agent_explained.py` | Arm B step by step, with MCP and A2A narrated |
-| `python demos/demo_3agent_explained.py` | Arm D step by step, showing where the LLM was removed |
+| `python demos/demo_approach.py A\|B\|C\|D` | One approach in isolation, narrated |
 | `python -m comparison.run_comparison` | Full evaluation, all 20 scenarios |
 | `python docs/generate_docx.py` | Rebuild the project document from results |
 | `python -m pytest` | Test suite (148 tests) |
@@ -160,7 +159,7 @@ trip_planner/
 │   ├── generate_docx.py       regenerates the document from results
 │   └── DEVELOPMENT_NOTES.md
 │
-├── demos/                   3 walkthrough scripts for demonstration
+├── demos/                   demo_approach.py (one arm) + demo_comparison.py (all four)
 ├── figures/                 7 generated charts and diagrams
 ├── testing/                 148 automated tests
 ├── deploy/                  Dockerfile and compose

@@ -7,16 +7,41 @@ package measures what each one costs and whether what it produced was real.
 
 | Arm | File | What it is |
 |---|---|---|
-| **A** | `architecture_single_llm.py` | One LLM call. No agents, no tools, no A2A. The control. |
-| **B** | `architecture_6agent.py` | Six agents, naive — the architecture as first built. |
-| **C** | `architecture_6agent_optimized.py` | Six agents, tuned — the architecture as the proposal specified. |
-| **D** | `architecture_3agent.py` | Three agents; retrieval moved out of the LLM into plain Python. |
+| **A** | `arm_a_single_llm.py` | One LLM call. No agents, no tools, no A2A. The control. |
+| **B** | `arm_b_six_agent_naive.py` | Six agents, naive — the architecture as first built. |
+| **C** | `arm_c_six_agent_tuned.py` | Six agents, tuned — the architecture as the proposal specified. |
+| **D** | `arm_d_three_agent_direct.py` | Three agents; retrieval moved out of the LLM into plain Python. |
 
-Arm C exists so the comparison is not against a straw man. Three commitments in
-the proposal were never implemented in arm B — distilled tool output (§3.4),
-concurrent search agents (§3.7), distillation inside the MCP lifecycle (§3.5) —
-and beating an under-built baseline would prove nothing. Arm C implements them,
-and D is compared against C as the headline claim.
+## Why each arm exists
+
+Every arm has to justify its place, or it is padding.
+
+**A — Single LLM.** The obvious approach, and the one a reader will ask about
+first: why not just prompt a model? Without it, the claim that the tool layer is
+necessary rests on assertion. With it, the answer is measured — arm A quotes
+prices that match nothing retrieved, which is the hallucination failure the
+literature reports (Xie et al., 2024). It also anchors the cost axis: A is the
+cheapest arm, which is precisely why cost alone cannot decide the comparison.
+
+**B — Six agents, naive.** The architecture as first built, and the evidence for
+the problem the project set out to solve. Without B, "the multi-agent design was
+expensive" is a claim; with it, it is a measurement. B is also what makes the
+*value of tuning* measurable at all — the single most interesting finding here
+requires something to measure C against.
+
+**C — Six agents, tuned.** The architecture as the proposal actually specified.
+Three commitments were never implemented in B — distilled tool output (§3.4),
+concurrent specialists (§3.7), distillation inside the MCP lifecycle (§3.5) —
+and comparing D against an under-built baseline would invite the obvious
+objection that the multi-agent arm lost through misconfiguration rather than
+design. C removes that objection, and **D is compared against C as the headline
+claim**, not against B.
+
+**D — Three agents, direct API.** The proposed improvement, and what the
+production system actually runs. It is the only arm that ships.
+
+Presented in that order the four read as one progression — no tools, naive
+multi-agent, tuned multi-agent, direct execution — rather than four rivals.
 
 ## Supporting modules
 

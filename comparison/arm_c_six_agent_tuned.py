@@ -3,7 +3,7 @@ Arm C: 6-agent architecture, OPTIMISED — the proposal as actually designed.
 
 Why this arm exists
 -------------------
-The naive 6-agent arm (architecture_6agent.py) is not the architecture the
+The naive 6-agent arm (arm_b_six_agent_naive.py) is not the architecture the
 proposal specifies. Three commitments were never implemented:
 
   * S3.4  specialists return "the top three choices ... not the 12 kB API
@@ -118,7 +118,7 @@ def _run_single(agent: Agent, description: str, expected: str) -> str:
     return str(kickoff_with_retry(crew))
 
 
-def plan_trip_optimized_6agent(user_input: str, scenario_id: str = "optimized6") -> dict:
+def run_six_agent_tuned(user_input: str, scenario_id: str = "optimized6") -> dict:
     """Run the optimised 6-agent arm. Returns the same metrics dict shape as the other arms."""
     start = time.time()
     errors: list = []
@@ -154,7 +154,7 @@ def _run(user_input: str, agents: OptimizedAgents, start: float, errors: list) -
         )
         t_extract = time.time() - t0
     except Exception as exc:
-        return {"arch": "architecture_6agent_optimized", "success": False,
+        return {"arch": "arm_c_six_agent_tuned", "success": False,
                 "error": str(exc), "latency": time.time() - start}
 
     # PHASE 2 — three specialists CONCURRENTLY (proposal S3.7)
@@ -182,7 +182,7 @@ def _run(user_input: str, agents: OptimizedAgents, start: float, errors: list) -
                     outputs.append(f"(search failed: {exc})")
         flights, hotels, activities = outputs
     except Exception as exc:
-        return {"arch": "architecture_6agent_optimized", "success": False,
+        return {"arch": "arm_c_six_agent_tuned", "success": False,
                 "extraction": extraction[:300], "error": str(exc),
                 "latency": time.time() - start}
     t_search = time.time() - t0
@@ -207,12 +207,12 @@ def _run(user_input: str, agents: OptimizedAgents, start: float, errors: list) -
         )
         t_coord = time.time() - t0
     except Exception as exc:
-        return {"arch": "architecture_6agent_optimized", "success": False,
+        return {"arch": "arm_c_six_agent_tuned", "success": False,
                 "extraction": extraction[:300], "error": str(exc),
                 "latency": time.time() - start}
 
     return {
-        "arch": "architecture_6agent_optimized",
+        "arch": "arm_c_six_agent_tuned",
         "success": True,
         "result": itinerary,
         "extraction": extraction[:500],
