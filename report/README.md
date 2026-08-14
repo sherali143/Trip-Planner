@@ -2,6 +2,12 @@
 
 The dissertation report belongs here.
 
+`REPORT_OUTLINE.md` is a planning aid: chapter structure, what each section has
+to contain to satisfy the published marking criteria, which evidence in this
+repository supports it, and a word budget that sums to 12,000. It contains no
+prose for the submission — every `[WRITE]` marker is yours. The assignment brief
+is explicit that assessed writing must be your own and not an AI tool's.
+
 ## Material available to draw on
 
 | Source | What it gives you |
