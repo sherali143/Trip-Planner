@@ -32,7 +32,7 @@ from matplotlib.ticker import FuncFormatter, MaxNLocator
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 RESULTS = os.path.join(ROOT, "comparison", "results", "comparison_results.json")
-OUT = os.path.join(ROOT, "figures")
+OUT = os.path.join(ROOT, "figures", "results")
 
 # From the validated reference palette (light mode).
 BLUE = "#2a78d6"          # categorical slot 1 — the single series hue
@@ -138,7 +138,7 @@ def chart_efficiency(data):
     scope = _scope(data)
     fig.text(0.012, 0.945, scope, fontsize=8.5, color=INK_2, ha="left")
     fig.tight_layout(rect=[0, 0.02, 1, 0.92], h_pad=3.2, w_pad=2.4)
-    path = os.path.join(OUT, "fig_efficiency.png")
+    path = os.path.join(OUT, "efficiency.png")
     fig.savefig(path, dpi=200)
     plt.close(fig)
     return path
@@ -160,7 +160,7 @@ def chart_groundedness(data):
     ax.set_xlim(0, 100)
     fig.text(0.012, 0.02, _scope(data), fontsize=8.5, color=INK_2, ha="left")
     fig.tight_layout(rect=[0, 0.06, 1, 1])
-    path = os.path.join(OUT, "fig_groundedness.png")
+    path = os.path.join(OUT, "groundedness.png")
     fig.savefig(path, dpi=200)
     plt.close(fig)
     return path
@@ -207,7 +207,7 @@ def chart_tuning_effect(data):
              "Same six agents and the same data path; only prompt economics changed.",
              fontsize=8.5, color=INK_2, ha="left")
     fig.tight_layout(rect=[0, 0.02, 1, 0.84], w_pad=3.0)
-    path = os.path.join(OUT, "fig_tuning_effect.png")
+    path = os.path.join(OUT, "tuning_effect.png")
     fig.savefig(path, dpi=200)
     plt.close(fig)
     return path
@@ -225,6 +225,7 @@ def _scope(data):
 
 
 def main():
+    os.makedirs(OUT, exist_ok=True)
     data = load()
     made = [chart_efficiency(data), chart_groundedness(data), chart_tuning_effect(data)]
     for path in made:

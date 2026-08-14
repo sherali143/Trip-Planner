@@ -79,7 +79,8 @@ def new_canvas(w, h, title, subtitle=None):
 
 
 def save(fig, name):
-    path = os.path.join(ROOT, "figures", name)
+    os.makedirs(os.path.join(ROOT, "figures", "diagrams"), exist_ok=True)
+    path = os.path.join(ROOT, "figures", "diagrams", name)
     fig.savefig(path, dpi=200, bbox_inches="tight", pad_inches=0.25)
     plt.close(fig)
     print("wrote", os.path.relpath(path, ROOT))
@@ -160,7 +161,7 @@ def fig_system_architecture():
                     "(REQUEST · RESPONSE · QUERY · INFO · ERROR · ACK) · "
                     "permission-validated · priority-ordered delivery",
           ha="left", fontsize=8, colour=INK_2)
-    return save(fig, "fig_architecture.png")
+    return save(fig, "architecture.png")
 
 
 # ---------------------------------------------------------------- figure 2
@@ -226,7 +227,7 @@ def fig_four_arms():
                      "three APIs through the same MCP server.\n"
                      "Arm A is the control: no tools, so nothing it reports was retrieved.",
           fontsize=8.5, colour=INK_2)
-    return save(fig, "fig_four_arms.png")
+    return save(fig, "four_arms.png")
 
 
 # ---------------------------------------------------------------- figure 3
@@ -261,7 +262,7 @@ def fig_a2a_flow():
           "Message types: REQUEST · RESPONSE · QUERY · INFO · ERROR · ACK      "
           "Delivery is priority-ordered.",
           fontsize=8, colour=INK_2)
-    return save(fig, "fig_a2a_flow.png")
+    return save(fig, "a2a_flow.png")
 
 
 # ---------------------------------------------------------------- figure 4
@@ -303,7 +304,7 @@ def fig_mcp_lifecycle():
           "were data.\nRequest headers are excluded from the cache, so no API key "
           "is written to disk.",
           fontsize=8, colour=INK_2)
-    return save(fig, "fig_mcp_lifecycle.png")
+    return save(fig, "mcp_lifecycle.png")
 
 
 def main():

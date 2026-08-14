@@ -226,7 +226,7 @@ para("The system is organised in four layers. A conversational layer collects "
      "coordination layer assembles the itinerary from that data and nothing "
      "else.")
 
-figure("fig_architecture.png",
+figure("diagrams/architecture.png",
        "Figure 1 — System architecture. The MCP server is the only route to an "
        "external API; every inter-agent message travels over the A2A protocol.")
 
@@ -236,7 +236,7 @@ para("A subprocess exposing twelve schema-validated tools over JSON-RPC on "
      "before it can reach a paid external service. Responses pass through a "
      "cache and a distillation stage on the way back.")
 
-figure("fig_mcp_lifecycle.png",
+figure("diagrams/mcp_lifecycle.png",
        "Figure 2 — The six stages of a tool call. The cache sits in front of "
        "the network, so a repeated query costs nothing.")
 
@@ -247,7 +247,7 @@ para("Agents never hand each other free text. Every message carries an "
      "declares who may send what to whom, and a message that violates it is "
      "rejected rather than delivered.")
 
-figure("fig_a2a_flow.png",
+figure("diagrams/a2a_flow.png",
        "Figure 3 — The six A2A messages exchanged during one trip request.")
 
 para("This layer is identical in every architecture evaluated below. That is "
@@ -266,7 +266,7 @@ para("The proposal specified a six-agent architecture. Once that was built and "
      "design is better, four architectures were built and measured against the "
      "same requests.")
 
-figure("fig_four_arms.png",
+figure("diagrams/four_arms.png",
        "Figure 4 — The four architectures. Same request, same APIs, same "
        "protocol; only the retrieval layer differs.")
 
@@ -388,7 +388,7 @@ else:
         widths=[1.9, 0.9, 0.9, 1.0, 0.7, 0.9],
     )
 
-    figure("fig_efficiency.png",
+    figure("results/efficiency.png",
            "Figure 5 — Cost of each architecture across four measures. "
            "Presented as separate panels because the quantities share no scale.")
 
@@ -398,7 +398,7 @@ else:
          "instead of up to eight, distilled results instead of raw payloads, "
          "and a cap on reasoning iterations.")
 
-    figure("fig_tuning_effect.png",
+    figure("results/tuning_effect.png",
            "Figure 6 — Effect of tuning alone, with the architecture unchanged.")
 
     para("This matters for the conclusion. Most of the cost difference between "
@@ -414,7 +414,7 @@ else:
          "the prices it quotes match fares and rates actually returned by the "
          "APIs.")
 
-    figure("fig_groundedness.png",
+    figure("results/groundedness.png",
            "Figure 7 — Share of quoted prices traceable to retrieved data.")
 
     a_pct = ARMS.get("A", {}).get("avg_prices_grounded_pct")

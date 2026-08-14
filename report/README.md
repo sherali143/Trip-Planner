@@ -8,7 +8,8 @@ The dissertation report belongs here.
 |---|---|
 | `../PROJECT_GUIDE.docx` | Problem, scope, solution, approaches, issues, results, structure |
 | `../comparison/results/comparison_results.json` | Every measured number |
-| `../figures/*.png` | Seven figures, ready to insert |
+| `../figures/diagrams/` | Four design diagrams — architecture, MCP, A2A, the four arms |
+| `../figures/results/` | Three measured charts — cost, tuning effect, groundedness |
 | `../comparison/README.md` | Why each architecture exists; which metric to lead with |
 | `../proposal/README.md` | Where the implementation diverged from the proposal |
 | Git history | What changed and why, for the reflection chapter |

@@ -167,7 +167,9 @@ trip_planner/
 ├── proposal/                proposal + assignment brief
 ├── report/                  the dissertation report
 ├── scripts/                 generators for the guide and figures
-├── figures/                 7 generated charts and diagrams
+├── figures/
+│   ├── diagrams/            architecture, MCP, A2A, the four arms
+│   └── results/             measured charts, regenerated per run
 ├── testing/                 149 automated tests
 ├── deploy/                  Docker
 └── .api_cache/              recorded API responses (committed)
