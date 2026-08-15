@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 from trip_planner.agents import TripPlannerAgents
 from trip_planner.tasks import TripPlannerTasks
 from trip_planner.comms import A2AProtocol, A2AMessage, MessageType
+from trip_planner.core.budget import LEGACY_ALLOCATION
 from trip_planner.comms.registry import AGENT_REGISTRY
 
 # Import utility modules for enhanced functionality.
@@ -499,8 +500,8 @@ class TripPlannerCrew:
             prefs.get("budget_breakdown"), dict) else {}
         nights = prefs.get("trip_duration", 5) or 5
 
-        accommodation = split.get("accommodation") or total * 0.35
-        meals = split.get("meals") or total * 0.10
+        accommodation = split.get("accommodation") or total * LEGACY_ALLOCATION["accommodation"]
+        meals = split.get("meals") or total * LEGACY_ALLOCATION["meals"]
         return {
             "origin": prefs.get("origin", ""),
             "destination": prefs.get("destination", ""),
@@ -510,7 +511,7 @@ class TripPlannerCrew:
             "adults": prefs.get("num_adults", 1),
             "interests": ", ".join(interests) if isinstance(interests, list)
                          else str(interests or ""),
-            "flight_budget": split.get("flights") or total * 0.35,
+            "flight_budget": split.get("flights") or total * LEGACY_ALLOCATION["flights"],
             "budget_per_night": accommodation / nights if nights > 0 else accommodation,
             "budget_per_meal": meals / (nights * 2) if nights > 0 else meals,
         }

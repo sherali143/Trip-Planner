@@ -9,6 +9,8 @@ import os, time, uuid
 from textwrap import dedent
 from crewai import Agent, Task, Crew, Process
 
+from trip_planner.core.budget import LEGACY_ALLOCATION as _DEFAULT_SPLIT
+
 from trip_planner.tools import (
     search_round_trip_flights, search_comprehensive_flights,
     search_hotels_comprehensive, search_accommodations_with_location,
@@ -30,11 +32,13 @@ class BaselineAgents:
         return Agent(
             role="Travel Preferences Extractor",
             goal="Extract structured JSON from conversation transcript",
-            backstory=dedent("""
+            backstory=dedent(f"""
                 Extract travel preferences from user input into JSON format.
                 Fields: origin, destination, departure_date, return_date, trip_duration,
                 total_budget, num_adults, num_children, interests, travel_style.
-                Allocate budget: flights 35%, hotels 35%, activities 20%, meals 10%.
+                Allocate budget: flights {_DEFAULT_SPLIT['flights']:.0%}, hotels
+                {_DEFAULT_SPLIT['accommodation']:.0%}, activities
+                {_DEFAULT_SPLIT['activities']:.0%}, meals {_DEFAULT_SPLIT['meals']:.0%}.
             """),
             verbose=True, allow_delegation=False, llm=self.llm, tools=[], max_iter=3, max_rpm=5
         )

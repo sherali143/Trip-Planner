@@ -13,6 +13,8 @@ from crewai import Agent
 from textwrap import dedent
 import os
 
+from trip_planner.core.budget import LEGACY_ALLOCATION as _DEFAULT_SPLIT
+
 # Tools needed by the coordinator agent
 from trip_planner.tools import (
     search_internet,
@@ -77,11 +79,16 @@ class TripPlannerAgents:
                 }
 
                 Budget allocation: if the user stated how to split their budget,
-                use their split. Otherwise default to flights 35%, hotels 35%,
-                activities 20%, meals 10%. The parts must sum to the total.
+                use their split. Otherwise default to flights {DEFAULT_SPLIT}.
+                The parts must sum to the total.
                 Calculate return_date from departure + duration if not explicit.
                 Defaults: 1 adult, 0 children if not specified.
-            """),
+            """).replace("{DEFAULT_SPLIT}", (
+                f"{_DEFAULT_SPLIT['flights']:.0%}, hotels "
+                f"{_DEFAULT_SPLIT['accommodation']:.0%}, activities "
+                f"{_DEFAULT_SPLIT['activities']:.0%}, meals "
+                f"{_DEFAULT_SPLIT['meals']:.0%}"
+            )),
             verbose=True,
             allow_delegation=False,
             llm=self.llm_standard,

@@ -238,3 +238,71 @@ class TestIntegration:
         a = suggest_allocation(0, 5, 1, "moderate", "Lahore", "Istanbul")
         assert _sums_to_one(a)
         assert all(v == 0 for v in a.amounts.values())
+
+
+class TestLegacySplitHasOneSource:
+    """
+    Regression test for a real duplication bug: LEGACY_ALLOCATION is the one
+    named source for the "no split stated" default, but trip_planner/agents.py,
+    trip_planner/tasks.py, trip_planner/orchestrator.py, and three of the four
+    evaluation arms each used to re-type 0.35 / 0.35 / 0.20 / 0.10 as separate
+    literals instead of importing it. Nothing enforced agreement, so if the
+    constant were ever tuned, every prompt and every fallback calculation
+    would silently keep quoting the old numbers.
+
+    Each check below derives its expectation FROM LEGACY_ALLOCATION rather than
+    from a literal of its own, so a future change to the constant changes what
+    these tests expect too — the point is to catch a site that was not updated
+    to match, not to pin today's numbers a second time.
+    """
+
+    def test_orchestrator_fallback_uses_the_constant(self):
+        from trip_planner.orchestrator import TripPlannerCrew
+
+        extraction = (
+            '{"origin":"Lahore","destination":"Istanbul","total_budget":1000,'
+            '"trip_duration":5,"num_adults":1}'
+        )
+        params = TripPlannerCrew._search_parameters(extraction)
+        assert params["flight_budget"] == pytest.approx(1000 * LEGACY_ALLOCATION["flights"])
+
+    def _agent_backstory_matches(self, backstory: str):
+        # Percentages are rendered with :.0% formatting everywhere they were
+        # converted, so the expected substring is derived the same way.
+        for category, key in [("flights", "flights"), ("hotels", "accommodation"),
+                              ("activities", "activities"), ("meals", "meals")]:
+            expected = f"{LEGACY_ALLOCATION[key]:.0%}"
+            assert expected in backstory, (
+                f"expected {category} share {expected} (from LEGACY_ALLOCATION) "
+                f"not found in: {backstory}"
+            )
+
+    def test_production_extractor_prompt_matches_the_constant(self):
+        from trip_planner.agents import TripPlannerAgents
+
+        backstory = TripPlannerAgents().preferences_extractor_agent().backstory
+        self._agent_backstory_matches(backstory)
+
+    def test_arm_b_extractor_prompt_matches_the_constant(self):
+        from evaluation.arm_b_six_agent_naive import BaselineAgents
+
+        backstory = BaselineAgents().preferences_extractor_agent().backstory
+        self._agent_backstory_matches(backstory)
+
+    def test_arm_c_extractor_prompt_matches_the_constant(self):
+        from evaluation.arm_c_six_agent_tuned import OptimizedAgents
+
+        backstory = OptimizedAgents().preferences_extractor_agent().backstory
+        self._agent_backstory_matches(backstory)
+
+    def test_arm_d_fallback_uses_the_constant(self):
+        # arm D deliberately pins the LEGACY split rather than the user-adjustable
+        # one (see the comment at its import site) so recorded API responses stay
+        # valid; it must still read that pin from the one named constant.
+        import inspect
+
+        from evaluation import arm_d_three_agent_direct as arm_d
+
+        source = inspect.getsource(arm_d)
+        assert "LEGACY_ALLOCATION" in source
+        assert "0.35" not in source and "0.20" not in source and "0.10" not in source

@@ -53,6 +53,7 @@ from evaluation.distilled_tools import (
 )
 from trip_planner.core.llm_metrics import recorder
 from trip_planner.core.resilience import kickoff_with_retry
+from trip_planner.core.budget import LEGACY_ALLOCATION as _DEFAULT_SPLIT
 
 MAX_ITER = 3
 
@@ -74,7 +75,9 @@ class OptimizedAgents:
         return self._agent(
             "Travel Preferences Extractor",
             "Turn a travel request into structured JSON",
-            "You extract travel details into JSON. Budget split: flights 35%, hotels 35%, activities 20%, meals 10%.",
+            "You extract travel details into JSON. Budget split: flights "
+            f"{_DEFAULT_SPLIT['flights']:.0%}, hotels {_DEFAULT_SPLIT['accommodation']:.0%}, "
+            f"activities {_DEFAULT_SPLIT['activities']:.0%}, meals {_DEFAULT_SPLIT['meals']:.0%}.",
             [],
         )
 

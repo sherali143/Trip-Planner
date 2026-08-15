@@ -13,6 +13,8 @@ from textwrap import dedent
 from typing import List, Optional
 from pydantic import BaseModel
 
+from trip_planner.core.budget import LEGACY_ALLOCATION as _DEFAULT_SPLIT
+
 
 # ============================================================================
 # PYDANTIC MODELS FOR STRUCTURED OUTPUTS
@@ -157,15 +159,15 @@ class TripPlannerTasks:
                   "$600 for flights, rest flexible" -> flights_budget = 600
 
                 Only if the user said NOTHING about splitting the budget, use:
-                - flights_budget: total_budget * 0.35
-                - accommodation_budget: total_budget * 0.35
-                - activities_budget: total_budget * 0.20
-                - meals_budget: total_budget * 0.10
+                - flights_budget: total_budget * {_DEFAULT_SPLIT['flights']}
+                - accommodation_budget: total_budget * {_DEFAULT_SPLIT['accommodation']}
+                - activities_budget: total_budget * {_DEFAULT_SPLIT['activities']}
+                - meals_budget: total_budget * {_DEFAULT_SPLIT['meals']}
 
                 The four values must add up to total_budget.
                 DO NOT use any tools for this calculation - just compute it directly.
                 Example: If total_budget = 150000 and no split was stated,
-                flights = 150000 * 0.35 = 52500
+                flights = 150000 * {_DEFAULT_SPLIT['flights']} = {150000 * _DEFAULT_SPLIT['flights']:.0f}
                 
                 **⚠️⚠️⚠️ BUDGET VALIDATION - VERY IMPORTANT ⚠️⚠️⚠️**
                 

@@ -1,6 +1,21 @@
 """
-Optimized runner: wraps current orchestrator's direct API + coordinator pattern.
-Skips interactive conversation — feeds scenario input directly to extraction + coordinator.
+Arm D: three agents, direct API retrieval — the design that ships.
+
+Why this arm exists
+--------------------
+The model is used only where judgement is required: understanding the free-text
+request (extraction) and assembling the plan (coordination). Retrieval in
+between is plain Python calling the travel APIs directly — no agent decides
+which tool to use or reasons over the response, so there is no ReAct loop to pay
+for. This is the arm `trip_planner.orchestrator` runs in production; every other
+arm exists to justify this one against alternatives, not to be shipped itself.
+
+What it gives up, measurably: it cannot widen the search and try again when a
+result disappoints, because there is no agent in the retrieval step to decide
+that adaptively. Arms B and C can.
+
+Skips the interactive conversation phase — a scenario string goes straight to
+extraction — since the evaluation runs unattended over twenty fixed requests.
 """
 
 import json, os, re, sys, time
@@ -15,6 +30,7 @@ from trip_planner.server.mcp_server import search_hotels_comprehensive, search_a
 from trip_planner.agents import TripPlannerAgents
 from trip_planner.core.llm_metrics import recorder
 from trip_planner.core.resilience import kickoff_with_retry
+from trip_planner.core.budget import LEGACY_ALLOCATION
 from evaluation.metrics import extract_ground_truth
 
 
@@ -114,15 +130,19 @@ def _run_optimized(user_input, agents_class, coordinator, start, errors) -> dict
     interests_raw = prefs.get("interests", [])
     interests = ", ".join(interests_raw) if isinstance(interests_raw, list) else str(interests_raw or "")
 
+    # Held at the legacy fixed split deliberately, not the user-adjustable one
+    # in trip_planner.core.budget: a different split changes budget_per_night,
+    # which changes the hotel query, which would invalidate every recorded API
+    # response this evaluation replays from. See LEGACY_ALLOCATION's docstring.
     bd = prefs.get("budget_breakdown", {})
     if isinstance(bd, dict):
-        flight_budget = bd.get("flights", total_budget * 0.35) or total_budget * 0.35
-        accommodation_budget = bd.get("accommodation", total_budget * 0.35) or total_budget * 0.35
-        meals_budget = bd.get("meals", total_budget * 0.10) or total_budget * 0.10
+        flight_budget = bd.get("flights", total_budget * LEGACY_ALLOCATION["flights"]) or total_budget * LEGACY_ALLOCATION["flights"]
+        accommodation_budget = bd.get("accommodation", total_budget * LEGACY_ALLOCATION["accommodation"]) or total_budget * LEGACY_ALLOCATION["accommodation"]
+        meals_budget = bd.get("meals", total_budget * LEGACY_ALLOCATION["meals"]) or total_budget * LEGACY_ALLOCATION["meals"]
     else:
-        flight_budget = total_budget * 0.35
-        accommodation_budget = total_budget * 0.35
-        meals_budget = total_budget * 0.10
+        flight_budget = total_budget * LEGACY_ALLOCATION["flights"]
+        accommodation_budget = total_budget * LEGACY_ALLOCATION["accommodation"]
+        meals_budget = total_budget * LEGACY_ALLOCATION["meals"]
 
     budget_per_night = accommodation_budget / trip_duration if trip_duration > 0 else accommodation_budget
     budget_per_meal = meals_budget / (trip_duration * 2) if trip_duration > 0 else meals_budget
