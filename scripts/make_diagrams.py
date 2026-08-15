@@ -327,7 +327,9 @@ def fig_mcp_lifecycle() -> str:
         ("5\nDistil to\ntop results", BLUE, BLUE_FILL),
         ("6\nCache write\n+ return", AQUA, AQUA_FILL),
     ]
-    x, w, gap = 1.0, 14.4, 2.6
+    # Six boxes and five gaps must fit inside the frame with clearance at both
+    # ends: 1.0 + 6*14.4 + 5*2.6 reached 100.4 and the last box was cropped.
+    x, w, gap = 1.0, 14.0, 2.4
     boxes = []
     for i, (text, edge, fill) in enumerate(stages):
         b = c.box(x, 42, w, 24, text, edge=edge, fill=fill, fontsize=8.4,

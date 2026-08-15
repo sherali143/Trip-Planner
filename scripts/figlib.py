@@ -357,11 +357,18 @@ class Canvas:
         problems: List[str] = []
         permitted = {frozenset(pair) for pair in allow_overlap}
 
+        # A box touching the frame gets clipped by the tight bounding box on
+        # export, so it must sit clear of the edge rather than merely inside it.
+        # A 0.5 tolerance passed a box ending at 100.4 whose right border was
+        # then cropped off the exported image.
+        MARGIN = 0.5
         for b in self.boxes:
-            if b.x < -0.5 or b.right > 100.5 or b.y < -0.5 or b.top > 100.5:
+            if (b.x < MARGIN or b.right > 100 - MARGIN
+                    or b.y < MARGIN or b.top > 100 - MARGIN):
                 problems.append(
-                    f"'{b.name}' is outside the frame "
-                    f"(x {b.x:.1f}..{b.right:.1f}, y {b.y:.1f}..{b.top:.1f})")
+                    f"'{b.name}' touches or crosses the frame edge "
+                    f"(x {b.x:.1f}..{b.right:.1f}, y {b.y:.1f}..{b.top:.1f}); "
+                    f"it will be clipped on export")
             if b.top > self.HEADER_FLOOR:
                 problems.append(
                     f"'{b.name}' intrudes into the reserved header band "
