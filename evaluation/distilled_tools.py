@@ -35,7 +35,7 @@ from trip_planner.server.mcp_server import (
     search_hotels_comprehensive as _mcp_hotels,
     search_restaurants as _mcp_restaurants,
 )
-from trip_planner.tools.mcp_tools import _call_fly_scraper_api
+from trip_planner.tools.travel_apis import _call_fly_scraper_api
 
 TOP_N = 3
 

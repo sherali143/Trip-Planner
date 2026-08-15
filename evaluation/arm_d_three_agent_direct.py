@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-from trip_planner.tools.mcp_tools import _call_fly_scraper_api
+from trip_planner.tools.travel_apis import _call_fly_scraper_api
 from trip_planner.server.mcp_server import search_hotels_comprehensive, search_attractions, search_restaurants
 from trip_planner.agents import TripPlannerAgents
 from trip_planner.core.llm_metrics import recorder

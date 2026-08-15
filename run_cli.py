@@ -262,7 +262,7 @@ def main():
     api_errors = []
     flights_data = hotels_data = attractions_data = restaurants_data = ""
 
-    from trip_planner.tools.mcp_tools import _call_fly_scraper_api
+    from trip_planner.tools.travel_apis import _call_fly_scraper_api
     from trip_planner.server.mcp_server import search_hotels_comprehensive, search_attractions, search_restaurants
 
     if origin and destination and dep_date:

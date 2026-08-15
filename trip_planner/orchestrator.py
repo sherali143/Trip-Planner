@@ -366,410 +366,237 @@ class TripPlannerCrew:
                 break
         
         return full_transcript
-    
+
+    # ==================================================================
+    # PLANNING
+    #
+    # Two entry points, one implementation. They used to be two methods
+    # sharing 74% of their text, and the copies had already drifted: the
+    # day-count validation existed in the command-line path and not in the
+    # web one, so a short itinerary was silently accepted in the browser and
+    # flagged in the terminal.
+    # ==================================================================
+
     def plan_trip(self, user_input: str) -> str:
+        """
+        Plan a trip, gathering the details through conversation first.
+
+        The command-line entry point: it asks the traveller questions until it
+        has what it needs, then plans.
+        """
         conversation_id = str(uuid.uuid4())
-        
-        print(f"\n{'='*80}")
-        print(f"TRIP PLANNER STARTED")
-        print(f"{'='*80}")
-        print(f"Conversation ID: {conversation_id}")
-        print(f"{'='*80}\n")
-        
+        print(f"\n{'=' * 80}\nTRIP PLANNER STARTED\n{'=' * 80}")
+        print(f"Conversation ID: {conversation_id}\n{'=' * 80}\n")
+
         self.a2a_protocol.start_conversation(conversation_id, {"user_input": user_input})
-        
-        # ============================================
-        # PHASE 1: Interactive Conversation
-        # ============================================
+
         print("\nPHASE 1: Starting conversation with Travel Assistant...\n")
-        conversation_transcript = self.have_conversation(user_input, conversation_id)
-        
-        # ============================================
-        # PHASE 2: Extract Preferences & Validate Budget
-        # ============================================
-        print("\nPHASE 2: Extracting structured preferences and validating budget...")
-        
-        conversation_task = self.tasks_class.conversation_task(
-            agent=self.conversational_agent,
-            user_input=conversation_transcript,
-            conversation_id=conversation_id
-        )
-        extraction_task = self.tasks_class.extraction_task(
-            agent=self.preferences_extractor,
-            conversation_id=conversation_id,
-            conversation_task=conversation_task
-        )
-        
-        print("\nValidating budget before proceeding...")
-        extraction_crew = Crew(
-            agents=[self.conversational_agent, self.preferences_extractor],
-            tasks=[conversation_task, extraction_task],
-            process=Process.sequential,
-            verbose=True
-        )
-        extraction_result = self._kickoff_with_retry(extraction_crew)
-        extraction_output = str(extraction_result)
-        self._extraction_output = extraction_output
-        
-        budget_verdict = self._assess_budget(extraction_output)
-        if not budget_verdict.feasible:
-            message = self._budget_error_message(budget_verdict)
+        transcript = self.have_conversation(user_input, conversation_id)
+        return self._plan(transcript, conversation_id)
+
+    def plan_trip_from_transcript(self, conversation_transcript: str,
+                                  conversation_id: str) -> str:
+        """
+        Plan a trip from an already-collected transcript.
+
+        The web entry point: the interface has asked its questions through a
+        form, so there is no conversation left to hold.
+        """
+        self.a2a_protocol.start_conversation(
+            conversation_id, {"transcript": conversation_transcript})
+        return self._plan(conversation_transcript, conversation_id)
+
+    # ------------------------------------------------------------------
+    def _plan(self, transcript: str, conversation_id: str) -> str:
+        """
+        The workflow both entry points run: understand, retrieve, assemble.
+
+        Retrieval happens in plain Python between two model steps. That is the
+        design decision this project tests — a model is used where the step
+        needs judgement, and not where it does not.
+        """
+        extraction_output, extraction_task = self._extract_preferences(
+            transcript, conversation_id)
+
+        verdict = self._assess_budget(extraction_output)
+        if not verdict.feasible:
+            message = self._budget_error_message(verdict)
             print(message)
             self.a2a_protocol.end_conversation(conversation_id)
             return message
 
-        # Feasible, but say plainly what this budget buys — a tight budget is a
-        # legitimate choice, so it warns and proceeds rather than blocking.
-        print(f"\n[Budget] {budget_verdict.verdict.replace('_', ' ').title()}: "
-              f"{budget_verdict.message}\n")
-        
-        # ============================================
-        # PHASE 3: Fetch Real Data via Direct API Calls
-        # ============================================
-        import json, re
-        from trip_planner.tools.mcp_tools import _call_fly_scraper_api
-        from trip_planner.server.mcp_server import search_hotels_comprehensive, search_attractions, search_restaurants
-        
-        # Parse extraction JSON to get search parameters
-        json_match = re.search(r'\{.*"origin".*"destination".*\}', extraction_output, re.DOTALL)
-        prefs = {}
-        if json_match:
-            try:
-                prefs = json.loads(json_match.group(0))
-            except json.JSONDecodeError:
-                pass
-        
-        origin = prefs.get("origin", "")
-        destination = prefs.get("destination", "")
-        departure_date = prefs.get("departure_date", "")
-        return_date = prefs.get("return_date", "")
-        trip_duration = prefs.get("trip_duration", 5)
-        num_adults = prefs.get("num_adults", 1)
-        total_budget = prefs.get("total_budget", 0)
-        interests = ", ".join(prefs.get("interests", [])) if isinstance(prefs.get("interests"), list) else str(prefs.get("interests", ""))
-        
-        # Budget breakdown
-        flight_budget = prefs.get("budget_breakdown", {}).get("flights", total_budget * 0.35) if isinstance(prefs.get("budget_breakdown"), dict) else total_budget * 0.35
-        accommodation_budget = prefs.get("budget_breakdown", {}).get("accommodation", total_budget * 0.35) if isinstance(prefs.get("budget_breakdown"), dict) else total_budget * 0.35
-        meals_budget = prefs.get("budget_breakdown", {}).get("meals", total_budget * 0.10) if isinstance(prefs.get("budget_breakdown"), dict) else total_budget * 0.10
-        
-        budget_per_night = accommodation_budget / trip_duration if trip_duration > 0 else accommodation_budget
-        budget_per_meal = meals_budget / (trip_duration * 2) if trip_duration > 0 else meals_budget
-        
-        # === Send A2A: Preferences → Coordinator ===
-        self._send_a2a_message(
-            "preferences_extractor", "itinerary_coordinator",
-            {"extraction_output": extraction_output[:5000]},
-            conversation_id, MessageType.REQUEST
-        )
-        
-        # Fetch flights
-        print("\nFetching flight data...")
-        flights_data = ""
-        if origin and destination and departure_date:
-            try:
-                flights_data = _call_fly_scraper_api(
-                    origin_code=origin,
-                    dest_code=destination,
-                    departure_date=departure_date,
-                    return_date=return_date if return_date else None,
-                    adults=num_adults,
-                    budget=flight_budget
-                )
-                print(f"  Flight data retrieved ({len(flights_data)} chars)")
-            except Exception as e:
-                print(f"  Flight search failed: {e}")
-                flights_data = json.dumps({"success": False, "error": str(e)})
-        
-        # === Send A2A: Flights → Coordinator ===
-        self._send_a2a_message(
-            "flight_data_provider", "itinerary_coordinator",
-            {"flights_data": flights_data[:5000], "success": bool(flights_data and "error" not in flights_data.lower())},
-            conversation_id, MessageType.RESPONSE
-        )
-        
-        # Fetch hotels
-        print("\nFetching hotel data...")
-        hotels_data = ""
-        if destination and departure_date and return_date:
-            try:
-                hotels_data = search_hotels_comprehensive(
-                    destination=destination,
-                    checkin_date=departure_date,
-                    checkout_date=return_date,
-                    budget_per_night=budget_per_night,
-                    adults=num_adults,
-                    rooms=1
-                )
-                print(f"  Hotel data retrieved ({len(hotels_data)} chars)")
-            except Exception as e:
-                print(f"  Hotel search failed: {e}")
-                hotels_data = json.dumps({"error": str(e), "success": False})
-        
-        # === Send A2A: Hotels → Coordinator ===
-        self._send_a2a_message(
-            "hotel_data_provider", "itinerary_coordinator",
-            {"hotels_data": hotels_data[:5000], "success": bool(hotels_data and "error" not in hotels_data.lower())},
-            conversation_id, MessageType.RESPONSE
-        )
-        
-        # Fetch attractions
-        print("\nFetching attraction data...")
-        attractions_data = ""
-        if destination and interests:
-            try:
-                attractions_data = search_attractions(
-                    destination=destination,
-                    interests=interests,
-                    duration_days=trip_duration
-                )
-                print(f"  Attraction data retrieved ({len(attractions_data)} chars)")
-            except Exception as e:
-                print(f"  Attraction search failed: {e}")
-                attractions_data = json.dumps({"error": str(e), "success": False})
-        
-        # === Send A2A: Attractions → Coordinator ===
-        self._send_a2a_message(
-            "attraction_data_provider", "itinerary_coordinator",
-            {"attractions_data": attractions_data[:5000], "success": bool(attractions_data and "error" not in attractions_data.lower())},
-            conversation_id, MessageType.RESPONSE
-        )
-        
-        # Fetch restaurants
-        print("\nFetching restaurant data...")
-        restaurants_data = ""
-        if destination:
-            try:
-                restaurants_data = search_restaurants(
-                    destination=destination,
-                    cuisine_types=interests,
-                    budget_per_meal=budget_per_meal
-                )
-                print(f"  Restaurant data retrieved ({len(restaurants_data)} chars)")
-            except Exception as e:
-                print(f"  Restaurant search failed: {e}")
-                restaurants_data = json.dumps({"error": str(e), "success": False})
-        
-        # === Send A2A: Restaurants → Coordinator ===
-        self._send_a2a_message(
-            "restaurant_data_provider", "itinerary_coordinator",
-            {"restaurants_data": restaurants_data[:5000], "success": bool(restaurants_data and "error" not in restaurants_data.lower())},
-            conversation_id, MessageType.RESPONSE
-        )
-        
-        # ============================================
-        # PHASE 4: Coordination & Itinerary Creation
-        # ============================================
-        print("\nPHASE 4: Itinerary Coordinator synthesizing all data...")
-        
-        a2a_message_history = self._build_a2a_message_history(conversation_id)
-        
-        coordination_task = self.tasks_class.coordination_task(
-            agent=self.coordinator_agent,
-            conversation_id=conversation_id,
-            extraction_task=extraction_task,
-            a2a_message_history=a2a_message_history
-        )
-        
-        print("\nAssembling crew and executing workflow...\n")
-        crew = Crew(
-            agents=[self.coordinator_agent],
-            tasks=[coordination_task],
-            process=Process.sequential,
-            verbose=True
-        )
-        result = self._kickoff_with_retry(crew)
-        
-        result_str = str(result)
-        if self._extraction_output:
-            result_str = self._validate_and_enhance_itinerary(result_str, self._extraction_output)
-        
-        # === Send A2A: Coordinator → User with final itinerary ===
+        # Feasible, but say plainly what this budget buys. A tight budget is a
+        # legitimate choice, so this warns and proceeds rather than blocking.
+        print(f"\n[Budget] {verdict.verdict.replace('_', ' ').title()}: "
+              f"{verdict.message}\n")
+
+        self._retrieve_and_announce(extraction_output, conversation_id)
+
+        itinerary = self._assemble_itinerary(extraction_task, conversation_id)
+        itinerary = self._validate_and_enhance_itinerary(itinerary, extraction_output)
+
         self._send_a2a_message(
             "itinerary_coordinator", "user",
-            {"itinerary": result_str[:5000]},
-            conversation_id, MessageType.RESPONSE
+            {"itinerary": itinerary[:5000]},
+            conversation_id, MessageType.RESPONSE,
         )
-        
         self.a2a_protocol.end_conversation(conversation_id)
-        
-        print(f"\n{'='*80}")
-        print("TRIP PLANNING COMPLETED")
-        print(f"{'='*80}\n")
-        
+
+        print(f"\n{'=' * 80}\nTRIP PLANNING COMPLETED\n{'=' * 80}\n")
         self._display_a2a_message_flow(conversation_id)
-        
-        return result_str
-    
-    def plan_trip_from_transcript(self, conversation_transcript: str, conversation_id: str) -> str:
-        self.a2a_protocol.start_conversation(conversation_id, {"transcript": conversation_transcript})
-        
+        return itinerary
+
+    # ------------------------------------------------------------------
+    def _extract_preferences(self, transcript: str, conversation_id: str):
+        """Turn the conversation into structured fields. This needs a model."""
+        print("\nPHASE 2: Extracting structured preferences and validating budget...")
+
         conversation_task = self.tasks_class.conversation_task(
             agent=self.conversational_agent,
-            user_input=conversation_transcript,
-            conversation_id=conversation_id
+            user_input=transcript,
+            conversation_id=conversation_id,
         )
         extraction_task = self.tasks_class.extraction_task(
             agent=self.preferences_extractor,
             conversation_id=conversation_id,
-            conversation_task=conversation_task
+            conversation_task=conversation_task,
         )
-        
-        # Run extraction
-        extraction_crew = Crew(
+        crew = Crew(
             agents=[self.conversational_agent, self.preferences_extractor],
             tasks=[conversation_task, extraction_task],
             process=Process.sequential,
-            verbose=True
+            verbose=True,
         )
-        extraction_result = self._kickoff_with_retry(extraction_crew)
-        extraction_output = str(extraction_result)
+        extraction_output = str(self._kickoff_with_retry(crew))
         self._extraction_output = extraction_output
-        
-        print("\n[DEBUG] Extraction output (first 500 chars):")
-        print(extraction_output[:500])
-        print("...\n")
-        
-        budget_verdict = self._assess_budget(extraction_output)
-        if not budget_verdict.feasible:
-            self.a2a_protocol.end_conversation(conversation_id)
-            return self._budget_error_message(budget_verdict)
-        print(f"\n[Budget] {budget_verdict.verdict.replace('_', ' ').title()}: "
-              f"{budget_verdict.message}\n")
-        
-        # === Send A2A: Preferences → Coordinator ===
+        return extraction_output, extraction_task
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _search_parameters(extraction_output: str) -> dict:
+        """
+        Pull the search parameters out of the extractor's JSON.
+
+        Budget shares fall back to the default split only when the extractor
+        did not supply one; a traveller who states how to divide their money
+        has expressed a preference, not made a mistake.
+        """
+        import json
+        import re
+
+        prefs = {}
+        match = re.search(r'\{.*"origin".*"destination".*\}', extraction_output,
+                          re.DOTALL)
+        if match:
+            try:
+                prefs = json.loads(match.group(0))
+            except json.JSONDecodeError:
+                pass
+
+        interests = prefs.get("interests", [])
+        total = prefs.get("total_budget", 0) or 0
+        split = prefs.get("budget_breakdown") if isinstance(
+            prefs.get("budget_breakdown"), dict) else {}
+        nights = prefs.get("trip_duration", 5) or 5
+
+        accommodation = split.get("accommodation") or total * 0.35
+        meals = split.get("meals") or total * 0.10
+        return {
+            "origin": prefs.get("origin", ""),
+            "destination": prefs.get("destination", ""),
+            "departure_date": prefs.get("departure_date", ""),
+            "return_date": prefs.get("return_date", ""),
+            "nights": nights,
+            "adults": prefs.get("num_adults", 1),
+            "interests": ", ".join(interests) if isinstance(interests, list)
+                         else str(interests or ""),
+            "flight_budget": split.get("flights") or total * 0.35,
+            "budget_per_night": accommodation / nights if nights > 0 else accommodation,
+            "budget_per_meal": meals / (nights * 2) if nights > 0 else meals,
+        }
+
+    # ------------------------------------------------------------------
+    def _retrieve_and_announce(self, extraction_output: str,
+                               conversation_id: str) -> None:
+        """
+        Fetch flights, hotels, attractions and restaurants, announcing each
+        result over the A2A protocol.
+
+        No model is involved. Once the request has been parsed the parameters
+        are fixed and there is exactly one correct call to make for each.
+        """
+        import json
+
+        from trip_planner.server.mcp_server import (search_attractions,
+                                                    search_hotels_comprehensive,
+                                                    search_restaurants)
+        from trip_planner.tools.travel_apis import _call_fly_scraper_api
+
+        p = self._search_parameters(extraction_output)
+
         self._send_a2a_message(
             "preferences_extractor", "itinerary_coordinator",
             {"extraction_output": extraction_output[:5000]},
-            conversation_id, MessageType.REQUEST
+            conversation_id, MessageType.REQUEST,
         )
-        
-        # Direct API calls instead of search agents
-        import json, re
-        from trip_planner.tools.mcp_tools import _call_fly_scraper_api
-        from trip_planner.server.mcp_server import search_hotels_comprehensive, search_attractions, search_restaurants
-        
-        json_match = re.search(r'\{.*"origin".*"destination".*\}', extraction_output, re.DOTALL)
-        prefs = {}
-        if json_match:
-            try:
-                prefs = json.loads(json_match.group(0))
-            except json.JSONDecodeError:
-                pass
-        
-        origin = prefs.get("origin", "")
-        destination = prefs.get("destination", "")
-        departure_date = prefs.get("departure_date", "")
-        return_date = prefs.get("return_date", "")
-        trip_duration = prefs.get("trip_duration", 5)
-        num_adults = prefs.get("num_adults", 1)
-        total_budget = prefs.get("total_budget", 0)
-        interests = ", ".join(prefs.get("interests", [])) if isinstance(prefs.get("interests"), list) else str(prefs.get("interests", ""))
-        
-        accommodation_budget = prefs.get("budget_breakdown", {}).get("accommodation", total_budget * 0.35) if isinstance(prefs.get("budget_breakdown"), dict) else total_budget * 0.35
-        meals_budget = prefs.get("budget_breakdown", {}).get("meals", total_budget * 0.10) if isinstance(prefs.get("budget_breakdown"), dict) else total_budget * 0.10
-        flight_budget = prefs.get("budget_breakdown", {}).get("flights", total_budget * 0.35) if isinstance(prefs.get("budget_breakdown"), dict) else total_budget * 0.35
-        
-        budget_per_night = accommodation_budget / trip_duration if trip_duration > 0 else accommodation_budget
-        budget_per_meal = meals_budget / (trip_duration * 2) if trip_duration > 0 else meals_budget
-        
-        # Fetch flights
-        print("\nFetching flight data...")
-        flights_data = ""
-        if origin and destination and departure_date:
-            try:
-                flights_data = _call_fly_scraper_api(origin, destination, departure_date, return_date or None, num_adults, flight_budget)
-                print(f"  Flight data retrieved ({len(flights_data)} chars)")
-            except Exception as e:
-                print(f"  Flight search failed: {e}")
-                flights_data = json.dumps({"success": False, "error": str(e)})
-        
-        # === Send A2A: Flights → Coordinator ===
-        self._send_a2a_message(
-            "flight_data_provider", "itinerary_coordinator",
-            {"flights_data": flights_data[:5000], "success": bool(flights_data and "error" not in flights_data.lower())},
-            conversation_id, MessageType.RESPONSE
-        )
-        
-        # Fetch hotels
-        print("\nFetching hotel data...")
-        hotels_data = ""
-        if destination and departure_date and return_date:
-            try:
-                hotels_data = search_hotels_comprehensive(destination, departure_date, return_date, budget_per_night, num_adults, 1)
-                print(f"  Hotel data retrieved ({len(hotels_data)} chars)")
-            except Exception as e:
-                print(f"  Hotel search failed: {e}")
-                hotels_data = json.dumps({"error": str(e), "success": False})
-        
-        # === Send A2A: Hotels → Coordinator ===
-        self._send_a2a_message(
-            "hotel_data_provider", "itinerary_coordinator",
-            {"hotels_data": hotels_data[:5000], "success": bool(hotels_data and "error" not in hotels_data.lower())},
-            conversation_id, MessageType.RESPONSE
-        )
-        
-        # Fetch attractions
-        print("\nFetching attraction data...")
-        attractions_data = ""
-        if destination and interests:
-            try:
-                attractions_data = search_attractions(destination, interests, trip_duration)
-                print(f"  Attraction data retrieved ({len(attractions_data)} chars)")
-            except Exception as e:
-                print(f"  Attraction search failed: {e}")
-                attractions_data = json.dumps({"error": str(e), "success": False})
-        
-        # === Send A2A: Attractions → Coordinator ===
-        self._send_a2a_message(
-            "attraction_data_provider", "itinerary_coordinator",
-            {"attractions_data": attractions_data[:5000], "success": bool(attractions_data and "error" not in attractions_data.lower())},
-            conversation_id, MessageType.RESPONSE
-        )
-        
-        # Fetch restaurants
-        print("\nFetching restaurant data...")
-        restaurants_data = ""
-        if destination:
-            try:
-                restaurants_data = search_restaurants(destination, interests, budget_per_meal)
-                print(f"  Restaurant data retrieved ({len(restaurants_data)} chars)")
-            except Exception as e:
-                print(f"  Restaurant search failed: {e}")
-                restaurants_data = json.dumps({"error": str(e), "success": False})
-        
-        # === Send A2A: Restaurants → Coordinator ===
-        self._send_a2a_message(
-            "restaurant_data_provider", "itinerary_coordinator",
-            {"restaurants_data": restaurants_data[:5000], "success": bool(restaurants_data and "error" not in restaurants_data.lower())},
-            conversation_id, MessageType.RESPONSE
-        )
-        
-        # Coordination task
-        a2a_message_history = self._build_a2a_message_history(conversation_id)
+
+        # Each entry: who announces the result, the field name the coordinator
+        # reads, a label for the log, whether the parameters it needs are
+        # present, and the call to make.
+        fetches = [
+            ("flight_data_provider", "flights_data", "flight",
+             bool(p["origin"] and p["destination"] and p["departure_date"]),
+             lambda: _call_fly_scraper_api(
+                 p["origin"], p["destination"], p["departure_date"],
+                 p["return_date"] or None, p["adults"], p["flight_budget"])),
+            ("hotel_data_provider", "hotels_data", "hotel",
+             bool(p["destination"] and p["departure_date"] and p["return_date"]),
+             lambda: search_hotels_comprehensive(
+                 p["destination"], p["departure_date"], p["return_date"],
+                 p["budget_per_night"], p["adults"], 1)),
+            ("attraction_data_provider", "attractions_data", "attraction",
+             bool(p["destination"] and p["interests"]),
+             lambda: search_attractions(
+                 p["destination"], p["interests"], p["nights"])),
+            ("restaurant_data_provider", "restaurants_data", "restaurant",
+             bool(p["destination"]),
+             lambda: search_restaurants(
+                 p["destination"], p["interests"], p["budget_per_meal"])),
+        ]
+
+        for sender, field, label, have_parameters, call in fetches:
+            data = ""
+            if have_parameters:
+                print(f"\nFetching {label} data...")
+                try:
+                    data = call()
+                    print(f"  {label.title()} data retrieved ({len(data)} chars)")
+                except Exception as exc:
+                    print(f"  {label.title()} search failed: {exc}")
+                    data = json.dumps({"success": False, "error": str(exc)})
+
+            self._send_a2a_message(
+                sender, "itinerary_coordinator",
+                {field: data[:5000],
+                 "success": bool(data and "error" not in data.lower())},
+                conversation_id, MessageType.RESPONSE,
+            )
+
+    # ------------------------------------------------------------------
+    def _assemble_itinerary(self, extraction_task, conversation_id: str) -> str:
+        """Arrange the retrieved options into a plan. This needs a model."""
+        print("\nPHASE 4: Itinerary Coordinator synthesizing all data...")
+
         coordination_task = self.tasks_class.coordination_task(
             agent=self.coordinator_agent,
             conversation_id=conversation_id,
             extraction_task=extraction_task,
-            a2a_message_history=a2a_message_history
+            a2a_message_history=self._build_a2a_message_history(conversation_id),
         )
-        
         crew = Crew(
             agents=[self.coordinator_agent],
             tasks=[coordination_task],
             process=Process.sequential,
-            verbose=True
+            verbose=True,
         )
-        result = self._kickoff_with_retry(crew)
-        
-        # === Send A2A: Coordinator → User with final itinerary ===
-        self._send_a2a_message(
-            "itinerary_coordinator", "user",
-            {"itinerary": str(result)[:5000]},
-            conversation_id, MessageType.RESPONSE
-        )
-        
-        self.a2a_protocol.end_conversation(conversation_id)
-        self._display_a2a_message_flow(conversation_id)
-        return str(result)
-
+        return str(self._kickoff_with_retry(crew))

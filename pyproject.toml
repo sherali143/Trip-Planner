@@ -1,24 +1,21 @@
-# Tooling configuration only.
+# Test configuration.
 #
-# Dependencies live in requirements.txt, which is PINNED to the exact versions
-# the published evaluation results were produced with. This file used to carry
-# a parallel [tool.poetry.dependencies] list with every version as "*", so
-# installing via poetry produced a different (and untested) dependency set than
-# installing via pip. One source of truth avoids that drift.
+# Dependencies are NOT here. They live in requirements.txt, pinned to the exact
+# versions the published evaluation results were produced with. This file used
+# to carry a parallel dependency list with every version as "*", so installing
+# via poetry produced a different and untested dependency set than installing
+# via pip. One source of truth avoids that drift.
+#
+# Configuration for ruff and pyright was removed: neither tool is installed and
+# neither is in requirements.txt, so it was settings for linters nobody runs.
 
 [tool.pytest.ini_options]
-# Every file under testing/ is a real test with real assertions. Ad-hoc API
-# probe scripts were removed rather than kept alongside them: named test_*.py
-# they were collected by pytest, asserted nothing, and called live endpoints.
+# Collect only from testing/. Every file there is a real test with real
+# assertions — ad-hoc API probe scripts were removed rather than left beside
+# them, because named test_*.py they were collected by pytest, asserted
+# nothing, and called live endpoints.
 testpaths = ["testing"]
-norecursedirs = [".venv", "__pycache__", ".api_cache", ".git"]
 
-[tool.pyright]
-# https://github.com/microsoft/pyright/blob/main/docs/configuration.md
-useLibraryCodeForTypes = true
-exclude = [".venv", ".api_cache", "**/__pycache__"]
-
-[tool.ruff]
-# https://beta.ruff.rs/docs/configuration/
-select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
-ignore = ['W291', 'W292', 'W293']
+# Never descend into these. .api_cache in particular holds a 2 MB recorded
+# response that pytest has no reason to walk.
+norecursedirs = [".venv", "__pycache__", ".api_cache", ".git", ".pytest_cache"]

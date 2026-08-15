@@ -1056,7 +1056,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
     
     # Flight Tools
     if name == "search_flights":
-        from trip_planner.tools.mcp_tools import _call_booking_flights_api
+        from trip_planner.tools.travel_apis import _call_booking_flights_api
         result = _call_booking_flights_api(
             origin_city=arguments.get("origin"),
             destination_city=arguments.get("destination"),
