@@ -13,7 +13,7 @@ import logging
 logging.getLogger("LiteLLM").setLevel(logging.ERROR)
 logging.getLogger("litellm").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("src").setLevel(logging.ERROR)
+logging.getLogger("trip_planner").setLevel(logging.ERROR)
 logging.getLogger("opentelemetry").setLevel(logging.ERROR)
 logging.getLogger("crewai").setLevel(logging.ERROR)
 import litellm
@@ -41,9 +41,9 @@ def _choose_budget_allocation(total_budget, duration, travelers, style, origin, 
     people have no basis for answering it. So the system proposes a split
     derived from the trip's own shape (distance, nights, party size, style),
     explains what each category pays for and why those numbers were chosen, and
-    then accepts any change. See src/core/budget.py for the evidence base.
+    then accepts any change. See trip_planner/core/budget.py for the evidence base.
     """
-    from src.core.budget import build_allocation
+    from trip_planner.core.budget import build_allocation
 
     allocation = build_allocation(
         total_budget=total_budget, trip_duration=duration, num_travelers=travelers,
@@ -181,7 +181,7 @@ def main():
     print("  ▶ PHASE 2: EXTRACTING PREFERENCES")
     print(f"{SEP}")
 
-    from src.agents import TripPlannerAgents
+    from trip_planner.agents import TripPlannerAgents
     agents = TripPlannerAgents()
 
     extract_task = Task(
@@ -262,8 +262,8 @@ def main():
     api_errors = []
     flights_data = hotels_data = attractions_data = restaurants_data = ""
 
-    from src.tools.mcp_tools import _call_fly_scraper_api
-    from src.server.mcp_server import search_hotels_comprehensive, search_attractions, search_restaurants
+    from trip_planner.tools.mcp_tools import _call_fly_scraper_api
+    from trip_planner.server.mcp_server import search_hotels_comprehensive, search_attractions, search_restaurants
 
     if origin and destination and dep_date:
         try:

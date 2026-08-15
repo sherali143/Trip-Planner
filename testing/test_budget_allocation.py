@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
 
-from src.core.budget import (
+from trip_planner.core.budget import (
     BASE_ALLOCATION,
     CATEGORIES,
     LEGACY_ALLOCATION,

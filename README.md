@@ -9,34 +9,59 @@ architectures actually cost.
 
 ---
 
-## Getting started
+## Start here
 
 Double-click **`run.bat`**.
 
-It creates the virtual environment, installs the pinned dependencies, sets up
-`.env`, and then gives you a menu. Nothing else needs installing.
+It checks Python, creates the virtual environment, installs the pinned
+dependencies, sets up `.env`, and then shows a menu. Nothing else to install.
 
 ```
-1. Plan a trip in the browser      needs API keys
-2. Plan a trip in this window      needs API keys
-3. Run the test suite              free
-4. Run the evaluation experiments  free
-5. Rebuild the figures             free
-6. Rebuild the dissertation        free
+DEMONSTRATIONS      free - no keys, no internet, no quota
+  1. Compare all four approaches      <- show this first
+  2. Approach A - single LLM, no tools
+  3. Approach B - six agents, naive
+  4. Approach C - six agents, tuned
+  5. Approach D - three agents, direct  (what ships)
+
+THE PROJECT         free
+  6. Run the test suite
+  7. Run the evaluation experiments
+  8. Rebuild the figures
+  9. Rebuild the dissertation
+
+PLAN A REAL TRIP    needs API keys
+ 10. In the browser
+ 11. In this window
 ```
 
-Options 3–6 need **no API keys and no internet**: the recorded API responses in
-`.api_cache/` are committed, so the whole evaluation replays from disk.
+**Options 1 to 9 need no API keys and no internet.** The demos replay real
+recorded runs, so they work even when every quota is exhausted.
 
-### API keys (only for options 1 and 2)
+### API keys (only for options 10 and 11)
 
-Paste these into `.env`:
+Paste into `.env`:
 
 | Key | Used for | Where to get one |
 |---|---|---|
 | `GOOGLE_API_KEY` | Gemini, the language model | [aistudio.google.com](https://aistudio.google.com/apikey) |
 | `RAPIDAPI_KEY` | Flights and hotels | [rapidapi.com](https://rapidapi.com) |
 | `SERPER_API_KEY` | Attractions and restaurants | [serper.dev](https://serper.dev) |
+
+---
+
+## The five folders
+
+| Folder | What is in it |
+|---|---|
+| **`trip_planner/`** | The system itself. All the application code. |
+| **`evaluation/`** | The four approaches, the scenarios, the metrics and the measured results the dissertation is built from. |
+| **`demos/`** | One runnable demonstration per approach, plus a side-by-side comparison. Works with no keys. |
+| **`report/`** | The dissertation, the code that generates it, and every figure. |
+| **`proposal/`** | The original proposal and the assignment brief. |
+| **`testing/`** | The test suite. |
+
+Every source file opens with a comment saying what that file does and why.
 
 ---
 
@@ -48,19 +73,19 @@ a 3-agent design was built that keeps both protocols but fetches data in plain
 Python. The multi-agent arm was **tuned first**, so the comparison is against a
 fair baseline rather than a straw man.
 
-| Arm | Architecture | File |
+| Approach | Architecture | Code |
 |---|---|---|
-| **A** | Single model — no agents, no tools | `comparison/arm_a_single_llm.py` |
-| **B** | 6 agents, naive (as first built) | `comparison/arm_b_six_agent_naive.py` |
-| **C** | 6 agents, tuned — the proposal as designed | `comparison/arm_c_six_agent_tuned.py` |
-| **D** | 3 agents + direct API calls — **what ships** | `comparison/arm_d_three_agent_direct.py` |
+| **A** | Single model — no agents, no tools | `evaluation/arm_a_single_llm.py` |
+| **B** | 6 agents, naive (as first built) | `evaluation/arm_b_six_agent_naive.py` |
+| **C** | 6 agents, tuned — the proposal as designed | `evaluation/arm_c_six_agent_tuned.py` |
+| **D** | 3 agents + direct API calls — **what ships** | `evaluation/arm_d_three_agent_direct.py` |
 
-`run_cli.py` and `run_web.py` both run **arm D**. Arms A, B and C exist for the
+`run_cli.py` and `run_web.py` both run **approach D**. A, B and C exist for the
 evaluation and are kept runnable because the dissertation rests on them.
 
-### Measured results (SC-01, all four arms)
+### Measured results (SC-01, all four)
 
-| Arm | Requests | Tokens | Cost | Time | Prices that are real |
+| Approach | Requests | Tokens | Cost | Time | Prices that are real |
 |---|---|---|---|---|---|
 | A single model | 1 | 11,392 | $0.028 | 93s | **0%** |
 | B 6-agent naive | 19 | 63,926 | $0.053 | 86s | 13% |
@@ -73,20 +98,16 @@ the numbers appear. Three findings:
 
 - **Tuning matters more than agent count.** Tuning cut the multi-agent arm's
   tokens ~83%; most of the naive penalty was implementation, not architecture.
-- **Cheap can mean worthless.** The tool-less arm quoted 57 prices and matched
-  **none** to a real fare — the hallucination failure the literature describes,
-  measured rather than asserted.
+- **Cheap can mean worthless.** The tool-less approach quoted 57 prices and
+  matched **none** to a real fare.
 - **Adopting a protocol is not conforming to one.** An audit of this project's
-  own protocol layer passes 3 of 9 checks. See below.
+  own protocol layer passes 3 of 9 checks.
 
-### Quota-free experiments
-
-Two parts of the evaluation need no network, no model and no keys, so they cover
-all 20 scenarios where the four-arm comparison cannot:
+### Experiments that need no quota
 
 ```bash
-python -m comparison.exp_protocol      # A2A + MCP conformance
-python -m comparison.exp_budget_gate   # budget feasibility gate, 20 scenarios
+python -m evaluation.exp_protocol      # A2A + MCP conformance, 9 checks
+python -m evaluation.exp_budget_gate   # budget gate across all 20 scenarios
 ```
 
 Both found real defects, and both are reported in the dissertation rather than
@@ -109,70 +130,17 @@ The flight and hotel free tiers are **monthly and very small**:
 | Gemini | free tier, rate-limited | The language model |
 
 One careless run can spend a whole month's allowance, and you cannot buy it back.
-Two protections:
 
 ```bash
 export TRIP_PLANNER_API_MODE=replay      # never touches the network
 export TRIP_PLANNER_MAX_LIVE_CALLS=10    # hard stop after N live calls
 ```
 
-### Record / replay
-
-Every HTTP call goes through `src/core/http_cache.py`. Recorded responses live in
-`.api_cache/` and **are committed**, so anyone can reproduce the published
-results **with no API keys at all**.
-
-Only 2xx responses are cached, so a quota 429 is never baked in. Request headers
-are excluded from both the cache key and the stored file, so no key material is
-written to disk. Because recordings are permanent, the evaluation can be built up
-**in batches across months**.
-
----
-
-## Project structure
-
-```
-trip_planner/
-│
-├── run.bat                  START HERE — sets everything up, then a menu
-├── run_cli.py               plan a trip in the terminal
-├── run_web.py               plan a trip in the browser
-│
-├── src/                     THE APPLICATION
-│   ├── orchestrator.py        the production workflow
-│   ├── agents.py, tasks.py    the three agents that need a model
-│   ├── comms/                 A2A protocol: 8 agent cards, 6 message types
-│   ├── server/                MCP server: 12 schema-validated tools
-│   ├── tools/                 tool wrappers plus the direct HTTP clients
-│   ├── core/                  caching, measurement, budget, cost, safe maths
-│   └── ui/                    Streamlit interface
-│
-├── comparison/              THE EVALUATION
-│   ├── arm_a…arm_d            the four architectures
-│   ├── scenarios.py           20 scenarios + declared ground truth
-│   ├── metrics.py             groundedness scoring
-│   ├── measured.py            the single accessor for measured results
-│   ├── exp_protocol.py        A2A + MCP conformance audit    (free)
-│   ├── exp_budget_gate.py     budget gate over 20 scenarios  (free)
-│   ├── run_comparison.py      the four-arm runner
-│   └── results/               measured results, as JSON
-│
-├── report/                  THE DISSERTATION
-│   ├── CMP7200_Dissertation.docx   generated — never edit by hand
-│   └── build/                 one module per chapter, plus the proof that
-│                              no number in it is typed by hand
-│
-├── scripts/                 FIGURE GENERATION
-│   ├── figlib.py              layout engine: measures text, fails on collisions
-│   ├── make_diagrams.py       8 architecture and concept diagrams
-│   └── make_charts.py         6 charts, straight from measured data
-│
-├── demos/                   viva demonstrations
-├── testing/                 the test suite
-├── figures/                 generated figures, 300 dpi
-├── proposal/                the proposal and the assignment brief
-└── .api_cache/              recorded API responses (committed)
-```
+Every HTTP call goes through `trip_planner/core/http_cache.py`. Recorded
+responses live in `.api_cache/` and **are committed**, so the published results
+reproduce **with no API keys at all**. Only 2xx responses are cached, so a quota
+429 is never baked in, and request headers are excluded from both the cache key
+and the stored file, so no key material reaches disk.
 
 ---
 
@@ -181,31 +149,35 @@ trip_planner/
 | Command | What it does | Costs |
 |---|---|---|
 | `run.bat` | Setup, then everything below via a menu | — |
-| `python run_cli.py` | Plan a trip in the terminal | API keys |
-| `python run_web.py` | Plan a trip in the browser | API keys |
+| `python demos/compare_all_approaches.py` | All four side by side | free |
+| `python demos/approach_d_three_agent_direct.py` | One approach in detail (also `_a_`, `_b_`, `_c_`) | free |
 | `python -m pytest` | The test suite | free |
-| `python -m comparison.exp_protocol` | Protocol conformance audit | free |
-| `python -m comparison.exp_budget_gate` | Budget gate, 20 scenarios | free |
-| `python -m comparison.run_comparison SC-01` | The four-arm comparison | model quota |
-| `python demos/demo_all_arms.py --no-pause` | Viva demo: all four, side by side | model quota |
-| `python demos/demo_one_arm.py D` | One architecture, narrated | model quota |
-| `python scripts/make_diagrams.py` | 8 diagrams at 300 dpi, validated | free |
-| `python scripts/make_charts.py` | 6 charts from measured data | free |
+| `python -m evaluation.exp_protocol` | Protocol conformance audit | free |
+| `python -m evaluation.exp_budget_gate` | Budget gate, 20 scenarios | free |
+| `python report/build/make_diagrams.py` | 8 diagrams at 300 dpi, validated | free |
+| `python report/build/make_charts.py` | 6 charts from measured data | free |
 | `python -m report.build.build_report --figures` | Rebuild the dissertation | free |
 | `python -m report.build.verify_no_hardcoded_numbers` | Prove no number is typed by hand | free |
+| `python -m evaluation.run_comparison SC-01` | The four-approach comparison | model quota |
+| `python run_cli.py` | Plan a trip in the terminal | API keys |
+| `python run_web.py` | Plan a trip in the browser | API keys |
+
+Add `--live` to any demo to execute it for real instead of replaying.
 
 ---
 
 ## Architecture
 
-**MCP server** (`src/server/mcp_server.py`) — 12 schema-validated tools over
-JSON-RPC/stdio. Runs as a subprocess, so it bootstraps `sys.path` before
-importing `src.*`; without that every tool call fails as "Connection lost".
+**MCP server** (`trip_planner/server/mcp_server.py`) — 12 schema-validated tools
+over JSON-RPC/stdio. Runs as a subprocess, so it bootstraps `sys.path` before
+importing `trip_planner.*`; without that every tool call fails as "Connection
+lost".
 
-**A2A protocol** (`src/comms/`) — 8 agent cards, 6 message types (REQUEST,
-RESPONSE, QUERY, INFO, ERROR, ACK), permission validation. Identical in every
-arm, which is the point: the protocol layer is independent of how data is
-fetched. In the shipped path it records the exchange rather than dispatching it.
+**A2A protocol** (`trip_planner/comms/`) — 8 agent cards, 6 message types
+(REQUEST, RESPONSE, QUERY, INFO, ERROR, ACK), permission validation. Identical in
+every approach, which is the point: the protocol layer is independent of how data
+is fetched. In the shipped path it records the exchange rather than dispatching
+it.
 
 | Component | Technology |
 |---|---|
@@ -229,19 +201,18 @@ fetched. In the shipped path it records the exchange rather than dispatching it.
 - **Endpoint paths are plural** (`/flights/...`); the RapidAPI console lists them
   as `flight/...`, which 404s.
 - **CrewAI `@tool` makes `Tool` objects, not functions.** Call `.run(...)`, not
-  `f(...)`. Runtime code imports the plain functions from `src/server/mcp_server.py`.
-- **Never hand-count model requests.** Use `src/core/llm_metrics.py`; its
-  callbacks fire off-thread, so sessions drain before reporting.
+  `f(...)`. Runtime code imports the plain functions from the MCP server module.
+- **Never hand-count model requests.** Use `trip_planner/core/llm_metrics.py`;
+  its callbacks fire off-thread, so sessions drain before reporting.
 
 ---
 
 ## Status
 
-**Working:** all four arms, all APIs, MCP server, A2A protocol, test suite,
+**Working:** all four approaches, all APIs, MCP server, A2A protocol, test suite,
 Streamlit UI, the generated dissertation, and every figure.
 
 **Waiting on quota:** repeat runs of SC-01 for a confidence interval (needs only
 the Gemini free tier, no travel-API quota), then the remaining 19 scenarios.
 Recordings accumulate, so coverage grows without re-running what already exists —
-re-run `python -m report.build.build_report --figures` afterwards and every
-number, figure and table updates itself.
+rebuild the report afterwards and every number, figure and table updates itself.

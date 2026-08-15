@@ -1,45 +1,75 @@
 # Demonstrations
 
-Two scripts, for showing the system rather than evaluating it. Both narrate what
-is happening as it happens, which `comparison/run_comparison.py` deliberately
-does not — that one is a measurement harness and prints a results table.
+Scripts for showing the work — to a supervisor, or in the viva.
 
-| Script | What it shows |
+**Every one of these runs with no API keys, no internet and no quota.** That is
+deliberate. The free tiers this project uses are exhaustible, and a demonstration
+that needs a working API is one that cannot be given on the day the quota runs
+out, which is exactly the day it will be needed.
+
+## What to run
+
+```bash
+python demos/compare_all_approaches.py          # show this first
+python demos/approach_a_single_llm.py           # one approach, in detail
+python demos/approach_b_six_agent_naive.py
+python demos/approach_c_six_agent_tuned.py
+python demos/approach_d_three_agent_direct.py   # the one that ships
+```
+
+Or use `run.bat` and pick options 1–5.
+
+Add `--no-pause` to run straight through without the "press Enter" stops.
+
+## The two modes
+
+| Mode | Command | What happens | Costs |
+|---|---|---|---|
+| **Playback** | *(default)* | Replays the measurement recorded in `evaluation/results/` — the same timings, the same cost, the same itinerary text that run really produced | Nothing at all |
+| **Live** | `--live` | Executes the architecture now, through the same code path the evaluation uses | Model quota, and travel-API quota unless `TRIP_PLANNER_API_MODE=replay` |
+
+Playback is the default because it always works. It is labelled as playback on
+screen every time, with the date of the run it is replaying and the model that
+produced it — presenting a recorded run as a live one would be dishonest, and a
+supervisor asking "is this running now?" should get the answer from the screen.
+
+The two modes narrate the same steps in the same order, because they describe
+the same architecture. The only difference is whether the numbers are being
+produced now or were produced earlier and recorded.
+
+## What each demo shows
+
+Every approach demo prints the same six things, so they can be compared directly:
+
+1. **What this approach is** — one paragraph
+2. **How it works** — the numbered steps it actually performs
+3. **What to watch for** — the point to make to your supervisor
+4. **The itinerary it produced** — real output, not a summary
+5. **What it cost** — requests, prompt vs completion tokens, money, time by phase
+6. **Was any of it real?** — how many of its quoted prices match a fare the APIs
+   actually returned
+
+That last section is the one to dwell on. Approach A quoted 57 prices and matched
+none of them; approaches C and D matched around 57–59%. The contrast is the
+project's central finding.
+
+## Layout
+
+| File | What it is |
 |---|---|
-| `demo_one_arm.py` | One architecture on one request, step by step |
-| `demo_all_arms.py` | All four architectures on the same request, side by side |
+| `compare_all_approaches.py` | All four side by side, with the table and what to say about it |
+| `approach_a_single_llm.py` | Approach A, in detail |
+| `approach_b_six_agent_naive.py` | Approach B, in detail |
+| `approach_c_six_agent_tuned.py` | Approach C, in detail |
+| `approach_d_three_agent_direct.py` | Approach D, in detail |
+| `_presenter.py` | The narration, in one place. The approach files hold only their own description |
 
-```bash
-python demos/demo_one_arm.py A          # single model, no tools
-python demos/demo_one_arm.py D          # three agents + direct API
-python demos/demo_one_arm.py D "Plan 5 nights in Bangkok from Karachi..."
+Each approach file describes its own approach and nothing else; the presentation
+logic is not duplicated across them.
 
-python demos/demo_all_arms.py           # all four, pausing between each
-python demos/demo_all_arms.py --no-pause
-```
+## A caution worth stating
 
-## Run them in replay mode
-
-```bash
-export TRIP_PLANNER_API_MODE=replay     # Windows: set TRIP_PLANNER_API_MODE=replay
-```
-
-The travel data is then served from the recorded responses in `.api_cache/`. The
-output is real captured data — it simply costs no travel-API quota and cannot
-fail on a network hiccup part way through a demonstration. Model requests still
-cost Gemini free-tier quota, because the model genuinely runs.
-
-## What to point at
-
-`demo_all_arms.py` is the one to show. Its value is the contrast: the tool-less
-arm produces a confident, well-formatted itinerary in which **no quoted price
-matches anything real**, next to arms that cost more and produce plans whose
-prices can be traced back to a retrieved fare. That comparison is the project's
-central finding, and it is more convincing watched than described.
-
-`demo_one_arm.py` is for the follow-up question — "what is arm C actually
-doing?" — where the step-by-step narration earns its place.
-
-There were once four extra wrapper scripts, one per arm. They differed only in
-the letter they passed, so the presentation logic existed in four copies; they
-were removed and the letter is now an argument.
+Playback shows one recorded scenario, run once. It is real measured output, and
+it is a single observation — the demos say so at the end of every run, and so
+does the dissertation. If a supervisor asks how many scenarios this covers, the
+honest answer is on the screen: 1 of 20 designed.

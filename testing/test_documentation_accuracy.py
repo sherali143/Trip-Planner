@@ -32,8 +32,8 @@ ALL_TEXT = "\n".join(DOCS.values())
 
 def test_documentation_exists_for_every_package():
     """Each top-level folder explains itself."""
-    for folder in ("src", "comparison", "testing", "demos", "figures",
-                   "scripts", "proposal", "report"):
+    for folder in ("trip_planner", "evaluation", "demos", "testing",
+                   "proposal", "report"):
         assert (ROOT / folder / "README.md").exists(), f"{folder}/ has no README"
 
 
@@ -103,7 +103,7 @@ def test_documented_commands_point_at_real_targets():
 
 def test_mcp_tool_count_matches_the_server():
     """The "12 tools" claim must match what the server actually registers."""
-    server = (ROOT / "src/server/mcp_server.py").read_text(encoding="utf-8")
+    server = (ROOT / "trip_planner/server/mcp_server.py").read_text(encoding="utf-8")
     actual = len(re.findall(r'Tool\(\s*name="', server))
     claimed = {int(n) for n in re.findall(r"(\d+) (?:schema-validated )?tools", ALL_TEXT)}
     assert claimed, "no tool count is documented anywhere"
@@ -111,18 +111,18 @@ def test_mcp_tool_count_matches_the_server():
 
 
 def test_scenario_count_matches_the_scenario_file():
-    scenarios = (ROOT / "comparison/scenarios.py").read_text(encoding="utf-8")
+    scenarios = (ROOT / "evaluation/scenarios.py").read_text(encoding="utf-8")
     actual = len(re.findall(r'"id":\s*"SC-', scenarios))
     assert actual == 20, f"expected 20 scenarios, found {actual}"
     assert "20 scenario" in ALL_TEXT or "20 evaluation scenarios" in ALL_TEXT
 
 
 def test_a2a_card_and_message_type_counts_match_the_code():
-    registry = (ROOT / "src/comms/registry.py").read_text(encoding="utf-8")
+    registry = (ROOT / "trip_planner/comms/registry.py").read_text(encoding="utf-8")
     cards = len(re.findall(r"AgentCard\(\s*\n?\s*agent_id=", registry))
     assert cards == 8, f"docs claim 8 agent cards, registry defines {cards}"
 
-    protocol = (ROOT / "src/comms/protocol.py").read_text(encoding="utf-8")
+    protocol = (ROOT / "trip_planner/comms/protocol.py").read_text(encoding="utf-8")
     block = re.search(r"class MessageType\b.*?(?=\nclass |\Z)", protocol, re.S)
     assert block, "MessageType enum not found"
     types = len(re.findall(r"^\s+[A-Z_]+\s*=", block.group(0), re.M))
@@ -138,7 +138,7 @@ def test_results_quoted_in_docs_match_the_results_file(arm):
     generates its table from this file; the READMEs are written by hand, so
     this is what stops them drifting.
     """
-    results_path = ROOT / "comparison/results/comparison_results.json"
+    results_path = ROOT / "evaluation/results/comparison_results.json"
     if not results_path.exists():
         pytest.skip("no results recorded yet")
     arms = json.loads(results_path.read_text(encoding="utf-8")).get("arms", {})

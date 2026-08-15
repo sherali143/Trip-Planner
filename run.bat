@@ -79,9 +79,9 @@ if not exist ".env" (
     echo  [4/4] Created .env from the template.
     echo.
     echo        NOTE: .env has no API keys in it yet.
-    echo        Options 3, 4, 5 and 6 below work fine without them.
-    echo        Options 1 and 2 need keys - open .env in Notepad and paste
-    echo        them in. See README.md for where to get each one.
+    echo        Options 1 to 9 below work fine without them.
+    echo        Only options 10 and 11 need keys - open .env in Notepad and
+    echo        paste them in. See README.md for where to get each one.
     echo.
 ) else (
     echo  [4/4] .env found.
@@ -96,30 +96,72 @@ echo  ==================================================================
 echo    WHAT WOULD YOU LIKE TO DO?
 echo  ==================================================================
 echo.
-echo    NEEDS API KEYS
-echo      1. Plan a trip in the browser        ^(Streamlit web app^)
-echo      2. Plan a trip in this window        ^(command line^)
+echo    DEMONSTRATIONS - free, no keys, no internet, no quota
+echo      1. Compare all four approaches       ^(show this first^)
+echo      2. Approach A - single LLM, no tools
+echo      3. Approach B - six agents, naive
+echo      4. Approach C - six agents, tuned
+echo      5. Approach D - three agents, direct ^(what ships^)
 echo.
-echo    FREE - no keys, no internet, replays recorded data
-echo      3. Run the test suite
-echo      4. Run the evaluation experiments    ^(protocol + budget gate^)
-echo      5. Rebuild the figures               ^(8 diagrams, 6 charts^)
-echo      6. Rebuild the dissertation          ^(report/*.docx^)
+echo    THE PROJECT - free
+echo      6. Run the test suite
+echo      7. Run the evaluation experiments    ^(protocol + budget gate^)
+echo      8. Rebuild the figures               ^(8 diagrams, 6 charts^)
+echo      9. Rebuild the dissertation          ^(report/*.docx^)
 echo.
-echo      7. Exit
+echo    PLAN A REAL TRIP - needs API keys in .env
+echo     10. In the browser                    ^(web app^)
+echo     11. In this window                    ^(command line^)
 echo.
-set /p choice="   Enter a number (1-7): "
+echo     12. Exit
+echo.
+set /p choice="   Enter a number (1-12): "
 echo.
 
-if "%choice%"=="1" goto web
-if "%choice%"=="2" goto cli
-if "%choice%"=="3" goto tests
-if "%choice%"=="4" goto experiments
-if "%choice%"=="5" goto figures
-if "%choice%"=="6" goto report
-if "%choice%"=="7" goto end
-echo  Please enter a number from 1 to 7.
+if "%choice%"=="1"  goto demo_all
+if "%choice%"=="2"  goto demo_a
+if "%choice%"=="3"  goto demo_b
+if "%choice%"=="4"  goto demo_c
+if "%choice%"=="5"  goto demo_d
+if "%choice%"=="6"  goto tests
+if "%choice%"=="7"  goto experiments
+if "%choice%"=="8"  goto figures
+if "%choice%"=="9"  goto report
+if "%choice%"=="10" goto web
+if "%choice%"=="11" goto cli
+if "%choice%"=="12" goto end
+echo  Please enter a number from 1 to 12.
 echo.
+goto menu
+
+:demo_all
+"%PY%" demos/compare_all_approaches.py
+echo.
+pause
+goto menu
+
+:demo_a
+"%PY%" demos/approach_a_single_llm.py
+echo.
+pause
+goto menu
+
+:demo_b
+"%PY%" demos/approach_b_six_agent_naive.py
+echo.
+pause
+goto menu
+
+:demo_c
+"%PY%" demos/approach_c_six_agent_tuned.py
+echo.
+pause
+goto menu
+
+:demo_d
+"%PY%" demos/approach_d_three_agent_direct.py
+echo.
+pause
 goto menu
 
 :web
@@ -150,9 +192,9 @@ goto menu
 echo  Running the quota-free experiments. These touch no network and
 echo  cost nothing, so they can be run as often as you like.
 echo.
-"%PY%" -m comparison.exp_protocol
+"%PY%" -m evaluation.exp_protocol
 echo.
-"%PY%" -m comparison.exp_budget_gate
+"%PY%" -m evaluation.exp_budget_gate
 echo.
 pause
 goto menu
@@ -160,8 +202,8 @@ goto menu
 :figures
 echo  Regenerating every figure from the measured results...
 echo.
-"%PY%" scripts/make_diagrams.py
-"%PY%" scripts/make_charts.py
+"%PY%" report/build/make_diagrams.py
+"%PY%" report/build/make_charts.py
 echo.
 pause
 goto menu

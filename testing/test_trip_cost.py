@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
 
-from src.core.trip_cost import (
+from trip_planner.core.trip_cost import (
     COMFORTABLE,
     GENEROUS,
     IMPOSSIBLE,

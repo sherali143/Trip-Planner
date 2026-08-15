@@ -12,7 +12,7 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.validators import (
+from trip_planner.core.validators import (
     validate_day_count,
     get_missing_days,
     regenerate_if_incomplete,

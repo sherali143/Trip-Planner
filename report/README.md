@@ -13,7 +13,7 @@ python -m report.build.verify_no_hardcoded_numbers # prove no number is typed by
 ## Why it is generated
 
 Every quantitative claim in the document is read from a measured results file
-through `comparison/measured.py`, the single accessor for measured data. Nothing
+through `evaluation/measured.py`, the single accessor for measured data. Nothing
 is typed. That is not a style preference: an earlier version of this project's
 documentation hardcoded its headline figures — "5 LLM calls", "~230 seconds",
 "85% faster" — and all three turned out to be wrong once the LLM calls were

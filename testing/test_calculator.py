@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
 
-from src.core.safe_math import (MAX_EXPONENT, MAX_EXPRESSION_LENGTH,
+from trip_planner.core.safe_math import (MAX_EXPONENT, MAX_EXPRESSION_LENGTH,
                                 SafeCalculator, UnsafeExpression, calculate)
 
 
@@ -221,7 +221,7 @@ def test_mcp_server_uses_this_implementation():
     This test is the reason the file exists in its current form: without it,
     nothing stops the two drifting apart again.
     """
-    from src.server import mcp_server
+    from trip_planner.server import mcp_server
     assert mcp_server.calculate("9**9**9").startswith("Error")
     assert mcp_server.calculate("2 + 2") == "4"
 
