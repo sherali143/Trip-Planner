@@ -3,7 +3,6 @@ Streamlit UI for AI Trip Planner
 """
 
 import streamlit as st
-import os
 from dotenv import load_dotenv
 from src.orchestrator import TripPlannerCrew
 import uuid

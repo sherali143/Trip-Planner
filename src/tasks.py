@@ -10,8 +10,8 @@ Reference: https://docs.crewai.com/concepts/tasks
 
 from crewai import Task
 from textwrap import dedent
-from typing import Dict, Any, List, Optional
-from pydantic import BaseModel, Field
+from typing import List, Optional
+from pydantic import BaseModel
 
 
 # ============================================================================

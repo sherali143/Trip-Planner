@@ -22,8 +22,8 @@ _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-import requests
 from src.core.http_cache import cached_get, cached_post
+from src.core.safe_math import calculate as _safe_calculate
 from mcp.server import Server
 from mcp.types import Tool, TextContent
 from mcp.server.stdio import stdio_server
@@ -697,28 +697,21 @@ def search_restaurants(destination: str, cuisine_types: str, budget_per_meal: fl
 
 def calculate(operation: str) -> str:
     """
-    Perform mathematical calculations
-    
+    Perform mathematical calculations.
+
     Args:
         operation: Mathematical expression to evaluate (e.g., "200*7" or "5000/2*10")
-    
+
     Returns:
-        Result of the calculation
+        Result of the calculation, or a readable error.
+
+    Delegates to src/core/safe_math.py, which walks the expression's syntax tree
+    instead of calling eval. The previous implementation filtered the input
+    against a permitted character set and evaluated it directly; that blocks name
+    lookups but not `9**9**9`, which is eight characters long and exhausts the
+    process. See the module docstring for the full reasoning.
     """
-    try:
-        # Basic safety check - only allow math operations
-        allowed_chars = set('0123456789+-*/().% ')
-        if not all(c in allowed_chars for c in operation):
-            return "Error: Only mathematical expressions are allowed"
-        
-        result = eval(operation)
-        return str(result)
-    except SyntaxError:
-        return "Error: Invalid syntax in mathematical expression"
-    except ZeroDivisionError:
-        return "Error: Division by zero"
-    except Exception as e:
-        return f"Error: {str(e)}"
+    return _safe_calculate(operation)
 
 
 # ============================================

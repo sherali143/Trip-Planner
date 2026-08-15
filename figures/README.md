@@ -1,57 +1,46 @@
 # Figures
 
-Generated, never hand-drawn. Split by what makes them change.
+Generated output. Nothing here is edited by hand — regenerate instead:
 
 ```bash
-python scripts/make_diagrams.py   # diagrams/  — change when the design changes
-python scripts/make_charts.py     # results/   — change after every evaluation run
+python scripts/make_diagrams.py    # diagrams/
+python scripts/make_charts.py      # results/
 ```
 
-## `diagrams/` — how the system is built
+Everything is 300 dpi, and every diagram passes geometric validation before it
+is written. See `../scripts/README.md` for how that works.
 
-Redraw these only when the architecture itself changes.
+## `diagrams/` — what the system is
 
-| File | Shows | Used in |
-|---|---|---|
-| `architecture.png` | Four layers, MCP server, A2A protocol, three APIs, cache | Guide §3 |
-| `mcp_lifecycle.png` | The six stages of an MCP tool call | Guide §3 |
-| `a2a_flow.png` | The six A2A messages exchanged per trip | Guide §3 |
-| `four_arms.png` | The four architectures side by side | Guide §4 |
+These change when the **design** changes.
+
+| File | Shown in |
+|---|---|
+| `architecture.png` | Design — the four layers, and which paths actually use the tool server |
+| `dataflow.png` | Design — what is persisted, and where each reported number comes from |
+| `sequence.png` | Design — one request end to end, with measured phase timings |
+| `four_arms.png` | Design — the four evaluated architectures side by side |
+| `a2a_flow.png` | Design — the six typed messages, and the two behaviours that are not implemented |
+| `mcp_lifecycle.png` | Design — the six-stage tool call, and the two stages that return early |
+| `conceptual_framework.png` | Literature review — failure mode, design response, measured outcome |
+| `methodology.png` | Methodology — the three design-science cycles as they actually ran |
+
+Three of these read measured values (phase timings, token counts, conformance
+results), so they are not purely structural — rerun them after a measurement run.
 
 ## `results/` — what was measured
 
-These read `comparison/results/comparison_results.json` directly. **No number in
-them is typed in**, so a chart cannot disagree with the data it claims to show,
-and a partial run is labelled as one in the caption.
+These change when the **results** change.
 
-| File | Shows | Used in |
-|---|---|---|
-| `efficiency.png` | LLM calls, tokens, cost and time for all four arms | Guide §6 |
-| `tuning_effect.png` | What tuning alone bought (arm B → arm C) | Guide §6.1 |
-| `groundedness.png` | Share of quoted prices matching a real fare or rate | Guide §6.2 |
+| File | Shows |
+|---|---|
+| `efficiency.png` | Requests, tokens, cost and time for all four arms |
+| `token_decomposition.png` | Prompt vs completion tokens — why the tuned arm is cheaper |
+| `tuning_effect.png` | The B-to-C ablation: how much of the penalty was implementation |
+| `groundedness.png` | Quoted prices matching a real fare, and why entity matching is weak |
+| `protocol_conformance.png` | All nine conformance checks, pass or fail |
+| `budget_gate.png` | The gate's decision on 20 scenarios, and the anchor error behind the miss |
 
-Regenerate `results/` after every evaluation run. `PROJECT_GUIDE.docx` embeds
-all seven, so run `scripts/generate_guide.py` afterwards.
-
-## Design decisions
-
-Each of these was a bug before it was a rule:
-
-- **One hue per panel, never a value ramp.** Colouring bars darker-where-bigger
-  double-encodes bar length as hue and spends the only free channel on
-  information the length already carries. Identity comes from the axis label, so
-  the charts survive greyscale printing.
-- **Small multiples, never a second y-axis.** LLM calls (1–19) and tokens
-  (7k–64k) share no scale; one plot would invent a relationship between them.
-- **Direction stated on every panel** — "lower is better" for cost sits beside
-  "higher is better" for groundedness in the same document.
-- **Values labelled directly.** Nobody should measure a bar against a gridline.
-- **Diagram layout is explicit, never auto-placed.** Layer names occupy a
-  reserved gutter no connector may enter, and connector labels sit to one side
-  of their arrow. Both rules exist because the first drafts routed arrows
-  through the word "LAYER 2" and struck lines through their own captions.
-
-## After regenerating, look at them
-
-matplotlib will happily draw text on top of text. Every layout fault in these
-figures was found by opening the output, not by reading the code.
+Every chart carries its own scope line — how many scenarios, how many repeats,
+which model, which API mode — so a single-scenario result can never be mistaken
+for a complete evaluation.

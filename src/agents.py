@@ -11,7 +11,6 @@ The six-agent variants used for the evaluation live in `comparison/`.
 
 from crewai import Agent
 from textwrap import dedent
-from typing import List, Optional
 import os
 
 # Tools needed by the coordinator agent

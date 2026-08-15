@@ -3,7 +3,7 @@ Optimized runner: wraps current orchestrator's direct API + coordinator pattern.
 Skips interactive conversation — feeds scenario input directly to extraction + coordinator.
 """
 
-import os, sys, time, uuid, json, re
+import json, os, re, sys, time
 from textwrap import dedent
 from crewai import Agent, Task, Crew, Process
 from dotenv import load_dotenv

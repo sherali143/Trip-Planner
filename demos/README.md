@@ -1,103 +1,45 @@
-# Demonstration scripts
+# Demonstrations
 
-For showing the system working. Each narrates what is happening as it happens,
-so an architecture can be explained while it runs rather than described
-afterwards.
+Two scripts, for showing the system rather than evaluating it. Both narrate what
+is happening as it happens, which `comparison/run_comparison.py` deliberately
+does not — that one is a measurement harness and prints a results table.
 
-## Run one approach at a time
-
-```bash
-python demos/run_approach_a_single_llm.py
-python demos/run_approach_b_six_agent_naive.py
-python demos/run_approach_c_six_agent_tuned.py
-python demos/run_approach_d_three_agent_direct.py
-```
-
-Each prints, in order: what the approach is, how it works, what to watch for,
-the measured cost, how much of the itinerary traces back to retrieved data, and
-the itinerary itself.
-
-Pass your own request as an argument:
-
-```bash
-python demos/run_approach_d_three_agent_direct.py "Plan 5 nights in Bangkok from Karachi, budget 1200 USD"
-```
-
-## Run all four together
-
-```bash
-python demos/demo_comparison.py             # pauses between approaches
-python demos/demo_comparison.py --no-pause  # runs straight through
-```
-
-Runs A, B, C then D — the optimised design last — and finishes with a metrics
-table comparing all four.
-
-## Suggested order for a presentation
-
-| Step | Command | The point being made |
-|---|---|---|
-| 1 | `run_approach_a_single_llm.py` | The obvious approach. Fast, cheap, and every price invented. This is the problem. |
-| 2 | `run_approach_b_six_agent_naive.py` | The proposed multi-agent design as first built. Real data, but the specialists spend most of their calls deciding which tool to use. |
-| 3 | `run_approach_c_six_agent_tuned.py` | The same six agents, tuned. Most of the cost disappears without changing the architecture. |
-| 4 | `run_approach_d_three_agent_direct.py` | Retrieval moved out of the model entirely. The design that ships. |
-| 5 | `demo_comparison.py` | All four side by side. |
-
-That order tells the story the evaluation actually found: the naive multi-agent
-penalty is largely an implementation artefact, and what remains after tuning is
-a smaller, more honest difference.
-
-## Before demonstrating — use replay mode
-
-```bash
-set TRIP_PLANNER_API_MODE=replay        # Windows
-export TRIP_PLANNER_API_MODE=replay     # bash
-```
-
-The recordings in `.api_cache/` are **real API data captured earlier**, so the
-output is genuine. Replaying costs no quota and cannot fail on a network problem
-in front of an audience. The flight and hotel APIs allow only 30 and 50 requests
-*per month*, so a live demonstration that goes wrong can take the evaluation
-down with it.
-
-If you do go live, cap it:
-
-```bash
-set TRIP_PLANNER_MAX_LIVE_CALLS=5
-```
-
-## Files
-
-| File | Purpose |
+| Script | What it shows |
 |---|---|
-| `run_approach_a_single_llm.py` | Approach A alone |
-| `run_approach_b_six_agent_naive.py` | Approach B alone |
-| `run_approach_c_six_agent_tuned.py` | Approach C alone |
-| `run_approach_d_three_agent_direct.py` | Approach D alone |
-| `demo_comparison.py` | All four, in order |
-| `demo_approach.py` | Shared presentation logic used by the four scripts above |
-
-The four `run_approach_*` scripts are thin: they fix which approach runs and
-nothing else. The presentation lives in `demo_approach.py` so all four are shown
-identically — four copies would drift, and one would end up printing something
-the others do not.
-
-`demo_approach.py` can also be called directly with an approach letter, which is
-convenient when scripting:
+| `demo_one_arm.py` | One architecture on one request, step by step |
+| `demo_all_arms.py` | All four architectures on the same request, side by side |
 
 ```bash
-python demos/demo_approach.py C
+python demos/demo_one_arm.py A          # single model, no tools
+python demos/demo_one_arm.py D          # three agents + direct API
+python demos/demo_one_arm.py D "Plan 5 nights in Bangkok from Karachi..."
+
+python demos/demo_all_arms.py           # all four, pausing between each
+python demos/demo_all_arms.py --no-pause
 ```
 
-## If a run does not complete
+## Run them in replay mode
 
-The scripts say so and name the cause. The approaches catch their own exceptions
-and return a failure result rather than raising, so without that an unavailable
-provider would appear only as a silent "0 LLM requests" — which reads as a
-successful run of a very cheap approach.
+```bash
+export TRIP_PLANNER_API_MODE=replay     # Windows: set TRIP_PLANNER_API_MODE=replay
+```
 
-## On the numbers these scripts print
+The travel data is then served from the recorded responses in `.api_cache/`. The
+output is real captured data — it simply costs no travel-API quota and cannot
+fail on a network hiccup part way through a demonstration. Model requests still
+cost Gemini free-tier quota, because the model genuinely runs.
 
-Every figure is measured through provider callbacks at runtime. Earlier versions
-printed estimates — including a literal `llm_calls += 8  # simulated` — which
-contradicted the measured results in `comparison/results/`.
+## What to point at
+
+`demo_all_arms.py` is the one to show. Its value is the contrast: the tool-less
+arm produces a confident, well-formatted itinerary in which **no quoted price
+matches anything real**, next to arms that cost more and produce plans whose
+prices can be traced back to a retrieved fare. That comparison is the project's
+central finding, and it is more convincing watched than described.
+
+`demo_one_arm.py` is for the follow-up question — "what is arm C actually
+doing?" — where the step-by-step narration earns its place.
+
+There were once four extra wrapper scripts, one per arm. They differed only in
+the letter they passed, so the presentation logic existed in four copies; they
+were removed and the letter is now an argument.

@@ -155,7 +155,6 @@ def run_async_tool(coro):
 
 import time
 
-import requests
 from src.core.http_cache import cached_get
 
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")

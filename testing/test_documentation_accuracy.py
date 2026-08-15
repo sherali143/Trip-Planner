@@ -33,16 +33,22 @@ ALL_TEXT = "\n".join(DOCS.values())
 def test_documentation_exists_for_every_package():
     """Each top-level folder explains itself."""
     for folder in ("src", "comparison", "testing", "demos", "figures",
-                   "scripts", "proposal", "report", "deploy"):
+                   "scripts", "proposal", "report"):
         assert (ROOT / folder / "README.md").exists(), f"{folder}/ has no README"
 
 
-def test_the_project_guide_exists():
-    """PROJECT_GUIDE.docx is the single entry document; it must be present."""
-    guide = ROOT / "PROJECT_GUIDE.docx"
-    assert guide.exists(), (
-        "PROJECT_GUIDE.docx is missing — regenerate with "
-        "python scripts/generate_guide.py"
+def test_the_dissertation_is_present():
+    """
+    The generated dissertation is the project's single written deliverable.
+
+    It replaced a separate PROJECT_GUIDE.docx that restated the same measured
+    results in a second document; keeping both meant two places for the same
+    number to be wrong in.
+    """
+    report = ROOT / "report" / "CMP7200_Dissertation.docx"
+    assert report.exists(), (
+        "report/CMP7200_Dissertation.docx is missing — regenerate with "
+        "python -m report.build.build_report"
     )
 
 

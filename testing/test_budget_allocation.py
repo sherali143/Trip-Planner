@@ -17,9 +17,7 @@ from src.core.budget import (
     BASE_ALLOCATION,
     CATEGORIES,
     LEGACY_ALLOCATION,
-    build_allocation,
-    check_realism,
-    parse_user_allocation,
+    build_allocation,parse_user_allocation,
     suggest_allocation,
 )
 

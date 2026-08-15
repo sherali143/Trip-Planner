@@ -14,11 +14,10 @@ import time
 from crewai import Crew, Process
 from textwrap import dedent
 from dotenv import load_dotenv
-from typing import Dict, Optional
 
 from src.agents import TripPlannerAgents
 from src.tasks import TripPlannerTasks
-from src.comms import A2AProtocol, A2AMessage, MessageType, create_message
+from src.comms import A2AProtocol, A2AMessage, MessageType
 from src.comms.registry import AGENT_REGISTRY
 
 # Import utility modules for enhanced functionality.

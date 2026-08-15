@@ -1,0 +1,356 @@
+{
+  "experiment": "protocol_conformance",
+  "cost": {
+    "llm_requests": 0,
+    "live_api_calls": 0,
+    "usd": 0.0
+  },
+  "a2a_checks": [
+    {
+      "id": "A1",
+      "claim": "every can_receive_from declaration is mirrored by the sender's can_send_to",
+      "passed": false,
+      "detail": "5 inbound declarations have no matching outbound permission, so can_receive_from is never enforced: validate_communication() consults only the sender's can_send_to.",
+      "observed": {
+        "declared_outbound_edges": 8,
+        "unmirrored_inbound_declarations": [
+          "preferences_extractor -> conversational_agent",
+          "preferences_extractor -> flight_data_provider",
+          "preferences_extractor -> hotel_data_provider",
+          "preferences_extractor -> attraction_data_provider",
+          "preferences_extractor -> restaurant_data_provider"
+        ]
+      }
+    },
+    {
+      "id": "A2",
+      "claim": "the queue delivers HIGH priority before LOW (proposal Objective 2: 'priority queuing')",
+      "passed": false,
+      "detail": "MessageQueue wraps queue.Queue, which is FIFO. The priority field is carried on every message and never read.",
+      "observed": {
+        "enqueued": [
+          "low",
+          "high"
+        ],
+        "delivered": [
+          "low",
+          "high"
+        ],
+        "container": "Queue"
+      }
+    },
+    {
+      "id": "A3",
+      "claim": "every message the production orchestrator sends is permitted by the registry",
+      "passed": true,
+      "detail": "6/6 messages in the shipped sequence pass permission validation.",
+      "observed": {
+        "sequence": [
+          {
+            "from": "preferences_extractor",
+            "to": "itinerary_coordinator",
+            "permitted": true
+          },
+          {
+            "from": "flight_data_provider",
+            "to": "itinerary_coordinator",
+            "permitted": true
+          },
+          {
+            "from": "hotel_data_provider",
+            "to": "itinerary_coordinator",
+            "permitted": true
+          },
+          {
+            "from": "attraction_data_provider",
+            "to": "itinerary_coordinator",
+            "permitted": true
+          },
+          {
+            "from": "restaurant_data_provider",
+            "to": "itinerary_coordinator",
+            "permitted": true
+          },
+          {
+            "from": "itinerary_coordinator",
+            "to": "user",
+            "permitted": true
+          }
+        ],
+        "permitted": 6,
+        "total": 6
+      }
+    },
+    {
+      "id": "A4",
+      "claim": "an undeclared sender/receiver edge and an empty payload are both rejected",
+      "passed": true,
+      "detail": "Permission validation and the empty-content guard both reject as designed.",
+      "observed": {
+        "undeclared_edge_accepted": false,
+        "empty_payload_accepted": false
+      }
+    },
+    {
+      "id": "A5",
+      "claim": "a message polled by the wrong recipient stays queued for its real recipient",
+      "passed": false,
+      "detail": "receive_message() dequeues before checking the recipient and discards the message when it does not match, so a single wrong poll destroys it. Not reached in production, which is why it never surfaced: the orchestrator uses the protocol as an audit log and never dequeues.",
+      "observed": {
+        "returned_to_wrong_recipient": null,
+        "message_survived_for_real_recipient": false
+      }
+    }
+  ],
+  "mcp_checks": [
+    {
+      "id": "M1",
+      "claim": "every advertised tool can be dispatched",
+      "passed": true,
+      "detail": "12 tools advertised, 12 dispatchable.",
+      "observed": {
+        "advertised": [
+          "calculate",
+          "get_attractions_near_hotel",
+          "get_hotel_reviews",
+          "search_accommodations_with_location",
+          "search_attractions",
+          "search_car_rentals",
+          "search_flights",
+          "search_hotel_destination",
+          "search_hotels_by_destination",
+          "search_hotels_comprehensive",
+          "search_internet",
+          "search_restaurants"
+        ],
+        "undispatchable": []
+      }
+    },
+    {
+      "id": "M2",
+      "claim": "every parameter the implementation accepts is declared in inputSchema (proposal S3.10 target: 100% schema pass rate)",
+      "passed": false,
+      "detail": "8/11 inspectable tools are clean. 6 implementation parameters are absent from their schema, so an agent cannot set them and they silently take defaults.",
+      "observed": {
+        "tools": [
+          {
+            "tool": "search_flights",
+            "dispatches_to": "_call_booking_flights_api",
+            "schema_params": [
+              "adults",
+              "departure_date",
+              "destination",
+              "origin",
+              "return_date"
+            ],
+            "signature_inspectable": false,
+            "undeclared_params": [],
+            "required_mismatch": []
+          },
+          {
+            "tool": "search_hotels_comprehensive",
+            "dispatches_to": "search_hotels_comprehensive",
+            "schema_params": [
+              "adults",
+              "budget_per_night",
+              "checkin_date",
+              "checkout_date",
+              "destination",
+              "rooms",
+              "star_rating"
+            ],
+            "signature_inspectable": true,
+            "undeclared_params": [
+              "currency_code"
+            ],
+            "required_mismatch": []
+          },
+          {
+            "tool": "search_accommodations_with_location",
+            "dispatches_to": "search_accommodations_with_location",
+            "schema_params": [
+              "budget_per_night",
+              "checkin_date",
+              "checkout_date",
+              "destination",
+              "latitude",
+              "longitude"
+            ],
+            "signature_inspectable": true,
+            "undeclared_params": [
+              "adults",
+              "currency_code",
+              "rooms"
+            ],
+            "required_mismatch": []
+          },
+          {
+            "tool": "search_car_rentals",
+            "dispatches_to": "search_car_rentals",
+            "schema_params": [
+              "currency_code",
+              "driver_age",
+              "drop_off_date",
+              "drop_off_latitude",
+              "drop_off_longitude",
+              "drop_off_time",
+              "location",
+              "pick_up_date",
+              "pick_up_latitude",
+              "pick_up_longitude",
+              "pick_up_time"
+            ],
+            "signature_inspectable": true,
+            "undeclared_params": [],
+            "required_mismatch": []
+          },
+          {
+            "tool": "search_internet",
+            "dispatches_to": "search_internet",
+            "schema_params": [
+              "query"
+            ],
+            "signature_inspectable": true,
+            "undeclared_params": [],
+            "required_mismatch": []
+          },
+          {
+            "tool": "search_attractions",
+            "dispatches_to": "search_attractions",
+            "schema_params": [
+              "destination",
+              "duration_days",
+              "interests"
+            ],
+            "signature_inspectable": true,
+            "undeclared_params": [],
+            "required_mismatch": []
+          },
+          {
+            "tool": "search_restaurants",
+            "dispatches_to": "search_restaurants",
+            "schema_params": [
+              "budget_per_meal",
+              "cuisine_types",
+              "destination"
+            ],
+            "signature_inspectable": true,
+            "undeclared_params": [],
+            "required_mismatch": []
+          },
+          {
+            "tool": "calculate",
+            "dispatches_to": "calculate",
+            "schema_params": [
+              "operation"
+            ],
+            "signature_inspectable": true,
+            "undeclared_params": [],
+            "required_mismatch": []
+          },
+          {
+            "tool": "search_hotel_destination",
+            "dispatches_to": "search_hotel_destination",
+            "schema_params": [
+              "query"
+            ],
+            "signature_inspectable": true,
+            "undeclared_params": [],
+            "required_mismatch": []
+          },
+          {
+            "tool": "search_hotels_by_destination",
+            "dispatches_to": "search_hotels_by_destination",
+            "schema_params": [
+              "adults",
+              "arrival_date",
+              "currency_code",
+              "departure_date",
+              "dest_id",
+              "room_qty",
+              "search_type"
+            ],
+            "signature_inspectable": true,
+            "undeclared_params": [
+              "children_age",
+              "page_number"
+            ],
+            "required_mismatch": [
+              "search_type"
+            ]
+          },
+          {
+            "tool": "get_hotel_reviews",
+            "dispatches_to": "get_hotel_reviews",
+            "schema_params": [
+              "hotel_id"
+            ],
+            "signature_inspectable": true,
+            "undeclared_params": [],
+            "required_mismatch": []
+          },
+          {
+            "tool": "get_attractions_near_hotel",
+            "dispatches_to": "get_attractions_near_hotel",
+            "schema_params": [
+              "hotel_id"
+            ],
+            "signature_inspectable": true,
+            "undeclared_params": [],
+            "required_mismatch": []
+          }
+        ],
+        "clean": 8,
+        "inspectable": 11,
+        "undeclared_parameter_count": 6
+      }
+    },
+    {
+      "id": "M3",
+      "claim": "what the implementation treats as mandatory matches schema.required",
+      "passed": false,
+      "detail": "1 parameter(s) are mandatory in the implementation but absent from schema.required.",
+      "observed": {
+        "mismatches": [
+          {
+            "tool": "search_hotels_by_destination",
+            "params": [
+              "search_type"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "M4",
+      "claim": "the API provider named in a tool's description is the provider the dispatcher calls",
+      "passed": false,
+      "detail": "1 tool(s) advertise one provider and call another. An agent selecting a tool on its description gets a different backend.",
+      "observed": {
+        "mismatches": [
+          {
+            "tool": "search_flights",
+            "description_says": [
+              "fly-scraper"
+            ],
+            "dispatcher_calls": "_call_booking_flights_api",
+            "actual_provider": "booking"
+          }
+        ]
+      }
+    }
+  ],
+  "summary": {
+    "total_checks": 9,
+    "passed": 3,
+    "failed": 6,
+    "failed_ids": [
+      "A1",
+      "A2",
+      "A5",
+      "M2",
+      "M3",
+      "M4"
+    ]
+  }
+}

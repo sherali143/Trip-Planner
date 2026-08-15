@@ -4,16 +4,16 @@ Run ONE architecture on a single request, narrating each step.
 For demonstrating a single approach in isolation — what it does, in what order,
 what it costs, and whether the itinerary it produced refers to anything real.
 
-    python demos/demo_approach.py A     # single LLM, no tools
-    python demos/demo_approach.py B     # six agents, naive
-    python demos/demo_approach.py C     # six agents, tuned
-    python demos/demo_approach.py D     # three agents + direct API
+    python demos/demo_one_arm.py A     # single model, no tools
+    python demos/demo_one_arm.py B     # six agents, naive
+    python demos/demo_one_arm.py C     # six agents, tuned
+    python demos/demo_one_arm.py D     # three agents + direct API
 
-    python demos/demo_approach.py D "Plan 5 nights in Bangkok from Karachi..."
+    python demos/demo_one_arm.py D "Plan 5 nights in Bangkok from Karachi..."
 
-One parametrised script rather than four near-identical ones: the arms differ
-in which function is called, not in how a run should be presented, and four
-copies of the presentation logic would drift apart.
+One parametrised script rather than four near-identical ones. There were once
+four wrapper scripts, one per arm; they differed only in which letter they
+passed, so the presentation logic existed in four copies that could drift.
 
 Set TRIP_PLANNER_API_MODE=replay to use recorded API responses — the output is
 real captured data, it simply costs no quota and cannot fail on a network
@@ -25,7 +25,6 @@ import sys as _sys
 
 _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
 
-import json
 import time
 
 if hasattr(_sys.stdout, "reconfigure"):
@@ -42,7 +41,7 @@ from comparison.arm_a_single_llm import run_single_llm
 from comparison.arm_b_six_agent_naive import run_six_agent_naive
 from comparison.arm_c_six_agent_tuned import run_six_agent_tuned
 from comparison.arm_d_three_agent_direct import run_three_agent_direct
-from comparison.metrics import extract_ground_truth, score_groundedness
+from comparison.metrics import score_groundedness
 
 DEFAULT_REQUEST = (
     "Plan a 4-night trip from Lahore to Istanbul for 1 adult departing "
@@ -110,20 +109,10 @@ def banner(text):
     print(f"\n{RULE}\n  {text}\n{RULE}")
 
 
-def main(code=None):
-    """
-    Run one arm.
-
-    `code` is supplied by the per-approach wrapper scripts
-    (run_approach_a_single_llm.py and friends). When it is None the arm is
-    taken from the command line instead, so this file stays usable directly.
-    """
-    args = [a for a in _sys.argv[1:]]
-    if code is None:
-        code = (args[0].upper() if args else "").strip()
-    else:
-        # A wrapper fixed the arm, so any argument is the request text.
-        args = [code] + args
+def main():
+    """Run one arm, named by its letter on the command line."""
+    args = list(_sys.argv[1:])
+    code = (args[0].upper() if args else "").strip()
     if code not in APPROACHES:
         print(__doc__)
         print("Choose one of: " + ", ".join(f"{k} ({v['name']})"
@@ -216,7 +205,7 @@ def main(code=None):
 
     print(f"\n{RULE}")
     print(f"  Live API calls spent by this run: {cache_summary()['live_calls']}")
-    print(f"  Compare all four:  python demos/demo_comparison.py")
+    print(f"  Compare all four:  python demos/demo_all_arms.py")
     print(RULE)
     return 0
 
