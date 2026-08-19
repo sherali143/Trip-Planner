@@ -104,6 +104,13 @@ def _table(results: dict) -> None:
               f"{(f'{ground:.0f}%' if ground is not None else 'n/a'):>8}")
     print("\n  'Real $' = share of the prices in the plan that match a fare or")
     print("  nightly rate the APIs actually returned.")
+    # The dissertation quotes MEANS over every repeat; this table shows the single
+    # run being replayed. Both are honest and they differ slightly, so say which
+    # is which. A supervisor holding the report beside this screen should not have
+    # to wonder whether one of them is wrong.
+    print("\n  These are the figures from the ONE recorded run being replayed.")
+    print("  The dissertation quotes means over all repeats, so its table reads")
+    print("  a little differently — same data, averaged rather than single-run.")
 
 
 def _findings(results: dict) -> None:

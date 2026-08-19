@@ -45,9 +45,29 @@ Any re-measurement must re-run all four arms together.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
+
+# The model used when GEMINI_MODEL is not set.
+#
+# This lives here, once, and every caller reads it through model_string() below.
+# It was previously typed into seven modules as "gemini/gemini-2.5-flash" — a
+# model Google has since withdrawn from new API keys. Anyone who ran the project
+# without a .env therefore got a 404 from every arm, which is the worst possible
+# first impression and had nothing to do with their setup.
+DEFAULT_MODEL = "gemini/gemini-3.6-flash"
+
+# The model every published measurement in this project was FIRST produced on,
+# before it was withdrawn. Kept because the documents have to be able to say what
+# changed, not because anything still runs on it.
+WITHDRAWN_MODEL = "gemini/gemini-2.5-flash"
+
+
+def model_string() -> str:
+    """The LiteLLM model string to use, honouring GEMINI_MODEL if it is set."""
+    return os.getenv("GEMINI_MODEL") or DEFAULT_MODEL
 
 # The cue appended when a request would otherwise be refused. Deliberately
 # short and neutral: it must not steer the answer, only satisfy the API's

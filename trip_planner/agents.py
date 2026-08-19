@@ -14,6 +14,7 @@ from textwrap import dedent
 import os
 
 from trip_planner.core.budget import LEGACY_ALLOCATION as _DEFAULT_SPLIT
+from trip_planner.core.gemini_compat import model_string
 
 # Tools needed by the coordinator agent
 from trip_planner.tools import (
@@ -31,7 +32,7 @@ class TripPlannerAgents:
     """
 
     def __init__(self):
-        model = os.getenv("GEMINI_MODEL", "gemini/gemini-2.5-flash")
+        model = model_string()
 
         self.llm_conversation = model
         self.llm_standard = model

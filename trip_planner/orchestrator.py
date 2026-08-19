@@ -20,6 +20,7 @@ from trip_planner.tasks import TripPlannerTasks
 from trip_planner.comms import A2AProtocol, A2AMessage, MessageType
 from trip_planner.core.budget import LEGACY_ALLOCATION
 from trip_planner.comms.registry import AGENT_REGISTRY
+from trip_planner.core.gemini_compat import model_string
 
 # Import utility modules for enhanced functionality.
 # `regenerate_if_incomplete` and `src.core.cache.get_cache` were imported here
@@ -300,7 +301,7 @@ class TripPlannerCrew:
         from litellm import completion
         import time, re
         
-        model_name = os.getenv("GEMINI_MODEL", "gemini/gemini-2.5-flash")
+        model_name = model_string()
         conversation_history = [{"role": "system", "content": dedent("""
             You are a friendly, knowledgeable travel assistant. You MUST ask ALL 8 questions below ONE AT A TIME. Do NOT skip any question.
             Wait for the user's answer before asking the next question.

@@ -56,6 +56,10 @@ htmlcov/
 # ========================
 *.log
 *.tmp
-# Debug dumps written by testing/manual/ scripts
+# Debug dumps from ad-hoc API probing. The probe scripts that wrote these were
+# deleted, but the patterns stay: the next person to debug a provider by dumping
+# a payload should not commit it, because a raw response can carry account
+# identifiers. The recorded responses under .api_cache/ are named by hash and are
+# committed deliberately — none of them matches these patterns.
 booking_flights_response.json
 *_response.json

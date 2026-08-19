@@ -12,7 +12,7 @@ Worth stating in the write-up rather than leaving a reader to notice.
 | Proposal | Implementation | Reason |
 |---|---|---|
 | Kiwi.com for flights | fly-scraper | The Kiwi endpoint was unreachable |
-| GPT-4o / GPT-4o-mini | Gemini 2.5 Flash | Cost |
+| GPT-4o / GPT-4o-mini | Gemini 3.6 Flash | Cost. 2.5 Flash produced the first round of measurements, then Google withdrew it from new API keys and everything was re-measured on 3.6 Flash |
 | 13 MCP tools | 12 | One flight tool consolidated |
 | 6 agents | 3 in production; all four variants evaluated | This is the finding the dissertation reports |
 

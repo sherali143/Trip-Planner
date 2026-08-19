@@ -54,6 +54,7 @@ from evaluation.distilled_tools import (
 from trip_planner.core.llm_metrics import recorder
 from trip_planner.core.resilience import kickoff_with_retry
 from trip_planner.core.budget import LEGACY_ALLOCATION as _DEFAULT_SPLIT
+from trip_planner.core.gemini_compat import model_string
 
 MAX_ITER = 3
 
@@ -62,7 +63,7 @@ class OptimizedAgents:
     """Same six roles as the proposal; narrow tools and short prompts."""
 
     def __init__(self):
-        self.llm = os.getenv("GEMINI_MODEL", "gemini/gemini-2.5-flash")
+        self.llm = model_string()
 
     def _agent(self, role: str, goal: str, backstory: str, tools: list) -> Agent:
         return Agent(

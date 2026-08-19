@@ -25,6 +25,7 @@ from litellm import completion
 
 from trip_planner.core.llm_metrics import recorder
 from trip_planner.core.resilience import is_rate_limit_error
+from trip_planner.core.gemini_compat import model_string
 
 PROMPT = """You are a travel planner. Create a complete day-by-day travel itinerary for this request:
 
@@ -43,7 +44,7 @@ Give specific names, times and prices."""
 def run_single_llm(user_input: str, scenario_id: str = "single") -> dict:
     """Run the single-LLM baseline. Returns the same metrics dict shape as the other arms."""
     start = time.time()
-    model = os.getenv("GEMINI_MODEL", "gemini/gemini-2.5-flash")
+    model = model_string()
 
     with recorder.session(f"single-llm/{scenario_id}") as llm:
         result = _run(user_input, model, start)

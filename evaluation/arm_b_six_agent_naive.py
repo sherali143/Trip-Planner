@@ -21,11 +21,12 @@ from trip_planner.tools import (
 )
 from trip_planner.core.llm_metrics import recorder
 from trip_planner.core.resilience import kickoff_with_retry
+from trip_planner.core.gemini_compat import model_string
 
 
 class BaselineAgents:
     def __init__(self):
-        model = os.getenv("GEMINI_MODEL", "gemini/gemini-2.5-flash")
+        model = model_string()
         self.llm = model
 
     def preferences_extractor_agent(self):

@@ -116,6 +116,17 @@ class Doc:
         return OUTPUT
 
 
+def _tuning_reduction_pct() -> float:
+    """How much of B's token use tuning removed, measured rather than recalled."""
+    b = measured.arm("B")["avg_total_tokens"]
+    c = measured.arm("C")["avg_total_tokens"]
+    return (b - c) / b * 100.0
+
+
+def _calls(code: str) -> int:
+    return round(measured.arm(code)["avg_llm_calls"])
+
+
 def build() -> str:
     cov = measured.coverage()
     doc = Doc()
@@ -250,8 +261,9 @@ def build() -> str:
         "This is the clearest result in the project.",
         "Tuning matters more than the number of agents. B and C are the SAME six "
         "agents with the same data — only the prompts and settings changed — and "
-        "that alone cut token use by about 83%. So most of what looked like the "
-        "cost of using many agents was really just bad configuration.",
+        f"that alone cut token use by about {_tuning_reduction_pct():.0f}%. So most "
+        "of what looked like the cost of using many agents was really just bad "
+        "configuration.",
         "Removing the AI from the lookup step saves a lot of AI calls and time, "
         "and only a little money. That is a smaller claim than we expected, and "
         "it is the one the numbers actually support.",
@@ -405,7 +417,7 @@ def build() -> str:
         widths=[1.0, 3.4, 2.0],
     )
     doc.p("""
-        Options 1 to 9 work with no internet and no API keys at all. This is
+        Options 1 to 10 work with no internet and no API keys at all. This is
         deliberate: the free accounts this project uses run out, and a
         demonstration that needs a working internet account is one that cannot be
         given on the day the account runs out.
@@ -425,12 +437,13 @@ def build() -> str:
 
         "Point at approaches B and C in the same table. Say: these are the SAME "
         "six agents with the same data. Only the settings changed, and that alone "
-        "cut token use by about 83%. So we compared our new design against the "
-        "properly tuned version, not the badly configured one.",
+        f"cut token use by about {_tuning_reduction_pct():.0f}%. So we compared our "
+        "new design against the properly tuned version, not the badly configured "
+        "one.",
 
         "Choose option 5 (approach D, the one that ships). It shows the real "
         "itinerary that was produced, what it cost, and how much of it was real. "
-        "Say: two AI calls instead of nine, same quality.",
+        f"Say: {_calls('D')} AI calls instead of {_calls('C')}, same quality.",
 
         "Choose option 7. This runs the two experiments that need no internet. "
         "Say: these check our own system against its own design, and they found "
@@ -443,8 +456,8 @@ def build() -> str:
         "and there is a script that proves it by corrupting the data and checking "
         "the document changes.",
 
-        "If asked to plan a real trip live, use option 10 with the API keys in "
-        "place. If the internet or the free quota is unavailable, options 1 to 9 "
+        "If asked to plan a real trip live, use option 11 with the API keys in "
+        "place. If the internet or the free quota is unavailable, options 1 to 10 "
         "still work and show real recorded output.",
     ])
     doc.p("""
@@ -590,7 +603,7 @@ def build() -> str:
              "Delete the .venv folder and run run.bat again. It rebuilds from "
              "scratch."],
             ["A live trip plan fails",
-             "The free quota has probably run out. Options 1 to 9 still work with "
+             "The free quota has probably run out. Options 1 to 10 still work with "
              "no internet."],
             ["The report will not rebuild",
              "It refuses to build if a figure is missing or a number cannot be "

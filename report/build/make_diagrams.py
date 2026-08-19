@@ -236,8 +236,16 @@ def fig_four_arms() -> str:
     c = Canvas(13.4, 7.6, "The four architectures compared",
                "Identical request, identical APIs, identical A2A layer. Only the "
                "retrieval mechanism differs — that is the independent variable.",
+               # The five-box columns under a "6 agents" heading are deliberate, and
+               # a reader who counts them deserves the answer from the figure rather
+               # than from Section 3.4. Leaving it to the prose invites the marker to
+               # read it as an error in the diagram.
                footer="Arms B, C and D reach the same three APIs. Arm A is the control: it "
-                      "has no tool access, so nothing it reports was retrieved from anywhere.")
+                      "has no tool access, so nothing it reports was retrieved from anywhere.\n"
+                      "B and C show five boxes because the conversational agent of the "
+                      "six-agent design is omitted: every arm receives the identical request "
+                      "string, so the role has nothing to do. They are a five-agent ablation "
+                      "of a six-agent design (Section 3.4).")
 
     columns = [
         (1.0, "ARM A", "Single LLM", [

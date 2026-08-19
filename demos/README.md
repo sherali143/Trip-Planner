@@ -49,9 +49,12 @@ Every approach demo prints the same six things, so they can be compared directly
 6. **Was any of it real?** — how many of its quoted prices match a fare the APIs
    actually returned
 
-That last section is the one to dwell on. Approach A quoted 57 prices and matched
-none of them; approaches C and D matched around 57–59%. The contrast is the
-project's central finding.
+That last section is the one to dwell on. In the recorded run, approach A quoted
+29 prices and matched none of them to a fare the APIs returned — 1.7% averaged
+over its five runs. Approach C averaged 56% and approach D 47%. The contrast
+between "no tools" and "tools" is the project's central finding; the gap between
+C and D is inside both their 95% intervals, so it is not a finding at all, and
+the dissertation says so.
 
 ## Layout
 

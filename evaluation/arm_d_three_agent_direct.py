@@ -32,11 +32,12 @@ from trip_planner.core.llm_metrics import recorder
 from trip_planner.core.resilience import kickoff_with_retry
 from trip_planner.core.budget import LEGACY_ALLOCATION
 from evaluation.metrics import extract_ground_truth
+from trip_planner.core.gemini_compat import model_string
 
 
 def _make_coordinator():
     """Create coordinator agent WITHOUT tools (just assembles provided data)."""
-    model = os.getenv("GEMINI_MODEL", "gemini/gemini-2.5-flash")
+    model = model_string()
     return Agent(
         role="Itinerary Coordinator",
         goal="Create day-by-day itinerary from the provided data only",

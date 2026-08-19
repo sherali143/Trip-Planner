@@ -23,6 +23,7 @@ litellm.set_verbose = False
 from dotenv import load_dotenv
 from textwrap import dedent
 from crewai import Agent, Task, Crew, Process
+from trip_planner.core.gemini_compat import model_string
 
 load_dotenv(override=True)
 
@@ -119,7 +120,7 @@ def main():
         user_input = "Plan a trip to Paris for 5 days with $3000 budget. Interests: food, culture."
         print(f"  (using default: {user_input})\n")
 
-    model = os.getenv("GEMINI_MODEL", "gemini/gemini-2.5-flash")
+    model = model_string()
     total_llm_calls = 0
     global_start = time.time()
 

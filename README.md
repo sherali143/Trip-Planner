@@ -198,7 +198,7 @@ it.
 | Component | Technology |
 |---|---|
 | Agents | CrewAI |
-| Model | Google Gemini 2.5 Flash via LiteLLM |
+| Model | Google Gemini 3.6 Flash via LiteLLM (2.5 Flash produced the first round and was withdrawn mid-project) |
 | Flights | fly-scraper (RapidAPI) |
 | Hotels | Booking.com (RapidAPI) |
 | Web search | Serper.dev |
