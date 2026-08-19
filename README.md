@@ -11,7 +11,12 @@ architectures actually cost.
 
 ## Start here
 
-Double-click **`run.bat`**.
+Read **`PROJECT_OVERVIEW.docx`** first — six pages of plain English covering the
+problem, the four approaches, what was found, the known issues, and how to
+demonstrate the work. It is written for someone who has never seen this
+repository.
+
+Then double-click **`run.bat`**.
 
 It checks Python, creates the virtual environment, installs the pinned
 dependencies, sets up `.env`, and then shows a menu. Nothing else to install.
@@ -29,16 +34,17 @@ THE PROJECT         free
   7. Run the evaluation experiments
   8. Rebuild the figures
   9. Rebuild the dissertation
+ 10. Rebuild the project overview
 
 PLAN A REAL TRIP    needs API keys
- 10. In the browser
- 11. In this window
+ 11. In the browser
+ 12. In this window
 ```
 
-**Options 1 to 9 need no API keys and no internet.** The demos replay real
+**Options 1 to 10 need no API keys and no internet.** The demos replay real
 recorded runs, so they work even when every quota is exhausted.
 
-### API keys (only for options 10 and 11)
+### API keys (only for options 11 and 12)
 
 Paste into `.env`:
 
@@ -83,25 +89,34 @@ fair baseline rather than a straw man.
 `run_cli.py` and `run_web.py` both run **approach D**. A, B and C exist for the
 evaluation and are kept runnable because the dissertation rests on them.
 
-### Measured results (SC-01, all four)
+### Measured results (SC-01, 5 runs of each)
 
-| Approach | Requests | Tokens | Cost | Time | Prices that are real |
+| Approach | AI calls | Tokens | Cost | Time | Prices that are real |
 |---|---|---|---|---|---|
-| A single model | 1 | 11,392 | $0.028 | 93s | **0%** |
-| B 6-agent naive | 19 | 63,926 | $0.053 | 86s | 13% |
-| C 6-agent tuned | 9 | 10,808 | $0.015 | 66s | 59% |
-| D 3-agent direct | 2 | 7,813 | $0.011 | 18s | 57% |
+| A single model | 1 | 4,644 | $0.0170 | 27s | 2% |
+| B 6-agent naive | 21 | 120,703 | $0.1859 | 372s | 23% |
+| C 6-agent tuned | 10 | 13,521 | $0.0313 | 37s | 56% |
+| D 3-agent direct | 2 | 7,840 | $0.0179 | 23s | 47% |
 
 Every request is counted through LiteLLM callbacks — none of these is an
-estimate. **This is one scenario of twenty, run once**, which is stated wherever
-the numbers appear. Three findings:
+estimate. Each architecture was run **5 times**, so the
+report carries a standard deviation and a 95% interval for every figure. The
+runs cover **1 of 20**
+designed scenarios: repeats replay recorded API responses and cost nothing,
+while extra scenarios need travel-API quota.
 
-- **Tuning matters more than agent count.** Tuning cut the multi-agent arm's
-  tokens ~83%; most of the naive penalty was implementation, not architecture.
-- **Cheap can mean worthless.** The tool-less approach quoted 57 prices and
-  matched **none** to a real fare.
-- **Adopting a protocol is not conforming to one.** An audit of this project's
-  own protocol layer passes 3 of 9 checks.
+Four findings:
+
+- **Tools matter most.** The tool-less approach quoted
+  29 prices and matched
+  0 to a real fare.
+- **Tuning matters more than agent count.** B and C are the *same* six agents
+  with the same data; tuning alone cut tokens by
+  89%.
+- **Removing the model from retrieval is decisively cheaper and faster.** Cost
+  and latency intervals for C and D do not overlap.
+- **It is not measurably better grounded.** C and D groundedness intervals do
+  overlap, and C's mean is the higher of the two. Reported as-is.
 
 ### Experiments that need no quota
 
@@ -112,7 +127,7 @@ python -m evaluation.exp_budget_gate   # budget gate across all 20 scenarios
 
 Both found real defects, and both are reported in the dissertation rather than
 quietly fixed: message priority is declared and never honoured, inbound
-permissions are never enforced, four tool schemas disagree with their
+permissions are never enforced, three tool schemas disagree with their
 implementations, and the budget gate's cheapest-fare anchor sits ~52% below the
 cheapest fare the flight API actually returned.
 
@@ -157,6 +172,7 @@ and the stored file, so no key material reaches disk.
 | `python report/build/make_diagrams.py` | 8 diagrams at 300 dpi, validated | free |
 | `python report/build/make_charts.py` | 6 charts from measured data | free |
 | `python -m report.build.build_report --figures` | Rebuild the dissertation | free |
+| `python report/build/make_handover.py` | Rebuild `PROJECT_OVERVIEW.docx` | free |
 | `python -m report.build.verify_no_hardcoded_numbers` | Prove no number is typed by hand | free |
 | `python -m evaluation.run_comparison SC-01` | The four-approach comparison | model quota |
 | `python run_cli.py` | Plan a trip in the terminal | API keys |

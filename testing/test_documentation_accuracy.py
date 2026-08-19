@@ -156,3 +156,43 @@ def test_results_quoted_in_docs_match_the_results_file(arm):
         pytest.skip(f"README has no results row for arm {arm}")
     assert str(calls) in row, f"README arm {arm} row missing llm_calls={calls}: {row}"
     assert f"{tokens:,}" in row, f"README arm {arm} row missing tokens={tokens:,}: {row}"
+
+
+def test_conformance_defect_counts_in_docs_match_the_audit():
+    """
+    The defect counts the READMEs quote must match the conformance results.
+
+    The dissertation interpolates these from the results file, so it cannot drift.
+    The READMEs are written by hand, and one of them did drift: it claimed four
+    tool schemas disagreed with their implementations when the audit found three.
+    A reader who spots that stops trusting every other number in the document.
+    """
+    results_path = ROOT / "evaluation/results/protocol_conformance.json"
+    if not results_path.exists():
+        pytest.skip("no conformance results recorded yet")
+    data = json.loads(results_path.read_text(encoding="utf-8"))
+
+    m2 = next((c for c in data["mcp_checks"] if c["id"] == "M2"), None)
+    assert m2, "M2 (implementation parameters absent from schema) not in the results"
+    # "8/11 inspectable tools are clean" -> 3 tools disagree with their schema.
+    match = re.search(r"(\d+)/(\d+) inspectable tools are clean", m2["detail"])
+    assert match, f"M2 detail no longer states a clean/total count: {m2['detail']}"
+    clean, total = int(match.group(1)), int(match.group(2))
+    dirty = total - clean
+
+    words = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six",
+             7: "seven", 8: "eight", 9: "nine", 10: "ten", 11: "eleven"}
+    quoted = re.findall(r"(\w+) tool schemas disagree", ALL_TEXT)
+    assert quoted, "no document states how many tool schemas disagree"
+    expected = {words.get(dirty, str(dirty)), str(dirty)}
+    wrong = [q for q in quoted if q.lower() not in expected]
+    assert not wrong, (f"docs claim {wrong} tool schemas disagree; the audit found "
+                       f"{dirty} ({clean} of {total} inspectable tools are clean)")
+
+    summary = data["summary"]
+    passed, failed = summary["passed"], summary["failed"]
+    total_checks = summary["total_checks"]
+    assert f"{passed} of {total_checks}" in ALL_TEXT or \
+           f"{total_checks} checks" in ALL_TEXT, \
+        (f"the conformance result ({passed} of {total_checks} passing, {failed} "
+         f"failing) is not stated in any document")

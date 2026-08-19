@@ -29,16 +29,12 @@ gap between them.
 
 import json
 import logging
-import os
 from typing import Optional
 
 from crewai.tools import tool
 
-from trip_planner.core.safe_math import calculate as _safe_calculate
 from trip_planner.tools.mcp_client import mcp_client, run_async_tool
-from trip_planner.tools.travel_apis import (BOOKING_HOST, RAPIDAPI_KEY,
-                                            _call_booking_flights_api,
-                                            _call_fly_scraper_api)
+from trip_planner.tools.travel_apis import _call_booking_flights_api
 
 logger = logging.getLogger(__name__)
 

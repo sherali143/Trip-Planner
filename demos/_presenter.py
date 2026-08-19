@@ -37,7 +37,7 @@ from __future__ import annotations
 import os
 import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable, List, Optional
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -208,7 +208,8 @@ def _live(approach: Approach, pause: bool) -> int:
     from dotenv import load_dotenv
     load_dotenv(override=True)
 
-    import trip_planner  # installs logging defaults so the model key is not printed
+    import trip_planner  # noqa: F401  side effect: installs logging
+    #   defaults, so the model key in the Gemini URL is never printed
     from evaluation.metrics import score_groundedness
     from trip_planner.core.http_cache import cache_summary, get_mode
 

@@ -117,6 +117,28 @@ def llm_breakdown(code: str, index: int = 0) -> Dict[str, Any]:
     return block
 
 
+def token_split(code: str) -> Dict[str, float]:
+    """
+    Mean prompt and completion tokens for an arm, across every recorded run.
+
+    llm_breakdown() returns one run. Charting that while the results table quotes
+    the mean made the token chart disagree with the table beside it by ten
+    thousand tokens, which is exactly the drift the single-accessor rule exists to
+    prevent.
+    """
+    rows = [r for r in ((results().get("details_by_arm") or {}).get(code) or [])
+            if r.get("success") and (r.get("llm") or {}).get("prompt_tokens") is not None]
+    if not rows:
+        raise MissingMeasurement(f"arm {code} has no recorded token breakdown")
+    n = len(rows)
+    return {
+        "n": n,
+        "prompt_tokens": sum(r["llm"]["prompt_tokens"] for r in rows) / n,
+        "completion_tokens": sum(r["llm"]["completion_tokens"] for r in rows) / n,
+        "llm_time_s": sum(r["llm"].get("llm_time_s", 0) for r in rows) / n,
+    }
+
+
 def phase_timings(code: str = "D", index: int = 0) -> Dict[str, float]:
     """Measured per-phase wall-clock for an arm that records phases."""
     row = detail(code, index)
@@ -155,17 +177,80 @@ def coverage() -> Dict[str, Any]:
     """
     from evaluation.scenarios import SCENARIOS
     measured = scenario_ids()
+    # Repeats are counted from the recorded rows, not assumed. This was hardcoded
+    # to 1 while the harness could only do one run per scenario; leaving it that
+    # way after repeats were added would have understated the evidence.
+    rows = (results().get("details_by_arm") or {}).get("D") or []
+    repeats = max(1, len(rows) // max(1, len(measured)))
     return {
         "scenarios_measured": len(measured),
         "scenarios_designed": len(SCENARIOS),
         "scenario_ids": measured,
         "coverage_pct": round(len(measured) / len(SCENARIOS) * 100, 1),
-        "repeats_per_arm": 1,
+        "repeats_per_arm": repeats,
         "status": results().get("status", "unknown"),
         "api_mode": provenance().get("api_mode", "unknown"),
         "model": provenance().get("model", "unknown"),
         "is_complete": results().get("status") == "complete" and len(measured) == len(SCENARIOS),
+        "has_repeats": repeats > 1,
     }
+
+
+# ------------------------------------------------------- dispersion accessors
+def spread(code: str, metric: str) -> Dict[str, Any]:
+    """
+    Mean, standard deviation and 95% interval for one metric on one arm.
+
+    Raises rather than returning a bare mean when repeats were never recorded,
+    because quoting an interval that does not exist is worse than saying so.
+    """
+    block = (arm(code).get("spread") or {}).get(metric)
+    if not block:
+        raise MissingMeasurement(
+            f"arm {code} has no recorded spread for {metric!r}; the run predates "
+            f"repeat support, or was made with --repeats 1")
+    if block.get("n", 0) < 2:
+        raise MissingMeasurement(
+            f"arm {code} has {block.get('n')} observation(s) of {metric!r}, so it "
+            f"has no measurable spread")
+    return block
+
+
+def intervals_overlap(code_a: str, code_b: str, metric: str) -> bool:
+    """
+    Do two arms' 95% intervals overlap on this metric?
+
+    Used instead of a significance test because with five observations per arm a
+    formal test adds precision the sample does not have. Non-overlapping
+    intervals are a conservative, readable statement that a difference is larger
+    than the run-to-run noise; overlapping intervals say the opposite, and both
+    are reported.
+    """
+    a, b = spread(code_a, metric), spread(code_b, metric)
+    return not (a["ci95_high"] < b["ci95_low"] or b["ci95_high"] < a["ci95_low"])
+
+
+def model_name() -> str:
+    """
+    The model that produced the recorded numbers, as a reader would write it.
+
+    Read from provenance rather than named in prose. Three documents had
+    "Gemini 2.5 Flash" typed into them, which was true of the first round of
+    measurements and false of the results that shipped: 2.5 Flash was withdrawn
+    from new API keys mid-project and everything was re-measured on its
+    replacement. A model name typed by hand goes stale exactly when the model
+    changes, which is the one moment it matters.
+
+    "gemini/gemini-3.6-flash" becomes "Gemini 3.6 Flash".
+    """
+    raw = provenance().get("model", "")
+    if not raw:
+        raise MissingMeasurement(
+            "the results file records no model in its provenance block, so no "
+            "document can state which model produced these numbers")
+    name = raw.split("/")[-1]                      # drop the LiteLLM provider prefix
+    parts = name.split("-")
+    return " ".join(p.capitalize() if not p[0].isdigit() else p for p in parts)
 
 
 # ------------------------------------------------------- protocol accessors

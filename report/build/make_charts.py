@@ -82,18 +82,42 @@ def _scope() -> str:
     c = measured.coverage()
     note = (f"{c['scenarios_measured']} of {c['scenarios_designed']} designed "
             f"scenarios ({', '.join(c['scenario_ids'])}), "
-            f"{c['repeats_per_arm']} run each")
-    if not c["is_complete"]:
-        note += "  [PARTIAL: no repeats, so run-to-run variance is unmeasured]"
+            f"{c['repeats_per_arm']} runs of each architecture")
+    if c["has_repeats"]:
+        note += "  ·  every bar is a mean over those runs"
+    else:
+        note += "  [no repeats, so run-to-run variance is unmeasured]"
     return (f"{note}  ·  model {c['model']}  ·  API layer in {c['api_mode']} mode  ·  "
             f"LLM requests counted via LiteLLM callbacks, not estimated")
 
 
+def _error_bars(metric: str):
+    """
+    Asymmetric error bars from the recorded 95% intervals.
+
+    Returned in the two-row shape matplotlib expects. None when the run had no
+    repeats, so a chart never draws a whisker it cannot justify.
+    """
+    if not measured.coverage()["has_repeats"]:
+        return None
+    lo, hi = [], []
+    for code in ARM_ORDER:
+        try:
+            b = measured.spread(code, metric)
+        except measured.MissingMeasurement:
+            return None
+        lo.append(max(0.0, b["mean"] - b["ci95_low"]))
+        hi.append(max(0.0, b["ci95_high"] - b["mean"]))
+    return [lo, hi]
+
+
 def bar_panel(ax, values, title, direction, fmt, *, labels=None,
-              colours=None, xmax=None) -> None:
+              colours=None, xmax=None, xerr=None) -> None:
     labels = labels or [ARM_LABELS[c] for c in ARM_ORDER]
     ypos = list(range(len(labels)))
-    ax.barh(ypos, values, color=colours or BLUE, height=0.62, zorder=3)
+    ax.barh(ypos, values, color=colours or BLUE, height=0.62, zorder=3,
+            xerr=xerr, error_kw=dict(ecolor=INK, elinewidth=1.1, capsize=3,
+                                     capthick=1.1, zorder=4))
     ax.set_yticks(ypos)
     ax.set_yticklabels(labels, fontsize=9)
     ax.invert_yaxis()
@@ -104,8 +128,11 @@ def bar_panel(ax, values, title, direction, fmt, *, labels=None,
     ax.set_xlim(0, span * (1.0 if xmax else 1.22))
     ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _, f=fmt: f(v)))
     ax.xaxis.set_major_locator(MaxNLocator(nbins=5))
-    for y, value in zip(ypos, values):
-        ax.text(value + span * 0.02, y, fmt(value), va="center", ha="left",
+    # Place each value label beyond its whisker rather than at the bar end,
+    # otherwise the text sits on top of the error bar and neither is readable.
+    upper = xerr[1] if xerr else [0] * len(values)
+    for y, value, err in zip(ypos, values, upper):
+        ax.text(value + err + span * 0.025, y, fmt(value), va="center", ha="left",
                 fontsize=9.5, color=INK, fontweight="bold")
     _style_axis(ax)
 
@@ -120,9 +147,12 @@ def chart_efficiency() -> str:
         ("avg_cost_usd", "Cost per trip", lambda v: f"${v:,.4f}"),
         ("avg_latency", "Wall-clock time per trip", lambda v: f"{v:,.0f}s"),
     ]
+    metric_for = {"avg_llm_calls": "llm_calls", "avg_total_tokens": "total_tokens",
+                  "avg_cost_usd": "cost_usd", "avg_latency": "latency"}
     for ax, (key, title, fmt) in zip(axes.flat, panels):
         bar_panel(ax, [measured.arm_metric(c, key) for c in ARM_ORDER],
-                  title, "lower is better", fmt)
+                  title, "lower is better  ·  whiskers are 95% intervals", fmt,
+                  xerr=_error_bars(metric_for[key]))
 
     fig.suptitle("Cost of each architecture, measured", fontsize=13,
                  fontweight="bold", color=INK, x=0.012, ha="left", y=0.985)
@@ -141,8 +171,9 @@ def chart_token_decomposition() -> str:
     prompt tokens are re-sent context and tool schemas, completion tokens are
     the itinerary itself, and on this model output costs several times input.
     """
-    prompt = [measured.llm_breakdown(c)["prompt_tokens"] for c in ARM_ORDER]
-    completion = [measured.llm_breakdown(c)["completion_tokens"] for c in ARM_ORDER]
+    # Means across repeats, so the totals here match the results table exactly.
+    prompt = [measured.token_split(c)["prompt_tokens"] for c in ARM_ORDER]
+    completion = [measured.token_split(c)["completion_tokens"] for c in ARM_ORDER]
 
     fig, ax = plt.subplots(figsize=(10.4, 4.2))
     ypos = list(range(len(ARM_ORDER)))
@@ -182,9 +213,21 @@ def chart_tuning_effect() -> str:
     ]
     fig, axes = plt.subplots(1, 4, figsize=(13.6, 3.8))
 
+    metric_for = {"avg_llm_calls": "llm_calls", "avg_total_tokens": "total_tokens",
+                  "avg_cost_usd": "cost_usd", "avg_latency": "latency"}
     for ax, (key, title, fmt) in zip(axes, metrics):
         values = [measured.arm_metric(c, key) for c in ("B", "C")]
-        ax.barh([0, 1], values, color=[GREY, BLUE], height=0.55, zorder=3)
+        # Whiskers here too. The shared scope line promises 95% intervals, and a
+        # chart that omits them while the caption claims them is worse than one
+        # without the claim.
+        xerr = None
+        if measured.coverage()["has_repeats"]:
+            spans = [measured.spread(c, metric_for[key]) for c in ("B", "C")]
+            xerr = [[max(0.0, b["mean"] - b["ci95_low"]) for b in spans],
+                    [max(0.0, b["ci95_high"] - b["mean"]) for b in spans]]
+        ax.barh([0, 1], values, color=[GREY, BLUE], height=0.55, zorder=3,
+                xerr=xerr, error_kw=dict(ecolor=INK, elinewidth=1.1, capsize=3,
+                                         capthick=1.1, zorder=4))
         ax.set_yticks([0, 1])
         ax.set_yticklabels(["6 agents\nnaive", "6 agents\ntuned"], fontsize=9)
         ax.invert_yaxis()
@@ -196,9 +239,10 @@ def chart_tuning_effect() -> str:
         # whichever formatter the loop finished on.
         ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _, f=fmt: f(v)))
         ax.xaxis.set_major_locator(MaxNLocator(nbins=4))
-        for y, value in zip([0, 1], values):
-            ax.text(value + span * 0.03, y, fmt(value), va="center", fontsize=9.5,
-                    color=INK, fontweight="bold")
+        upper = xerr[1] if xerr else [0, 0]
+        for y, value, err in zip([0, 1], values, upper):
+            ax.text(value + err + span * 0.03, y, fmt(value), va="center",
+                    fontsize=9.5, color=INK, fontweight="bold")
         if values[0]:
             drop = (1 - values[1] / values[0]) * 100
             ax.text(0.98, 0.06, f"-{drop:.0f}%", transform=ax.transAxes,
@@ -226,20 +270,25 @@ def chart_groundedness() -> str:
     name the obvious airline for a route. Showing them together, with that
     stated, prevents the weaker signal from carrying the claim.
     """
-    prices = [measured.groundedness(c)["prices_grounded_pct"] for c in ARM_ORDER]
+    # Means across every repeat, so this chart cannot disagree with the table in
+    # Section 6.2. Reading run one instead put 50% here and 56% in the text.
+    prices = [measured.arm_metric(c, "avg_prices_grounded_pct") for c in ARM_ORDER]
     quoted = [measured.groundedness(c)["prices_quoted"] for c in ARM_ORDER]
-    airlines = [measured.groundedness(c)["airlines_grounded_pct"] for c in ARM_ORDER]
+    airlines = [measured.arm_metric(c, "avg_airlines_grounded") /
+                max(measured.groundedness(c)["airlines_available"], 1) * 100
+                for c in ARM_ORDER]
 
     fig, axes = plt.subplots(1, 2, figsize=(13.0, 4.0))
 
     bar_panel(axes[0], prices,
               "Quoted prices that match a real fare or nightly rate",
-              "higher is better  ·  0% means every price was invented",
+              "higher is better  ·  overlapping whiskers mean the gap is within noise",
               lambda v: f"{v:,.0f}%",
-              colours=[GREY, BLUE, BLUE, BLUE], xmax=100)
+              colours=[GREY, BLUE, BLUE, BLUE], xmax=100,
+              xerr=_error_bars("prices_grounded_pct"))
     for y, (pct, n) in enumerate(zip(prices, quoted)):
-        axes[0].text(2, y + 0.34, f"{n} prices quoted", fontsize=7.8, color=INK_2,
-                     va="center")
+        axes[0].text(2, y + 0.40, f"{n} prices quoted in run 1", fontsize=7.4,
+                     color=INK_2, va="center")
 
     bar_panel(axes[1], airlines,
               "Airlines named that appear in the flight results",
@@ -344,8 +393,15 @@ def chart_budget_gate() -> str:
     # bottom bar instead.
     ax.text(1.06, -0.95, "decision boundary: budget = estimated minimum",
             fontsize=8, color=INK_2, va="center", ha="left")
-    ax.set_xlabel("stated budget as a multiple of the estimated minimum cost",
-                  fontsize=8.5, color=INK_2, labelpad=6)
+    # The word beside each bar is the gate's own verdict, which it reaches against
+    # its COMFORTABLE estimate, while the bar length is a ratio against the MINIMUM.
+    # Two denominators, so the words need not run in the same order as the bars —
+    # SC-16 reads "workable" between two "comfortable" bars for that reason. Saying
+    # so on the axis stops it looking like a plotting error.
+    ax.set_xlabel("stated budget as a multiple of the estimated minimum cost\n"
+                  "(the word beside each bar is the gate's own verdict, which it\n"
+                  "judges against its comfortable estimate, not against this minimum)",
+                  fontsize=8.2, color=INK_2, labelpad=6)
     ax.set_title("Every scenario against the feasibility floor", fontsize=11,
                  fontweight="bold", loc="left", color=INK, pad=8)
     ax.set_xlim(0, max(ratios) * 1.16)

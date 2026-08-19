@@ -141,6 +141,8 @@ echo  ==================================================================
 echo    WHAT WOULD YOU LIKE TO DO?
 echo  ==================================================================
 echo.
+echo    NEW HERE? Read PROJECT_OVERVIEW.docx first - six pages, plain English.
+echo.
 echo    DEMONSTRATIONS - free, no keys, no internet, no quota
 echo      1. Compare all four approaches       ^(show this first^)
 echo      2. Approach A - single LLM, no tools
@@ -153,14 +155,15 @@ echo      6. Run the test suite
 echo      7. Run the evaluation experiments    ^(protocol + budget gate^)
 echo      8. Rebuild the figures               ^(8 diagrams, 6 charts^)
 echo      9. Rebuild the dissertation          ^(report/*.docx^)
+echo     10. Rebuild the project overview      ^(PROJECT_OVERVIEW.docx^)
 echo.
 echo    PLAN A REAL TRIP - needs API keys in .env
-echo     10. In the browser                    ^(web app^)
-echo     11. In this window                    ^(command line^)
+echo     11. In the browser                    ^(web app^)
+echo     12. In this window                    ^(command line^)
 echo.
-echo     12. Exit
+echo     13. Exit
 echo.
-set /p choice="   Enter a number (1-12): "
+set /p choice="   Enter a number (1-13): "
 echo.
 
 if "%choice%"=="1"  goto demo_all
@@ -172,9 +175,10 @@ if "%choice%"=="6"  goto tests
 if "%choice%"=="7"  goto experiments
 if "%choice%"=="8"  goto figures
 if "%choice%"=="9"  goto report
-if "%choice%"=="10" goto web
-if "%choice%"=="11" goto cli
-if "%choice%"=="12" goto end
+if "%choice%"=="10" goto overview
+if "%choice%"=="11" goto web
+if "%choice%"=="12" goto cli
+if "%choice%"=="13" goto end
 echo  Please enter a number from 1 to 12.
 echo.
 goto menu
@@ -258,6 +262,16 @@ echo  Rebuilding the dissertation. This regenerates the figures, runs the
 echo  test suite, rebuilds the document and reports the word count.
 echo.
 "%PY%" -m report.build.build_report --figures
+echo.
+pause
+goto menu
+
+:overview
+echo  Rebuilding PROJECT_OVERVIEW.docx - the plain-English guide to this
+echo  project. Every number in it is read from the measured results, so it
+echo  stays correct after the experiments are re-run.
+echo.
+"%PY%" report/build/make_handover.py
 echo.
 pause
 goto menu

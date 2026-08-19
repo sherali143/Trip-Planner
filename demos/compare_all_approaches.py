@@ -45,7 +45,8 @@ def _gather_live(pause: bool) -> dict:
     from dotenv import load_dotenv
     load_dotenv(override=True)
 
-    import trip_planner  # installs logging defaults so the model key is not printed
+    import trip_planner  # noqa: F401  side effect: installs logging
+    #   defaults, so the model key in the Gemini URL is never printed
     from evaluation import measured
     from evaluation.metrics import score_groundedness
 

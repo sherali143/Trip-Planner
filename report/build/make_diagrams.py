@@ -357,8 +357,8 @@ def fig_mcp_lifecycle() -> str:
 # ================================================== 7. conceptual framework
 def fig_conceptual_framework() -> str:
     # Every figure in the MEASURED OUTCOME column is read from a results file.
-    naive_prompt = measured.llm_breakdown("B")["prompt_tokens"]
-    tuned_prompt = measured.llm_breakdown("C")["prompt_tokens"]
+    naive_prompt = round(measured.token_split("B")["prompt_tokens"])
+    tuned_prompt = round(measured.token_split("C")["prompt_tokens"])
     schema = measured.mcp_schema_stats()
     provider_errors = len(measured.protocol_check("M4")["observed"]["mismatches"])
     a2a_seq = measured.protocol_check("A3")["observed"]

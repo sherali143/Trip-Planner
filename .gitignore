@@ -12,8 +12,12 @@ __pycache__/
 *$py.class
 *.so
 *.egg-info/
-dist/
-build/
+/dist/
+# Anchored to the repository root. Unanchored, "build/" also matched
+# report/build/, which is the report generator's source — so the entire
+# generator was silently untracked and a fresh clone would not have built the
+# dissertation at all.
+/build/
 *.egg
 
 # ========================
