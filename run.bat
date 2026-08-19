@@ -36,6 +36,30 @@ if errorlevel 1 (
 for /f "tokens=2" %%v in ('python --version 2^>^&1') do set PYVER=%%v
 echo  [1/4] Python %PYVER% found.
 
+REM Windows refuses paths longer than 260 characters unless long-path support
+REM is enabled. Installing creates deeply nested files inside .venv, so if this
+REM folder already sits deep the install fails with a confusing
+REM "No such file or directory" OSError that reads like a corrupt download.
+REM Verified: a clean install from a short path succeeds and all tests pass; the
+REM same install from a deeply nested path fails on a jedi stub file. Checked
+REM here so the cause is named before it costs anyone an afternoon.
+python -c "import os,sys; sys.exit(1 if len(os.path.abspath('.'))>90 else 0)"
+if errorlevel 1 (
+    echo.
+    echo  [!] WARNING: this folder is nested deeply:
+    echo      %CD%
+    echo.
+    echo      Windows limits paths to 260 characters and the install creates
+    echo      long paths inside .venv, so it may fail with a confusing
+    echo      "No such file or directory" error.
+    echo.
+    echo      FIX: move this whole folder somewhere short, such as
+    echo           C:\trip_planner
+    echo.
+    set /p ignore="   Press Enter to try anyway, or close this window to move it: "
+    echo.
+)
+
 REM ---------------------------------------------------------------- 2/4
 REM The virtual environment keeps this project's pinned dependencies
 REM away from anything else on the machine.
