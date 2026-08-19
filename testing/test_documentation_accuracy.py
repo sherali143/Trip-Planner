@@ -158,6 +158,52 @@ def test_results_quoted_in_docs_match_the_results_file(arm):
     assert f"{tokens:,}" in row, f"README arm {arm} row missing tokens={tokens:,}: {row}"
 
 
+def test_every_module_is_named_in_its_package_readme():
+    """
+    A new module must be added to the README of the folder it lives in.
+
+    gemini_compat.py — the module that made the agent arms runnable again after
+    Google withdrew the old model, and which now holds the single default model
+    string — sat undocumented in trip_planner/README.md. Someone reading that
+    README to understand the codebase would not have known the model problem had
+    been solved at all.
+
+    Only folders that keep a module table are checked, and only modules that are
+    part of the explained surface: dunder files and the test suite are exempt.
+    """
+    packages = {
+        "trip_planner": ["trip_planner", "trip_planner/core", "trip_planner/tools",
+                         "trip_planner/comms", "trip_planner/server"],
+        "evaluation": ["evaluation"],
+        "demos": ["demos"],
+    }
+
+    undocumented = []
+    for package, folders in packages.items():
+        readme_path = ROOT / package / "README.md"
+        if not readme_path.exists():
+            continue
+        readme = readme_path.read_text(encoding="utf-8")
+        for folder in folders:
+            directory = ROOT / folder
+            if not directory.is_dir():
+                continue
+            for module in sorted(directory.glob("*.py")):
+                if module.name.startswith("__"):
+                    continue
+                # A README may name a module as a filename, as a path, or as the
+                # dotted form used to run it ("python -m evaluation.exp_protocol").
+                # All three tell the reader the module exists; only the absence of
+                # all three is a documentation gap.
+                dotted = f"{folder}/{module.stem}".replace("/", ".")
+                forms = (module.name, f"{folder}/{module.name}", dotted)
+                if not any(form in readme for form in forms):
+                    undocumented.append(f"{folder}/{module.name} "
+                                        f"(not in {package}/README.md)")
+    assert not undocumented, (
+        "modules missing from their package README: " + ", ".join(undocumented))
+
+
 def test_run_bat_menu_is_internally_consistent_and_matches_the_docs():
     """
     Every menu option run.bat offers must dispatch somewhere, and the docs must

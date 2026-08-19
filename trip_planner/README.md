@@ -44,6 +44,18 @@ These were one 986-line file mixing all three. Splitting them makes the
 dependency obvious: an agent holds `agent_tools`, which reaches the outside world
 through either `mcp_client` or `travel_apis`.
 
+### `comms/` — the A2A protocol
+
+| File | What it does |
+|---|---|
+| `protocol.py` | The typed message envelope and its six message types. A message carries its sender, recipient, intent and payload, so an exchange can be checked rather than assumed. |
+| `registry.py` | The eight agent cards. Each declares what its agent can send and receive, which is what makes an undeclared message a detectable error instead of a silent one. |
+
+The conformance audit (`python -m evaluation.exp_protocol`) tests this layer
+against its own declarations and currently fails 3 of its 5 A2A checks — priority
+is declared but never honoured, and inbound permissions are never enforced. Those
+are reported in the dissertation rather than quietly fixed.
+
 ### `core/` — the infrastructure
 
 | Module | What it solves |
@@ -56,6 +68,7 @@ through either `mcp_client` or `travel_apis`.
 | `trip_cost.py` | Estimates what a trip costs at minimum, comfortable and luxury standards, and refuses budgets below the true floor. |
 | `validators.py` | Checks the generated itinerary contains every day it should. |
 | `log_setup.py` | Keeps the model API key out of the console — it travels as a URL parameter, which the HTTP client logs at INFO. |
+| `gemini_compat.py` | Makes the agent arms runnable on current Gemini models, which reject a request whose last message is a model turn — exactly what a reasoning loop produces. Adds a short user turn to only those requests and counts how many it changed. Also holds the single default model string, so no module can fall back to the withdrawn one. |
 
 ## Four things that will bite you
 
