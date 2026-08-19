@@ -102,6 +102,44 @@ def _load_previous():
             for code, rows in by_arm.items()}
 
 
+def _dispersion(values: list) -> dict:
+    """
+    Mean, standard deviation and a 95% confidence interval for one metric.
+
+    Reported because a single observation cannot support a claim about a
+    difference. With repeats the question "is this gap real or is it noise?"
+    becomes answerable, which is the whole reason repeats exist.
+
+    The interval uses Student's t, not 1.96 sigma: at five runs the normal
+    approximation is meaningfully too narrow, and quoting an interval that is
+    too tight is worse than quoting none.
+    """
+    n = len(values)
+    if n == 0:
+        return {"n": 0}
+    mean = sum(values) / n
+    if n == 1:
+        return {"n": 1, "mean": mean, "sd": None, "ci95_low": None,
+                "ci95_high": None, "cv_pct": None}
+    variance = sum((v - mean) ** 2 for v in values) / (n - 1)
+    sd = variance ** 0.5
+    # Two-tailed t at 95% for small samples; falls back to 1.96 beyond the table.
+    T = {2: 12.706, 3: 4.303, 4: 3.182, 5: 2.776, 6: 2.571, 7: 2.447,
+         8: 2.365, 9: 2.306, 10: 2.262}
+    t = T.get(n - 1, 1.96)
+    margin = t * sd / (n ** 0.5)
+    return {
+        "n": n,
+        "mean": mean,
+        "sd": sd,
+        "ci95_low": mean - margin,
+        "ci95_high": mean + margin,
+        # Coefficient of variation: how noisy this metric is relative to its own
+        # size, which is what decides whether a small gap between arms is real.
+        "cv_pct": round(sd / mean * 100, 1) if mean else None,
+    }
+
+
 def _save(payload):
     os.makedirs("evaluation/results", exist_ok=True)
     with open(RESULTS_PATH, "w", encoding="utf-8") as fh:
@@ -117,6 +155,15 @@ def main():
     # Lets a run be repeated over only the scenarios whose API responses are
     # already recorded, so the comparison can be re-run at zero API cost while
     # the monthly quota is being conserved for uncached scenarios.
+    # `--repeats N` runs every scenario N times so the spread can be measured.
+    # One observation per arm establishes an ordering and nothing about whether a
+    # small difference is real, which is the limitation this flag removes.
+    repeats = 1
+    for arg in sys.argv[1:]:
+        if arg.startswith("--repeats"):
+            repeats = max(1, int(arg.split("=", 1)[1] if "=" in arg
+                                 else sys.argv[sys.argv.index(arg) + 1]))
+
     wanted = {a.upper() for a in sys.argv[1:] if a.upper().startswith("SC-")}
     scenarios = [s for s in SCENARIOS if s["id"] in wanted] if wanted else list(SCENARIOS)
     if wanted and not scenarios:
@@ -173,29 +220,40 @@ def main():
             print(f"\n  ! {stopped_early}\n")
             break
 
-        for code, name, runner in execution_order:
-            results_by_arm[code].append(run_scenario(scenario, runner, f"{code} — {name}"))
-        BUDGET.pace()
+        for attempt in range(repeats):
+            if repeats > 1:
+                print(f"\n  --- {sid}: repeat {attempt + 1} of {repeats} ---")
 
-        # Groundedness: score every arm's itinerary against the data arm D
-        # actually retrieved for this scenario. Arms with no tool access have
-        # nothing real to cite, which is exactly what this exposes.
-        truth = (results_by_arm["D"][-1] or {}).get("ground_truth") or {}
-        if truth.get("hotels") or truth.get("airlines"):
-            for code, _, _ in ARMS:
-                result = results_by_arm[code][-1]
-                result["groundedness"] = score_groundedness(result.get("result", ""), truth)
-        else:
-            print("  ! no ground truth retrieved for this scenario — groundedness skipped")
+            for code, name, runner in execution_order:
+                row = run_scenario(scenario, runner, f"{code} — {name}")
+                # Which repeat this row belongs to, so the aggregate can compute a
+                # spread rather than assuming one observation per scenario.
+                row["repeat"] = attempt
+                results_by_arm[code].append(row)
+            BUDGET.pace()
 
-        # Save after every scenario — and after scoring, so the checkpoint is
-        # complete — rather than once at the end. An interrupted run then keeps
-        # everything it has already paid for.
-        _save({
-            "status": "in_progress",
-            "completed_scenarios": [r.get("scenario_id") for r in results_by_arm["D"]],
-            "details_by_arm": results_by_arm,
-        })
+            # Groundedness: score every arm's itinerary against the data arm D
+            # actually retrieved for this repeat. Arms with no tool access have
+            # nothing real to cite, which is exactly what this exposes.
+            truth = (results_by_arm["D"][-1] or {}).get("ground_truth") or {}
+            if truth.get("hotels") or truth.get("airlines"):
+                for code, _, _ in ARMS:
+                    result = results_by_arm[code][-1]
+                    result["groundedness"] = score_groundedness(
+                        result.get("result", ""), truth)
+            else:
+                print("  ! no ground truth retrieved for this repeat — "
+                      "groundedness skipped")
+
+            # Save after every repeat — and after scoring, so the checkpoint is
+            # complete — rather than once at the end. An interrupted run then
+            # keeps everything it has already paid for.
+            _save({
+                "status": "in_progress",
+                "completed_scenarios": [r.get("scenario_id")
+                                        for r in results_by_arm["D"]],
+                "details_by_arm": results_by_arm,
+            })
 
     total_time = time.time() - overall_start
 
@@ -236,6 +294,18 @@ def main():
             "avg_prices_grounded_pct": round(sum(
                 (r.get("groundedness") or {}).get("prices_grounded_pct", 0) for r in successes
             ) / n, 1),
+            # Spread across repeats. Without these an arm's mean is a point with
+            # no error bar, and a small gap between two arms cannot be told from
+            # run-to-run noise.
+            "spread": {
+                "llm_calls": _dispersion([r.get("llm_calls", 0) for r in successes]),
+                "total_tokens": _dispersion([r.get("total_tokens", 0) for r in successes]),
+                "cost_usd": _dispersion([r.get("cost_usd", 0) for r in successes]),
+                "latency": _dispersion([r.get("latency", 0) for r in successes]),
+                "prices_grounded_pct": _dispersion([
+                    (r.get("groundedness") or {}).get("prices_grounded_pct", 0)
+                    for r in successes]),
+            },
         }
 
     agg_by_arm = {code: aggregate(results_by_arm[code]) for code, _, _ in ARMS}

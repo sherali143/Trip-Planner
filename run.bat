@@ -87,6 +87,27 @@ if not exist ".env" (
     echo  [4/4] .env found.
 )
 
+REM ---------------------------------------------------------------- 5/5
+REM One self-check, so a broken install is reported here rather than inside
+REM whichever menu option happens to be chosen first.
+echo  [5/5] Checking the install...
+"%PY%" -c "import crewai, litellm, streamlit, matplotlib, docx, pytest" 2>nul
+if errorlevel 1 (
+    echo.
+    echo  [X] Some dependencies are missing. Delete the .venv folder and run
+    echo      this file again to reinstall from scratch.
+    echo.
+    pause
+    exit /b 1
+)
+"%PY%" -c "import sys; sys.path.insert(0,'.'); import evaluation.measured as m; m.results()" 2>nul
+if errorlevel 1 (
+    echo        WARNING: measured results are missing. Demos and the report
+    echo        need evaluation/results/ - check the folder was copied.
+) else (
+    echo        Everything present.
+)
+
 echo.
 echo  Setup complete.
 echo.
