@@ -36,6 +36,42 @@ if errorlevel 1 (
 for /f "tokens=2" %%v in ('python --version 2^>^&1') do set PYVER=%%v
 echo  [1/4] Python %PYVER% found.
 
+REM The comment above said "3.10+ is required" and nothing checked it, so a
+REM Python 3.9 user got a SyntaxError from a type annotation several minutes into
+REM the install and no clue why. Checked here instead.
+python -c "import sys; sys.exit(0 if sys.version_info[:2] >= (3,10) else 1)"
+if errorlevel 1 (
+    echo.
+    echo  [X] Python %PYVER% is too old. This project needs 3.10 or newer.
+    echo      Install from https://www.python.org/downloads/ and TICK
+    echo      "Add Python to PATH" during installation.
+    echo.
+    pause
+    exit /b 1
+)
+
+REM Upper bound is a WARNING, not a stop. requirements.txt is pinned to the exact
+REM versions the published results were produced with, and some of those pins
+REM predate the newest interpreters, so pip may fail to build a wheel. That is a
+REM dependency problem, not a code problem, and naming it here saves an hour of
+REM reading a compiler traceback. The evaluation was produced and verified on
+REM 3.11.
+python -c "import sys; sys.exit(1 if sys.version_info[:2] > (3,12) else 0)"
+if errorlevel 1 (
+    echo.
+    echo  [!] Python %PYVER% is newer than this project was tested on.
+    echo      Dependencies are pinned to the versions the published results were
+    echo      measured with, and pip may fail to build one of them on a very new
+    echo      interpreter.
+    echo.
+    echo      If the install fails, install Python 3.11 alongside this one and
+    echo      run:   py -3.11 -m venv .venv
+    echo      then start this script again.
+    echo.
+    set /p ignore="   Press Enter to continue anyway: "
+    echo.
+)
+
 REM Windows refuses paths longer than 260 characters unless long-path support
 REM is enabled. Installing creates deeply nested files inside .venv, so if this
 REM folder already sits deep the install fails with a confusing
