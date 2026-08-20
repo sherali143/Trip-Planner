@@ -51,6 +51,8 @@ multi-agent, tuned multi-agent, direct execution — rather than four rivals.
 | `metrics.py` | Groundedness: does the itinerary cite data that was actually retrieved? |
 | `distilled_tools.py` | Compact tool wrappers used by arm C |
 | `run_comparison.py` | Runs the arms, aggregates, checkpoints, writes `results/` |
+| `measured.py` | The single accessor every figure, chapter and document reads results through |
+| `check_quota.py` | Reports how much monthly travel-API quota is left. **Costs 1 flight and 1 hotel call** — the balance is only returned in a response header, so there is no free way to ask. Writes `results/api_quota.json`. |
 
 ## Running it
 

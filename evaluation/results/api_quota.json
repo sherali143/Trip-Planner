@@ -1,0 +1,19 @@
+{
+  "checked_at": "2026-08-20T21:53:21",
+  "apis": {
+    "fly-scraper.p.rapidapi.com": {
+      "name": "fly-scraper (flights)",
+      "status": 200,
+      "remaining": "13",
+      "limit": "30",
+      "reset_seconds": "1702080"
+    },
+    "booking-com15.p.rapidapi.com": {
+      "name": "booking-com15 (hotels)",
+      "status": 200,
+      "remaining": "27",
+      "limit": "50",
+      "reset_seconds": "1702080"
+    }
+  }
+}

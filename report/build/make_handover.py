@@ -35,6 +35,88 @@ OUTPUT = os.path.join(ROOT, "PROJECT_OVERVIEW.docx")
 ACCENT = RGBColor(0x1F, 0x4E, 0x79)
 MUTED = RGBColor(0x52, 0x51, 0x4E)
 
+# One workflow diagram per approach. Written as plain text so they survive being
+# copied into an email, a slide or a Word document, and so the person presenting
+# this can change a label without needing the drawing tool that made it.
+DIAGRAM_A = """\
+  your request
+       |
+       v
+  +-----------------------+
+  |     ONE AI CALL       |   no tools. no internet. no lookups.
+  +-----------------------+
+       |
+       v
+  a plan that LOOKS finished
+
+  APIs called: NONE"""
+
+DIAGRAM_B = """\
+  your request
+       |
+       v
+  [ extractor ]
+       |
+       +--> [ flight agent   ]  8 tools, loops until satisfied
+       +--> [ hotel agent    ]  8 tools, loops until satisfied
+       +--> [ activity agent ]  4 tools, loops until satisfied
+                  |
+                  v
+          [ coordinator ]  writes the plan
+                  |
+                  v
+          your itinerary
+
+  Every loop step is a FULL AI call that re-sends the whole
+  conversation and every tool description again."""
+
+DIAGRAM_C = """\
+  your request
+       |
+       v
+  [ extractor ]
+       |
+       +--> [ flight agent   ]  1 tool   \\
+       +--> [ hotel agent    ]  1 tool    >  all three run AT THE SAME TIME
+       +--> [ activity agent ]  2 tools  /
+                  |
+                  v
+          [ coordinator ]  writes the plan
+                  |
+                  v
+          your itinerary
+
+  Same six agents as B. Shorter prompts, fewer tools each, results
+  trimmed before being passed on, and a hard cap of 3 loop steps."""
+
+DIAGRAM_D = """\
+  your request
+       |
+       v
+  +----------------------------+
+  |  AI STEP 1: read request   |  a judgement: wording varies endlessly
+  +----------------------------+
+       |   origin, destination, dates, budget, interests
+       v
+  +----------------------------+
+  |  PLAIN PYTHON: fetch data  |  NO AI HERE
+  |                            |
+  |    1  flights      1 call  |
+  |    2  hotels       2 calls |
+  |    3  attractions  1 call  |
+  |    4  restaurants  1 call  |
+  |                            |
+  |    always these 5 calls    |
+  +----------------------------+
+       |
+       v
+  +----------------------------+
+  |  AI STEP 2: write the plan |  a judgement: how to order a day
+  +----------------------------+
+       |
+       v
+  your day-by-day itinerary"""
+
 
 class Doc:
     """A very small wrapper. This document has no numbering or cross-references."""
@@ -114,6 +196,135 @@ class Doc:
     def save(self) -> str:
         self.d.save(OUTPUT)
         return OUTPUT
+
+
+# What each file does, in one line, in plain English. The table in the document is
+# built by listing the folders on disk and looking each file up here, so a new file
+# with no entry shows up as "(not yet described)" rather than being silently
+# omitted — the same reason the test suite checks that every module is named in its
+# package README.
+FILE_PURPOSE = {
+    # top level
+    "run_cli.py": "Plan a trip by typing in the terminal. Runs the shipped design.",
+    "run_web.py": "Plan a trip in a web page. Runs the same shipped design.",
+    # trip_planner
+    "trip_planner/orchestrator.py":
+        "The workflow. Reads the request, fetches the data, assembles the plan. "
+        "Both the terminal and the web page go through this one file.",
+    "trip_planner/agents.py":
+        "Defines the three AI agents: one to chat, one to read the request, one to "
+        "write the itinerary.",
+    "trip_planner/tasks.py": "The instructions each agent is given.",
+    # core
+    "trip_planner/core/http_cache.py":
+        "Records every reply from every travel website and replays it later. This is "
+        "why the results reproduce with no accounts, and why one careless run cannot "
+        "burn a whole month of free quota.",
+    "trip_planner/core/llm_metrics.py":
+        "Counts the real AI calls, tokens and cost. An earlier version estimated "
+        "these and the estimates were wrong.",
+    "trip_planner/core/trip_cost.py":
+        "Works out what a trip costs at minimum, comfortable and luxury levels, and "
+        "refuses a budget below the real floor. This is the budget validation the "
+        "supervisor asked for.",
+    "trip_planner/core/budget.py":
+        "Splits a budget across flights, hotels, food and activities based on what "
+        "the trip actually costs, instead of a fixed percentage for every trip.",
+    "trip_planner/core/gemini_compat.py":
+        "Keeps the project running on current Google AI models. The newer models "
+        "reject a message pattern the agent loop produces; this fixes only those "
+        "requests and counts how many it changed.",
+    "trip_planner/core/safe_math.py":
+        "Does the arithmetic for the calculator tool without letting the AI run "
+        "arbitrary code. Also blocks sums designed to hang the machine.",
+    "trip_planner/core/resilience.py":
+        "Decides whether a refusal from the AI provider is worth retrying. A spending "
+        "cap and a per-minute limit look the same but need opposite responses.",
+    "trip_planner/core/validators.py":
+        "Checks the finished itinerary actually contains every day it should.",
+    "trip_planner/core/log_setup.py":
+        "Keeps the API key out of the console. Google sends it inside the web "
+        "address, which the network library would otherwise print.",
+    # tools
+    "trip_planner/tools/mcp_client.py":
+        "Talks to the tool server, starting it as a separate process.",
+    "trip_planner/tools/travel_apis.py":
+        "Calls the flight and hotel websites directly over the internet.",
+    "trip_planner/tools/agent_tools.py":
+        "The 12 tools an AI agent is allowed to hold and choose to use.",
+    # comms
+    "trip_planner/comms/protocol.py":
+        "The typed message format components use to talk to each other, and its six "
+        "message types. Every message names its sender, receiver and purpose.",
+    "trip_planner/comms/registry.py":
+        "The eight agent cards. Each says what its agent may send and receive, which "
+        "is what makes an undeclared message a detectable mistake.",
+    # server / ui
+    "trip_planner/server/mcp_server.py":
+        "The tool server: 12 tools, each with a declared input format, offered over a "
+        "standard protocol so any client could use them.",
+    "trip_planner/ui/app.py": "The web page itself.",
+    # evaluation
+    "evaluation/arm_a_single_llm.py": "Approach A: one AI call, no tools.",
+    "evaluation/arm_b_six_agent_naive.py": "Approach B: six agents, as first built.",
+    "evaluation/arm_c_six_agent_tuned.py": "Approach C: the same six agents, tuned.",
+    "evaluation/arm_d_three_agent_direct.py":
+        "Approach D: three agents with the lookups in plain Python. What ships.",
+    "evaluation/run_comparison.py":
+        "Runs the approaches, repeats them, and writes the measured numbers to files.",
+    "evaluation/measured.py":
+        "The ONE place any measured number is read from. This is why the report "
+        "cannot disagree with its own charts.",
+    "evaluation/metrics.py":
+        "Scores how much of a plan is real: do its prices match fares the websites "
+        "actually returned?",
+    "evaluation/scenarios.py":
+        "The 20 test trips, from short and cheap to long and impossible.",
+    "evaluation/distilled_tools.py": "Trimmed-down tool wrappers used by approach C.",
+    "evaluation/exp_protocol.py":
+        "Audits our own two protocols against what we declared they do. Needs no "
+        "internet. Currently fails 6 of 9 checks, all reported in the dissertation.",
+    "evaluation/exp_budget_gate.py":
+        "Tests the budget rules across all 20 trips. Needs no internet.",
+    "evaluation/check_quota.py":
+        "Reports how much monthly travel-API allowance is left. Costs 1 flight and 1 "
+        "hotel call, because the balance only comes back inside a real reply.",
+    # demos
+    "demos/compare_all_approaches.py":
+        "All four approaches side by side, with the table and what to say about it.",
+    "demos/approach_a_single_llm.py": "Approach A on its own, explained step by step.",
+    "demos/approach_b_six_agent_naive.py": "Approach B on its own, explained.",
+    "demos/approach_c_six_agent_tuned.py": "Approach C on its own, explained.",
+    "demos/approach_d_three_agent_direct.py": "Approach D on its own, explained.",
+    "demos/_presenter.py":
+        "The narration, written once and shared, so each approach file only has to "
+        "describe its own approach.",
+}
+
+# Folder, and the heading it appears under in the document.
+FILE_GROUPS = [
+    ("", "Start here (top level)"),
+    ("trip_planner", "trip_planner/ — the workflow"),
+    ("trip_planner/core", "trip_planner/core/ — the infrastructure"),
+    ("trip_planner/tools", "trip_planner/tools/ — anything that calls outside"),
+    ("trip_planner/comms", "trip_planner/comms/ — the message protocol"),
+    ("trip_planner/server", "trip_planner/server/ — the tool server"),
+    ("trip_planner/ui", "trip_planner/ui/ — the web page"),
+    ("evaluation", "evaluation/ — the experiment"),
+    ("demos", "demos/ — the demonstrations"),
+]
+
+
+def _file_rows(folder: str):
+    """Every Python file in one folder, paired with its plain-English purpose."""
+    directory = os.path.join(ROOT, folder) if folder else ROOT
+    rows = []
+    for name in sorted(os.listdir(directory)):
+        if not name.endswith(".py") or name.startswith("__"):
+            continue
+        key = f"{folder}/{name}" if folder else name
+        rows.append([name, FILE_PURPOSE.get(key, "(not yet described)")])
+    return rows
 
 
 def _tuning_reduction_pct() -> float:
@@ -227,7 +438,91 @@ def build() -> str:
     """)
 
     # ------------------------------------------------------------------
-    doc.h("4. What we found")
+    # One diagram per approach, drawn in text rather than as an image, because
+    # this document is meant to be read and explained by someone who did not build
+    # the project. A diagram they can edit is worth more than a picture they cannot.
+    doc.h("4. How each approach works, and what is wrong with it")
+
+    doc.h2("Approach A — one AI call, no tools")
+    doc.code(DIAGRAM_A)
+    doc.p(f"""
+        What is wrong with it: it invents everything. It quoted
+        {measured.groundedness('A')['prices_quoted']} prices and
+        {measured.groundedness('A')['prices_grounded']} of them matched a real fare.
+        It is the cheapest and among the fastest, and it is useless. This is exactly
+        why cost on its own is a misleading way to judge these systems.
+    """)
+
+    doc.h2("Approach B — six agents, each deciding for itself")
+    doc.code(DIAGRAM_B)
+    doc.p("""
+        What is wrong with it: the loop is the cost. Each agent thinks, calls a tool,
+        reads the result and thinks again — and every one of those steps re-sends the
+        whole conversation and every tool description again. On the run measured for
+        this document it made 24 AI calls, never called the attractions or restaurant
+        tools at all, and twice produced malformed output its own loop had to retry.
+        It also takes about six minutes, which makes it unusable in a live demo.
+    """)
+
+    doc.h2("Approach C — the same six agents, configured properly")
+    doc.code(DIAGRAM_C)
+    doc.p(f"""
+        What is wrong with it: it is far better than B but still unpredictable.
+        Configuration alone cut token use by about {_tuning_reduction_pct():.0f}%,
+        which is the most useful engineering lesson in the project — most of what
+        looked like the price of using many agents was really bad setup. But the
+        agents still choose when to call a tool, and on the run measured here it never
+        called the flight tool at all.
+    """)
+
+    doc.h2("Approach D — three agents, lookups in plain Python (this is what ships)")
+    doc.code(DIAGRAM_D)
+    doc.p("""
+        The idea: use the AI only where a judgement is genuinely required. Reading a
+        request is a judgement — there is no single right way to phrase one. Ordering
+        a day is a judgement. Fetching a flight price is not: once the cities and
+        dates are known there is exactly one correct call to make, so ordinary code
+        makes it.
+    """)
+    doc.p("""
+        What is wrong with it, stated honestly: it is decisively cheaper and faster,
+        but it is NOT measurably better grounded than approach C. Their ranges overlap
+        and C's average is in fact slightly higher. The claim is "no penalty we can
+        detect", not "better".
+    """)
+
+    # ------------------------------------------------------------------
+    doc.h("5. How many calls each approach makes")
+    calls = measured.api_calls_per_arm()
+    doc.p(f"""
+        Counted by watching the real calls go past, with travel responses replayed
+        from disk so the counting itself spent no quota. One run of each.
+        {calls['note']}
+    """)
+    doc.table(
+        ["Approach", "AI calls", "Flights", "Hotels", "Serper", "Total API",
+         "Same every run?"],
+        [[f"{code} — {measured.ARM_LABELS[code]}",
+          f"{calls['arms'][code]['model_calls']:,}",
+          f"{calls['arms'][code]['flights']:,}",
+          f"{calls['arms'][code]['hotels']:,}",
+          f"{calls['arms'][code]['serper']:,}",
+          f"{calls['arms'][code]['total_http']:,}",
+          "yes" if calls["arms"][code]["fixed"] else "NO — varies"]
+         for code in ("A", "B", "C", "D")],
+        widths=[1.5, 0.75, 0.7, 0.7, 0.7, 0.8, 1.15],
+    )
+    doc.p("""
+        Read the last column first. Approaches B and C give a different answer every
+        time, because a model is deciding when to call a tool. Approach D makes the
+        same five calls every time, because plain code makes them. When the monthly
+        allowance is this small, being predictable matters as much as being cheap.
+    """)
+    doc.bullets([f"{code}: {calls['arms'][code]['comment']}"
+                 for code in ("A", "B", "C", "D")])
+
+    # ------------------------------------------------------------------
+    doc.h("6. What we found")
     rows = []
     for code in ("A", "B", "C", "D"):
         arm = measured.arm(code)
@@ -294,7 +589,7 @@ def build() -> str:
     """)
 
     # ------------------------------------------------------------------
-    doc.h("5. Budget validation (the change the supervisor asked for)")
+    doc.h("7. Budget validation (the change the supervisor asked for)")
     doc.p("""
         The supervisor asked for the budget handling to be improved. Two things
         were wrong with the original version, and both are fixed.
@@ -352,7 +647,7 @@ def build() -> str:
     """)
 
     # ------------------------------------------------------------------
-    doc.h("6. Known issues, stated honestly")
+    doc.h("8. Known issues, stated honestly")
     protocol = measured.protocol_summary()
     doc.p(f"""
         We wrote a test that checks whether our own communication and tool layers
@@ -380,14 +675,14 @@ def build() -> str:
              f"scenarios measured",
              "The travel websites' free monthly limit. Nothing to do with the code."],
             ["Google retired the AI model we measured on",
-             "Handled — see section 9. The old numbers stay valid for the model "
+             "Handled — see section 11. The old numbers stay valid for the model "
              "that produced them."],
         ],
         widths=[2.1, 4.3],
     )
 
     # ------------------------------------------------------------------
-    doc.h("7. How to run it")
+    doc.h("9. How to run it")
     doc.p("""
         Put the project folder somewhere with a SHORT path, for example
         C:\\trip_planner. Windows cannot handle very long folder paths and the
@@ -424,7 +719,7 @@ def build() -> str:
     """)
 
     # ------------------------------------------------------------------
-    doc.h("8. How to show it to the supervisor")
+    doc.h("10. How to show it to the supervisor")
     doc.p("""
         Fifteen minutes, in this order. Everything here works offline, so nothing
         can fail on the day.
@@ -469,7 +764,7 @@ def build() -> str:
     """)
 
     # ------------------------------------------------------------------
-    doc.h("9. About the AI model")
+    doc.h("11. About the AI model")
     doc.p(f"""
         The first round of measurements used Google's Gemini 2.5 Flash. Google
         then stopped giving that model to new accounts, so it could no longer be
@@ -495,7 +790,7 @@ def build() -> str:
     """)
 
     # ------------------------------------------------------------------
-    doc.h("10. Folder structure")
+    doc.h("12. Folder structure")
     doc.code(
         "trip_planner\\\n"
         "  run.bat                  <- START HERE. Sets up everything, then a menu.\n"
@@ -539,7 +834,21 @@ def build() -> str:
     )
 
     # ------------------------------------------------------------------
-    doc.h("11. Important files, if you only look at a few")
+    doc.h("13. Every file, and what it does")
+    doc.p("""
+        The whole system, file by file. The list is read from the folders
+        themselves when this document is generated, so it cannot describe a file
+        that has been deleted or miss one that has been added.
+    """)
+    for folder, heading in FILE_GROUPS:
+        rows = _file_rows(folder)
+        if not rows:
+            continue
+        doc.h2(heading)
+        doc.table(["File", "What it does"], rows, widths=[1.9, 4.5], font_pt=9)
+
+    # ------------------------------------------------------------------
+    doc.h("14. Important files, if you only look at a few")
     doc.table(
         ["File", "Why it matters"],
         [
@@ -565,7 +874,7 @@ def build() -> str:
     )
 
     # ------------------------------------------------------------------
-    doc.h("12. The APIs used")
+    doc.h("15. The APIs used, and how much is left")
     doc.table(
         ["What", "Service", "Free limit", "Used for"],
         [
@@ -588,8 +897,45 @@ def build() -> str:
         at all.
     """)
 
+    doc.h2("How much is left right now")
+    quota = measured.api_quota()
+    quota_rows = []
+    for host, reading in quota["apis"].items():
+        remaining = reading.get("remaining")
+        limit = reading.get("limit") or "?"
+        if remaining is None:
+            quota_rows.append([reading["name"], "not reported by the plan",
+                               "check rapidapi.com"])
+            continue
+        days = ""
+        if reading.get("reset_seconds"):
+            try:
+                days = f"resets in {int(reading['reset_seconds']) / 86400:.0f} days"
+            except (TypeError, ValueError):
+                days = ""
+        quota_rows.append([reading["name"], f"{remaining} left of {limit}", days])
+    doc.table(["API", "Remaining", "When it refills"], quota_rows,
+              widths=[2.0, 2.0, 2.4])
+    doc.p(f"""
+        Taken at {quota['checked_at'].replace('T', ' ')}. This is a snapshot, not a
+        live figure — it falls every time anyone plans a real trip. To refresh it:
+    """)
+    doc.code("python -m evaluation.check_quota")
+    doc.p("""
+        Be aware that checking costs 1 flight call and 1 hotel call, because the
+        remaining balance is only reported inside the reply to a real request. There
+        is no way to ask for free. Run it once before a demonstration, not in a loop.
+    """)
+    doc.p("""
+        What that buys, in practice: one live trip through the shipped design uses 1
+        flight call and 2 hotel calls. So the flight allowance is the binding limit —
+        divide the flights remaining by one to get the number of complete live trips
+        left. Everything else in this project, including all five demonstrations and
+        both experiments, replays from disk and uses none of it.
+    """)
+
     # ------------------------------------------------------------------
-    doc.h("13. If something goes wrong")
+    doc.h("16. If something goes wrong")
     doc.table(
         ["Problem", "What to do"],
         [

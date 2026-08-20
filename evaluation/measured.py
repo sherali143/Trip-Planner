@@ -35,6 +35,8 @@ RESULTS_DIR = os.path.join(ROOT, "evaluation", "results")
 COMPARISON_PATH = os.path.join(RESULTS_DIR, "comparison_results.json")
 PROTOCOL_PATH = os.path.join(RESULTS_DIR, "protocol_conformance.json")
 BUDGET_GATE_PATH = os.path.join(RESULTS_DIR, "budget_gate.json")
+API_CALLS_PATH = os.path.join(RESULTS_DIR, "api_calls_per_arm.json")
+API_QUOTA_PATH = os.path.join(RESULTS_DIR, "api_quota.json")
 
 ARM_LABELS = {
     "A": "Single LLM",
@@ -63,6 +65,30 @@ def _load(path: str, what: str) -> Dict[str, Any]:
 def results() -> Dict[str, Any]:
     """The four-arm architecture comparison."""
     return _load(COMPARISON_PATH, "The architecture comparison")
+
+
+@functools.lru_cache(maxsize=None)
+def api_calls_per_arm() -> Dict[str, Any]:
+    """
+    How many calls to each API each architecture makes for one trip.
+
+    Measured by counting real calls through the recording layer with travel
+    responses replayed, so the count cost no quota. B and C vary between runs
+    because their agents decide when to call a tool; A and D do not.
+    """
+    return _load(API_CALLS_PATH, "Per-architecture API call counts")
+
+
+@functools.lru_cache(maxsize=None)
+def api_quota() -> Dict[str, Any]:
+    """
+    The last reading of how much monthly travel-API quota is left.
+
+    Written by evaluation/check_quota.py, which has to make one live call per API
+    because the balance is only reported in a response header. Carries the time it
+    was taken, since it is a snapshot and falls with every live run.
+    """
+    return _load(API_QUOTA_PATH, "The API quota reading")
 
 
 @functools.lru_cache(maxsize=None)

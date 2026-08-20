@@ -1,0 +1,42 @@
+{
+  "measured_at": "2026-08-20T22:01:54",
+  "note": "One run each, travel APIs in replay mode so nothing was spent. B and C are agent-driven and vary between runs; A and D do not.",
+  "arms": {
+    "A": {
+      "model_calls": 1,
+      "flights": 0,
+      "hotels": 0,
+      "serper": 0,
+      "total_http": 0,
+      "fixed": true,
+      "comment": "No tools at all, so it retrieves nothing and cites nothing."
+    },
+    "B": {
+      "model_calls": 24,
+      "flights": 1,
+      "hotels": 1,
+      "serper": 0,
+      "total_http": 2,
+      "fixed": false,
+      "comment": "Never called the attractions or restaurant tools at all, and twice produced malformed output its loop had to retry."
+    },
+    "C": {
+      "model_calls": 14,
+      "flights": 0,
+      "hotels": 2,
+      "serper": 2,
+      "total_http": 4,
+      "fixed": false,
+      "comment": "Never called the flight tool on this run."
+    },
+    "D": {
+      "model_calls": 2,
+      "flights": 1,
+      "hotels": 2,
+      "serper": 2,
+      "total_http": 5,
+      "fixed": true,
+      "comment": "Always exactly these five, because plain Python makes the calls rather than a model deciding to."
+    }
+  }
+}
