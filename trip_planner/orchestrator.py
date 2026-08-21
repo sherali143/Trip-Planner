@@ -35,9 +35,11 @@ from trip_planner.core.validators import (
 # Load environment variables from .env file
 load_dotenv(override=True)
 
-# Set up API keys (Gemini is set via GOOGLE_API_KEY in .env)
-os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY", "")
-os.environ["SERPER_API_KEY"] = os.getenv("SERPER_API_KEY", "")
+# Gemini's key is normalised across both of its names by trip_planner/__init__.py,
+# which runs on import of the package. The line that used to be here assigned
+# GOOGLE_API_KEY to itself — or to "" when only GEMINI_API_KEY was set, which is
+# the case it was presumably meant to handle.
+os.environ.setdefault("SERPER_API_KEY", os.getenv("SERPER_API_KEY", ""))
 
 
 class TripPlannerCrew:

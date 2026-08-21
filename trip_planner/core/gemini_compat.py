@@ -69,6 +69,27 @@ def model_string() -> str:
     """The LiteLLM model string to use, honouring GEMINI_MODEL if it is set."""
     return os.getenv("GEMINI_MODEL") or DEFAULT_MODEL
 
+
+def normalise_api_keys() -> bool:
+    """
+    Make Google's key available under both names it is known by.
+
+    LiteLLM reads GEMINI_API_KEY for gemini/ models; other code and most
+    documentation say GOOGLE_API_KEY. They are the same credential, and a .env in
+    the wild carries either one. Copying in only one direction meant a .env
+    holding just GEMINI_API_KEY was reported as having no key at all — a
+    confusing way to fail when the key is sitting right there.
+
+    Returns whether a key was found, so a caller can tell "normalised" from
+    "there was nothing to normalise".
+    """
+    key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or ""
+    if not key or key.startswith("your_"):
+        return False
+    os.environ["GOOGLE_API_KEY"] = key
+    os.environ["GEMINI_API_KEY"] = key
+    return True
+
 # The cue appended when a request would otherwise be refused. Deliberately
 # short and neutral: it must not steer the answer, only satisfy the API's
 # requirement that a request end with a user turn.

@@ -49,9 +49,10 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-# LiteLLM reads GEMINI_API_KEY for gemini/ models; .env may only set GOOGLE_API_KEY.
-if os.getenv("GOOGLE_API_KEY") and not os.getenv("GEMINI_API_KEY"):
-    os.environ["GEMINI_API_KEY"] = os.getenv("GOOGLE_API_KEY", "")
+# Google's key is valid under either name and .env carries either one. Importing
+# the package copies it to both; doing it here too would be a second copy of a
+# rule that already lives in trip_planner/core/gemini_compat.py.
+import trip_planner  # noqa: F401,E402  side effect: keys, logging, model shim
 
 SEP = "━" * 60
 
@@ -61,13 +62,22 @@ DEFAULT_REQUEST = ("Plan a trip to Paris for 5 days with $3000 budget. "
 
 def validate_api_keys() -> bool:
     """Name every missing key at once, rather than failing on the first."""
-    required = {
-        "GOOGLE_API_KEY": "Google Gemini (the AI agents)",
-        "SERPER_API_KEY": "Serper (attractions and restaurants)",
-        "RAPIDAPI_KEY": "RapidAPI (flights and hotels)",
-    }
-    missing = [f"  - {name}: {what}" for name, what in required.items()
-               if not os.getenv(name) or os.getenv(name, "").startswith("your_")]
+    # Each entry: the names that would satisfy it, and what it is for. Gemini
+    # accepts either of its two names, so requiring one specifically would reject
+    # a .env that is perfectly usable.
+    required = [
+        (("GOOGLE_API_KEY", "GEMINI_API_KEY"), "Google Gemini (the AI agents)"),
+        (("SERPER_API_KEY",), "Serper (attractions and restaurants)"),
+        (("RAPIDAPI_KEY",), "RapidAPI (flights and hotels)"),
+    ]
+
+    def present(name: str) -> bool:
+        value = os.getenv(name, "")
+        return bool(value) and not value.startswith("your_")
+
+    missing = [f"  - {' or '.join(names)}: {what}"
+               for names, what in required
+               if not any(present(name) for name in names)]
     if missing:
         print("\nMISSING API KEYS:\n" + "\n".join(missing))
         print("\nAdd them to .env and try again.")
