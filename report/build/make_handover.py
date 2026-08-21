@@ -286,6 +286,11 @@ FILE_PURPOSE = {
         "internet. Currently fails 6 of 9 checks, all reported in the dissertation.",
     "evaluation/exp_budget_gate.py":
         "Tests the budget rules across all 20 trips. Needs no internet.",
+    "evaluation/verify_approaches.py":
+        "Shows on one screen that every approach really exists: how many agents "
+        "each has, how many tools each agent holds, and how many thinking steps it "
+        "is allowed. Also calls the tool server for real. Costs nothing, so it is "
+        "safe to run in front of someone.",
     "evaluation/check_quota.py":
         "Reports how much monthly travel-API allowance is left. Costs 1 flight and 1 "
         "hotel call, because the balance only comes back inside a real reply.",

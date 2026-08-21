@@ -52,6 +52,7 @@ multi-agent, tuned multi-agent, direct execution — rather than four rivals.
 | `distilled_tools.py` | Compact tool wrappers used by arm C |
 | `run_comparison.py` | Runs the arms, aggregates, checkpoints, writes `results/` |
 | `measured.py` | The single accessor every figure, chapter and document reads results through |
+| `verify_approaches.py` | Prints what every approach is actually made of — agents, tools per agent, loop caps — plus a live round trip to the MCP server and the A2A card registry. Costs nothing: building an agent does not call the model. |
 | `check_quota.py` | Reports how much monthly travel-API quota is left. **Costs 1 flight and 1 hotel call** — the balance is only returned in a response header, so there is no free way to ask. Writes `results/api_quota.json`. |
 
 ## Running it

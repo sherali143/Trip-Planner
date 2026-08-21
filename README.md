@@ -167,6 +167,7 @@ and the stored file, so no key material reaches disk.
 | `python demos/compare_all_approaches.py` | All four side by side | free |
 | `python demos/approach_d_three_agent_direct.py` | One approach in detail (also `_a_`, `_b_`, `_c_`) | free |
 | `python -m pytest` | The test suite | free |
+| `python -m evaluation.verify_approaches` | Prove every approach, the MCP server and the A2A layer are wired up | free |
 | `python -m evaluation.exp_protocol` | Protocol conformance audit | free |
 | `python -m evaluation.exp_budget_gate` | Budget gate, 20 scenarios | free |
 | `python report/build/make_diagrams.py` | 8 diagrams at 300 dpi, validated | free |
