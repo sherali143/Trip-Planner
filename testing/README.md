@@ -1,7 +1,7 @@
 # Tests
 
 ```bash
-python -m pytest -q        # 180 tests, from the project root
+python -m pytest -q        # 210 tests, from the project root
 ```
 
 No API keys required and no network access — every test here is pure logic.
@@ -10,12 +10,14 @@ No API keys required and no network access — every test here is pure logic.
 
 | File | Tests | Covers |
 |---|---|---|
-| `test_budget_allocation.py` | 40 | Scenario-aware budget splits; parsing whatever the user types |
+| `test_calculator.py` | 46 | The safe AST calculator, including rejection of malicious input |
+| `test_budget_allocation.py` | 44 | Scenario-aware budget splits; parsing whatever the user types |
 | `test_trip_cost.py` | 36 | Cost estimation, feasibility verdicts, edge cases |
-| `test_calculator.py` | 26 | The safe AST calculator, including rejection of malicious input |
 | `test_itinerary_validator.py` | 20 | Day-count validation on generated itineraries |
+| `test_a2a_protocol.py` | 19 | Message serialisation, dispatch and permission refusal. Covers the slice of the protocol library the shipped path records but never dispatches. |
+| `test_documentation_accuracy.py` | 18 | That the READMEs still tell the truth about the code |
 | `test_budget_validation.py` | 16 | Budget parsing and breakdown |
-| `test_documentation_accuracy.py` | 11 | That the READMEs still tell the truth about the code |
+| `test_extraction_parsing.py` | 11 | That the extractor's output stays readable to everything downstream. Written after a silent bug turned the budget feasibility check off entirely. |
 
 ## What is deliberately not here
 

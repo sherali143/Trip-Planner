@@ -13,7 +13,48 @@ first will calibrate on them.
 from __future__ import annotations
 
 from evaluation import measured
-from report.build.common import Report, val
+from report.build.common import BuildError, Report, val
+
+# The two arms this chapter's headline comparison is between.
+_TUNED, _DIRECT = "C", "D"
+
+
+def _require_separation(metric: str, claim: str) -> None:
+    """
+    Fail the build if this chapter claims two intervals are separated and they
+    are not.
+
+    A qualitative claim is as capable of going stale as a number, and the
+    perturbation check cannot catch it: it verifies that values move when the data
+    moves, not that a sentence about those values is still true. So the claim is
+    checked against the data it describes.
+
+    Deliberately not self-rewording. If the tuned and direct arms stop separating
+    on cost, the chapter's argument has changed and needs a person to rewrite it,
+    not a builder to quietly swap "do not overlap" for "overlap".
+    """
+    if measured.intervals_overlap(_TUNED, _DIRECT, metric):
+        a = measured.spread(_TUNED, metric)
+        b = measured.spread(_DIRECT, metric)
+        raise BuildError(
+            f"{claim} says the {metric} intervals do not overlap, but they now do: "
+            f"arm {_TUNED} [{a['ci95_low']:.4f}, {a['ci95_high']:.4f}] against arm "
+            f"{_DIRECT} [{b['ci95_low']:.4f}, {b['ci95_high']:.4f}]. The finding has "
+            f"changed — rewrite the argument in ch6_evaluation.py rather than "
+            f"loosening this check.")
+
+
+def _require_overlap(metric: str, claim: str) -> None:
+    """The mirror of _require_separation, for a claim that two intervals DO overlap."""
+    if not measured.intervals_overlap(_TUNED, _DIRECT, metric):
+        a = measured.spread(_TUNED, metric)
+        b = measured.spread(_DIRECT, metric)
+        raise BuildError(
+            f"{claim} says the {metric} intervals overlap, but they no longer do: "
+            f"arm {_TUNED} [{a['ci95_low']:.4f}, {a['ci95_high']:.4f}] against arm "
+            f"{_DIRECT} [{b['ci95_low']:.4f}, {b['ci95_high']:.4f}]. That would be a "
+            f"stronger result than this dissertation claims, and it must be argued "
+            f"deliberately rather than appearing by accident.")
 
 
 def build(report: Report) -> None:
@@ -122,6 +163,16 @@ def build(report: Report) -> None:
     lat_c, lat_d = measured.spread("C", "latency"), measured.spread("D", "latency")
     gnd_c, gnd_d = (measured.spread("C", "prices_grounded_pct"),
                     measured.spread("D", "prices_grounded_pct"))
+    # The words "do not overlap" used to be typed here while only the bounds came
+    # from the data. If a re-measurement made the cost intervals overlap, the
+    # chapter would have printed overlapping numbers underneath a sentence saying
+    # they do not. The relationship is now read from the data, and a flip stops the
+    # build: it does not need rewording, it needs the argument rewritten, and that
+    # is a decision for a person.
+    _require_separation("cost_usd", "Section 6.4's cost claim")
+    _require_separation("latency", "Section 6.4's latency claim")
+    _require_overlap("prices_grounded_pct", "Section 6.4's groundedness claim")
+
     report.p(f"""
         With repeats, those percentages can be tested against their own noise
         instead of being asserted, and the answer separates cleanly into two kinds.

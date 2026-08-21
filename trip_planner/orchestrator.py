@@ -379,7 +379,7 @@ class TripPlannerCrew:
     # flagged in the terminal.
     # ==================================================================
 
-    def plan_trip(self, user_input: str) -> str:
+    def plan_trip(self, user_input: str, confirm_allocation=None) -> str:
         """
         Plan a trip, gathering the details through conversation first.
 
@@ -394,10 +394,11 @@ class TripPlannerCrew:
 
         print("\nPHASE 1: Starting conversation with Travel Assistant...\n")
         transcript = self.have_conversation(user_input, conversation_id)
-        return self._plan(transcript, conversation_id)
+        return self._plan(transcript, conversation_id, confirm_allocation)
 
     def plan_trip_from_transcript(self, conversation_transcript: str,
-                                  conversation_id: str) -> str:
+                                  conversation_id: str,
+                                  confirm_allocation=None) -> str:
         """
         Plan a trip from an already-collected transcript.
 
@@ -406,16 +407,26 @@ class TripPlannerCrew:
         """
         self.a2a_protocol.start_conversation(
             conversation_id, {"transcript": conversation_transcript})
-        return self._plan(conversation_transcript, conversation_id)
+        return self._plan(conversation_transcript, conversation_id,
+                          confirm_allocation)
 
     # ------------------------------------------------------------------
-    def _plan(self, transcript: str, conversation_id: str) -> str:
+    def _plan(self, transcript: str, conversation_id: str,
+              confirm_allocation=None) -> str:
         """
         The workflow both entry points run: understand, retrieve, assemble.
 
         Retrieval happens in plain Python between two model steps. That is the
         design decision this project tests — a model is used where the step
         needs judgement, and not where it does not.
+
+        `confirm_allocation` is an optional callback taking the extracted
+        preferences and returning a budget split to use instead of the extracted
+        one, or None to keep it. It exists because the command line can ask the
+        traveller to approve the split and the web form cannot, and the
+        alternative was a second copy of this whole workflow in run_cli.py —
+        which is what used to be there, and which had already drifted: the
+        command line skipped the A2A layer and the itinerary validation entirely.
         """
         extraction_output, extraction_task = self._extract_preferences(
             transcript, conversation_id)
@@ -432,7 +443,12 @@ class TripPlannerCrew:
         print(f"\n[Budget] {verdict.verdict.replace('_', ' ').title()}: "
               f"{verdict.message}\n")
 
-        self._retrieve_and_announce(extraction_output, conversation_id)
+        allocation = None
+        if confirm_allocation is not None:
+            allocation = confirm_allocation(extraction_output)
+
+        self._retrieve_and_announce(extraction_output, conversation_id,
+                                    allocation=allocation)
 
         itinerary = self._assemble_itinerary(extraction_task, conversation_id)
         itinerary = self._validate_and_enhance_itinerary(itinerary, extraction_output)
@@ -469,13 +485,42 @@ class TripPlannerCrew:
             process=Process.sequential,
             verbose=True,
         )
-        extraction_output = str(self._kickoff_with_retry(crew))
+        extraction_output = self._as_json_text(self._kickoff_with_retry(crew))
         self._extraction_output = extraction_output
         return extraction_output, extraction_task
 
+    @staticmethod
+    def _as_json_text(crew_result) -> str:
+        """
+        Get the crew's answer as JSON TEXT, not as a Python repr.
+
+        str() on a CrewAI result is not safe here. When the framework manages to
+        parse the model's answer it stores a dict and str() then returns a Python
+        repr — {'total_budget': 800.0} — with single quotes. Every downstream
+        regex looks for "total_budget" with double quotes, so all of them missed,
+        and the failure was silent and intermittent: it only appeared when the
+        framework SUCCEEDED at parsing, which is the opposite of what anyone
+        debugging would expect.
+
+        What that cost: _parse_prefs returned an empty dict, so _assess_budget saw
+        no destination and skipped the feasibility check altogether. On the run
+        that exposed this the extractor had itself flagged BUDGET_TOO_LOW and
+        recommended a minimum of $1,000 against a stated $800 — and the trip was
+        planned anyway, because the warning was in a dict nobody could read.
+        """
+        import json
+
+        payload = getattr(crew_result, "json_dict", None)
+        if isinstance(payload, dict) and payload:
+            return json.dumps(payload)
+        raw = getattr(crew_result, "raw", None)
+        if isinstance(raw, str) and raw.strip():
+            return raw
+        return str(crew_result)
+
     # ------------------------------------------------------------------
     @staticmethod
-    def _search_parameters(extraction_output: str) -> dict:
+    def _search_parameters(extraction_output: str, allocation: dict = None) -> dict:
         """
         Pull the search parameters out of the extractor's JSON.
 
@@ -499,6 +544,11 @@ class TripPlannerCrew:
         total = prefs.get("total_budget", 0) or 0
         split = prefs.get("budget_breakdown") if isinstance(
             prefs.get("budget_breakdown"), dict) else {}
+        # An allocation the traveller approved outranks one the extractor guessed.
+        # This is how the command line's interactive budget split reaches the
+        # searches without a second copy of the workflow existing to carry it.
+        if isinstance(allocation, dict) and allocation:
+            split = {k: total * v if v <= 1 else v for k, v in allocation.items()}
         nights = prefs.get("trip_duration", 5) or 5
 
         accommodation = split.get("accommodation") or total * LEGACY_ALLOCATION["accommodation"]
@@ -519,7 +569,8 @@ class TripPlannerCrew:
 
     # ------------------------------------------------------------------
     def _retrieve_and_announce(self, extraction_output: str,
-                               conversation_id: str) -> None:
+                               conversation_id: str,
+                               allocation: dict = None) -> None:
         """
         Fetch flights, hotels, attractions and restaurants, announcing each
         result over the A2A protocol.
@@ -534,7 +585,7 @@ class TripPlannerCrew:
                                                     search_restaurants)
         from trip_planner.tools.travel_apis import _call_fly_scraper_api
 
-        p = self._search_parameters(extraction_output)
+        p = self._search_parameters(extraction_output, allocation)
 
         self._send_a2a_message(
             "preferences_extractor", "itinerary_coordinator",

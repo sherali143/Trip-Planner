@@ -246,43 +246,76 @@ def test_the_test_count_in_docs_matches_what_pytest_collects():
     """
     A documented test count must match the suite.
 
-    testing/README.md said "149 tests" long after the suite had grown to 174; a
+    testing/README.md said "149 tests" long after the suite had grown past 170; a
     reader who runs the command sees a different number and reasonably wonders
     what else is out of date. The dissertation gets this right by running pytest
     at build time; a README cannot, so it is pinned here instead.
 
-    Counted by parsing, not by running pytest inside pytest.
+    Counted by asking pytest to COLLECT, not by parsing the files. An earlier
+    version of this test walked the AST and multiplied out parametrize arguments,
+    which worked until a parametrize list was computed at runtime
+    (`sorted(AGENT_REGISTRY)`) — it counted that as one case instead of eight and
+    then accused the README of being wrong by seven. Collection is the only source
+    that agrees with what the reader will see.
     """
-    import ast
+    import subprocess
 
-    collected = 0
-    for path in sorted((ROOT / "testing").glob("test_*.py")):
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        for node in ast.walk(tree):
-            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                continue
-            if not node.name.startswith("test"):
-                continue
-            # A parametrised test contributes one case per argument set.
-            cases = 1
-            for dec in node.decorator_list:
-                if not isinstance(dec, ast.Call):
-                    continue
-                target = dec.func
-                name = getattr(target, "attr", getattr(target, "id", ""))
-                if name != "parametrize" or len(dec.args) < 2:
-                    continue
-                values = dec.args[1]
-                if isinstance(values, (ast.List, ast.Tuple)):
-                    cases *= len(values.elts)
-            collected += cases
+    if os.environ.get("TRIP_PLANNER_COLLECTING"):
+        pytest.skip("already inside a collection run")
+
+    env = dict(os.environ, TRIP_PLANNER_COLLECTING="1")
+    proc = subprocess.run(
+        [sys.executable, "-m", "pytest", "-q", "--collect-only"],
+        cwd=ROOT, capture_output=True, text=True, timeout=600, env=env)
+    match = re.search(r"(\d+) tests? collected", proc.stdout)
+    assert match, ("could not read a collection count from pytest:\n"
+                   + proc.stdout[-800:])
+    collected = int(match.group(1))
 
     quoted = {int(n) for n in re.findall(r"(\d+) tests", ALL_TEXT)}
     assert quoted, "no document states a test count"
     assert quoted == {collected}, (
-        f"docs claim {sorted(quoted)} tests; the suite defines {collected}. "
+        f"docs claim {sorted(quoted)} tests; pytest collects {collected}. "
         f"Update the README, or the number is the first thing a reader "
         f"finds wrong.")
+
+
+def test_run_bat_menu_is_internally_consistent_and_matches_the_docs():
+    """
+    Every menu option run.bat offers must dispatch somewhere, and the docs must
+    not name an option that does not exist.
+
+    Inserting one option into the middle of the menu shifts every number after it.
+    That happened when the project-overview option was added: run.bat was updated,
+    and three documents went on telling the reader that the live-trip option was
+    number 10 when it had become 11. A reader following those instructions runs
+    the wrong thing.
+    """
+    run_bat = (ROOT / "run.bat").read_text(encoding="utf-8", errors="replace")
+
+    dispatch = dict(re.findall(r'if "%choice%"=="(\d+)"\s+goto\s+(\w+)', run_bat))
+    assert dispatch, "run.bat has no menu dispatch table"
+
+    labels = set(re.findall(r"^:(\w+)", run_bat, re.M))
+    dangling = {n: t for n, t in dispatch.items() if t not in labels}
+    assert not dangling, f"menu options dispatching to missing labels: {dangling}"
+
+    numbers = sorted(int(n) for n in dispatch)
+    assert numbers == list(range(1, len(numbers) + 1)),         f"menu options are not a contiguous run from 1: {numbers}"
+
+    highest = numbers[-1]
+    prompt = re.search(r"Enter a number \(1-(\d+)\)", run_bat)
+    assert prompt, "run.bat does not prompt for a numbered choice"
+    assert int(prompt.group(1)) == highest, (
+        f"run.bat prompts for 1-{prompt.group(1)} but dispatches up to {highest}")
+
+    # No document may point at an option the menu does not have.
+    quoted = {int(n) for n in re.findall(r"option[s]? (\d+)", ALL_TEXT)}
+    quoted |= {int(n) for n in re.findall(r"options (\d+) to \d+", ALL_TEXT)}
+    quoted |= {int(n) for n in re.findall(r"options \d+ to (\d+)", ALL_TEXT)}
+    beyond = sorted(n for n in quoted if n > highest)
+    assert not beyond, (
+        f"docs name menu option(s) {beyond}, but run.bat only goes up to {highest}")
 
 
 def test_no_module_defaults_to_the_withdrawn_model():

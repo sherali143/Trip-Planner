@@ -1,395 +1,184 @@
 """
-AI Trip Planner — Clean CLI
-Usage: python run_cli.py
+WHAT THIS FILE DOES
+===================
+Plans a trip from the command line. Entry point:
+
+    python run_cli.py
+
+It does three things and delegates everything else:
+
+  1. checks the API keys are present and says which are missing,
+  2. asks the traveller to approve the budget split before any money-shaped
+     search is made,
+  3. hands the request to trip_planner/orchestrator.py.
+
+Why it is this short
+--------------------
+It used to be 395 lines that re-implemented the whole workflow: its own
+extraction crew, its own four retrieval calls, its own coordination crew. Two
+copies of the shipped path existed, and they had already drifted apart — the
+command line never sent a single A2A message and never ran the itinerary day-count
+validation, so a marker running this file saw a different system from the one the
+dissertation describes.
+
+The interactive budget split is the one thing that genuinely belongs here, because
+a web form cannot hold a conversation. The orchestrator takes it as a callback.
 """
 
-import os, sys, json, re, time
+import os
+import sys
+
 sys.stdout.reconfigure(encoding="utf-8")
 
-# Suppress noisy logs
+# Keep the console readable. The AI libraries log at INFO by default, and one of
+# them prints the request URL — which carries the API key as a parameter.
 os.environ["CREWAI_TRACING_ENABLED"] = "false"
 os.environ["LITELLM_LOG"] = "ERROR"
+
 import logging
-logging.getLogger("LiteLLM").setLevel(logging.ERROR)
-logging.getLogger("litellm").setLevel(logging.ERROR)
-logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("trip_planner").setLevel(logging.ERROR)
-logging.getLogger("opentelemetry").setLevel(logging.ERROR)
-logging.getLogger("crewai").setLevel(logging.ERROR)
+
+for noisy in ("LiteLLM", "litellm", "httpx", "trip_planner", "opentelemetry",
+              "crewai"):
+    logging.getLogger(noisy).setLevel(logging.ERROR)
+
 import litellm
+
 litellm.suppress_debug_info = True
-litellm.set_verbose = False
 
 from dotenv import load_dotenv
-from textwrap import dedent
-from crewai import Agent, Task, Crew, Process
-from trip_planner.core.gemini_compat import model_string
 
 load_dotenv(override=True)
 
-# Ensure GEMINI_API_KEY is always set (LiteLLM needs it for gemini/ models)
+# LiteLLM reads GEMINI_API_KEY for gemini/ models; .env may only set GOOGLE_API_KEY.
 if os.getenv("GOOGLE_API_KEY") and not os.getenv("GEMINI_API_KEY"):
     os.environ["GEMINI_API_KEY"] = os.getenv("GOOGLE_API_KEY", "")
 
 SEP = "━" * 60
 
+DEFAULT_REQUEST = ("Plan a trip to Paris for 5 days with $3000 budget. "
+                   "Interests: food, culture.")
 
-def _choose_budget_allocation(total_budget, duration, travelers, style, origin, destination):
+
+def validate_api_keys() -> bool:
+    """Name every missing key at once, rather than failing on the first."""
+    required = {
+        "GOOGLE_API_KEY": "Google Gemini (the AI agents)",
+        "SERPER_API_KEY": "Serper (attractions and restaurants)",
+        "RAPIDAPI_KEY": "RapidAPI (flights and hotels)",
+    }
+    missing = [f"  - {name}: {what}" for name, what in required.items()
+               if not os.getenv(name) or os.getenv(name, "").startswith("your_")]
+    if missing:
+        print("\nMISSING API KEYS:\n" + "\n".join(missing))
+        print("\nAdd them to .env and try again.")
+        print("Nothing here needs keys: run.bat options 1 to 10.\n")
+        return False
+    return True
+
+
+def _confirm_allocation(extraction_output: str):
     """
-    Show a suggested budget split, explain it, and let the user change it.
+    Show the suggested budget split, explain it, and accept any change.
 
-    Asking "what percentage for flights?" cold is not a fair question — most
-    people have no basis for answering it. So the system proposes a split
-    derived from the trip's own shape (distance, nights, party size, style),
-    explains what each category pays for and why those numbers were chosen, and
-    then accepts any change. See trip_planner/core/budget.py for the evidence base.
+    Passed to the orchestrator as a callback. Asking "what percentage for
+    flights?" cold is not a fair question — most people have no basis for
+    answering it. So the split is proposed from the trip's own shape (distance,
+    nights, party size, style), explained, and then whatever the traveller says
+    is used. See trip_planner/core/budget.py for the evidence behind the default.
+
+    Returns absolute amounts, or None to keep what the extractor produced.
     """
     from trip_planner.core.budget import build_allocation
+    from trip_planner.orchestrator import TripPlannerCrew
 
-    allocation = build_allocation(
-        total_budget=total_budget, trip_duration=duration, num_travelers=travelers,
-        travel_style=style, origin=origin, destination=destination,
+    prefs = TripPlannerCrew._parse_prefs(extraction_output)
+    try:
+        total = float(prefs.get("total_budget", 0) or 0)
+    except (TypeError, ValueError):
+        total = 0.0
+    if total <= 0:
+        # No budget to divide. Say so: silently skipping the one interactive step
+        # this file exists for looks identical to the step being broken, and the
+        # difference matters when someone is demonstrating the feature.
+        print("\n  (No total budget was extracted, so there is nothing to split.")
+        print("   Continuing with the search defaults.)\n")
+        return None
+
+    travelers = max(1, int(prefs.get("num_adults", 1) or 1)
+                    + int(prefs.get("num_children", 0) or 0))
+    kwargs = dict(
+        total_budget=total,
+        trip_duration=int(prefs.get("trip_duration", 5) or 5),
+        num_travelers=travelers,
+        travel_style=prefs.get("travel_style", "") or "",
+        origin=prefs.get("origin", "") or "",
+        destination=prefs.get("destination", "") or "",
     )
+    allocation = build_allocation(**kwargs)
 
-    print(f"\n{SEP}")
-    print("  ▶ BUDGET ALLOCATION")
-    print(f"{SEP}\n")
+    print(f"\n{SEP}\n  BUDGET ALLOCATION\n{SEP}\n")
     print(allocation.explain())
-
     print("\n  Press Enter to accept, or type a different split.")
-    print("  Examples:  40/30/20/10      (flights/accommodation/activities/meals)")
+    print("  Examples:  40/30/20/10   (flights/accommodation/activities/meals)")
     print("             hotel 50, flights 25")
     print("             flights 600, hotel 400")
     try:
         answer = input("\n  Your choice: ").strip()
     except (EOFError, KeyboardInterrupt):
-        # Non-interactive run (piped input, CI) — keep the suggestion.
+        # Piped input or a non-interactive shell. Keep the suggestion rather
+        # than crashing, so the CLI still works when scripted.
         answer = ""
 
     if not answer:
         print("\n  Using the suggested split.\n")
-        return allocation
+        return allocation.as_dict()
 
-    revised = build_allocation(
-        total_budget=total_budget, trip_duration=duration, num_travelers=travelers,
-        travel_style=style, origin=origin, destination=destination,
-        user_input=answer,
-    )
+    revised = build_allocation(user_input=answer, **kwargs)
     if revised.source != "user":
-        # Input could not be read; build_allocation already explains why.
-        print("\n  Keeping the suggested split.\n")
+        # The input could not be read; build_allocation says why.
+        print("\n  Keeping the suggested split.")
         for note in revised.reasons:
             print(f"    {note}")
-        return revised
+        print()
+        return revised.as_dict()
 
     print()
     print(revised.explain())
     if revised.warnings:
         print("\n  Your split is being used as entered. The notes above are")
         print("  warnings, not corrections.\n")
-    return revised
+    return revised.as_dict()
 
 
-def validate_api_keys():
-    required = {
-        "GOOGLE_API_KEY": "Google Gemini (AI agents)",
-        "SERPER_API_KEY": "Serper (web search)",
-        "RAPIDAPI_KEY": "RapidAPI (flights + hotels)",
-    }
-    missing = [f"  - {k} ({v})" for k, v in required.items() if not os.getenv(k)]
-    if missing:
-        print("\n❌ MISSING API KEYS:\n" + "\n".join(missing))
-        print("\nAdd them to .env file and try again.\n")
-        return False
-    return True
-
-
-def main():
+def main() -> int:
     print(SEP)
-    print("  AI TRIP PLANNER — 3-Agent + Direct API Architecture")
+    print("  AI TRIP PLANNER  -  three agents, direct retrieval")
     print(SEP)
 
     if not validate_api_keys():
-        return
+        return 1
 
-    # Get user input
-    print("\n📝 Describe your ideal trip:")
-    print("   (e.g., 'Plan a trip to Paris for 7 days with $3000 budget')\n")
-    user_input = input("You: ").strip()
-    if not user_input:
-        user_input = "Plan a trip to Paris for 5 days with $3000 budget. Interests: food, culture."
-        print(f"  (using default: {user_input})\n")
-
-    model = model_string()
-    total_llm_calls = 0
-    global_start = time.time()
-
-    # ============================================================
-    # PHASE 1: Interactive Conversation (clean Q&A loop)
-    # ============================================================
-    print(f"\n{SEP}")
-    print("  ▶ PHASE 1: COLLECTING TRIP INFORMATION")
-    print(f"{SEP}")
-
-    from litellm import completion
-
-    conversation = [
-        {"role": "system", "content": dedent("""
-            You are a travel assistant. Ask the user ONE question at a time.
-            Questions in order: destination, travelers, origin city, dates (departure+return),
-            total budget USD, interests, travel style, special requirements.
-
-            After ALL 8 questions are answered, say CONVERSATION_COMPLETE.
-        """)},
-        {"role": "user", "content": user_input}
-    ]
-
-    transcript = f"User: {user_input}\n\n"
-    round_num = 0
-
-    while True:
-        round_num += 1
-        resp = completion(model=model, messages=conversation, temperature=0.3)
-        total_llm_calls += 1
-        msg = resp.choices[0].message.content
-
-        if "CONVERSATION_COMPLETE" in msg:
-            clean = msg.replace("CONVERSATION_COMPLETE", "").strip()
-            if clean:
-                print(f"\n  Agent: {clean}\n")
-                transcript += f"Agent: {clean}\n\n"
-            break
-
-        print(f"\n  Agent: {msg}")
-        transcript += f"Agent: {msg}\n\n"
-        conversation.append({"role": "assistant", "content": msg})
-
-        answer = input("\n  You: ").strip()
-        if not answer:
-            answer = "I don't have more details. Proceed with what you have."
-        transcript += f"User: {answer}\n\n"
-        conversation.append({"role": "user", "content": answer})
-
-        if round_num > 10:
-            break
-
-    print(f"\n  ✅ All information collected\n")
-
-    # ============================================================
-    # PHASE 2: Extract Preferences
-    # ============================================================
-    print(f"{SEP}")
-    print("  ▶ PHASE 2: EXTRACTING PREFERENCES")
-    print(f"{SEP}")
-
-    from trip_planner.agents import TripPlannerAgents
-    agents = TripPlannerAgents()
-
-    extract_task = Task(
-        description=dedent(f"""
-            Extract travel preferences from this conversation into JSON:
-            {transcript}
-
-            Return JSON: origin, destination, departure_date, return_date,
-            trip_duration, total_budget, num_adults, num_children,
-            interests[], travel_style, budget_breakdown.
-        """),
-        expected_output="JSON object",
-        agent=agents.preferences_extractor_agent()
-    )
-
-    extract_crew = Crew(
-        agents=[agents.preferences_extractor_agent()],
-        tasks=[extract_task],
-        process=Process.sequential,
-        verbose=False
-    )
-
-    extraction_result = str(extract_crew.kickoff())
-    total_llm_calls += 1
-
-    prefs = {}
+    print("\nDescribe your trip:")
+    print("   (for example: 'Plan a trip to Paris for 7 days with $3000')\n")
     try:
-        jm = re.search(r'\{.*"origin".*"destination".*\}', extraction_result, re.DOTALL)
-        if jm:
-            prefs = json.loads(jm.group(0))
-    except Exception:
-        pass
+        request = input("You: ").strip()
+    except (EOFError, KeyboardInterrupt):
+        request = ""
+    if not request:
+        request = DEFAULT_REQUEST
+        print(f"  (using the default: {request})\n")
 
-    print(f"\n  Origin:      {prefs.get('origin', '?')}")
-    print(f"  Destination: {prefs.get('destination', '?')}")
-    print(f"  Dates:       {prefs.get('departure_date', '?')} → {prefs.get('return_date', '?')}")
-    print(f"  Budget:      ${prefs.get('total_budget', 0)}")
-    print(f"  Interests:   {', '.join(prefs.get('interests', []))}")
-    print(f"  Style:       {prefs.get('travel_style', 'not specified')}")
-    print(f"  ✅ Extraction complete\n")
+    # Everything below this line lives in one place, shared with the web app.
+    from trip_planner.orchestrator import TripPlannerCrew
 
-    # ============================================================
-    # PHASE 3: Direct API Calls
-    # ============================================================
-    print(f"{SEP}")
-    print("  ▶ PHASE 3: FETCHING REAL-TIME DATA")
-    print(f"{SEP}")
+    crew = TripPlannerCrew()
+    itinerary = crew.plan_trip(request, confirm_allocation=_confirm_allocation)
 
-    origin = prefs.get("origin", "")
-    destination = prefs.get("destination", "")
-    dep_date = prefs.get("departure_date", "")
-    ret_date = prefs.get("return_date", "")
-    duration = prefs.get("trip_duration", 5)
-    adults = prefs.get("num_adults", 1)
-    budget = prefs.get("total_budget", 0)
-    interests = ", ".join(prefs.get("interests", [])) if isinstance(prefs.get("interests"), list) else str(prefs.get("interests", ""))
-
-    # ---- Budget allocation: suggest, explain, then let the user decide -------
-    # Previously this applied a fixed 35/35/20/10 with no explanation and no way
-    # to change it. The split is a user preference, not a system assumption.
-    allocation = _choose_budget_allocation(
-        total_budget=budget,
-        duration=duration,
-        travelers=adults + prefs.get("num_children", 0),
-        style=prefs.get("travel_style", "moderate"),
-        origin=origin,
-        destination=destination,
-    )
-    prefs["budget_breakdown"] = allocation.as_dict()
-
-    fb = allocation.amounts["flights"]
-    ab = allocation.amounts["accommodation"]
-    mb = allocation.amounts["meals"]
-
-    bpn = ab / duration if duration > 0 else ab
-    bpm = mb / (duration * 2) if duration > 0 else mb
-
-    api_errors = []
-    flights_data = hotels_data = attractions_data = restaurants_data = ""
-
-    from trip_planner.tools.travel_apis import _call_fly_scraper_api
-    from trip_planner.server.mcp_server import search_hotels_comprehensive, search_attractions, search_restaurants
-
-    if origin and destination and dep_date:
-        try:
-            flights_data = _call_fly_scraper_api(origin, destination, dep_date, ret_date, adults, fb)
-            print("  ✓ Flights: data retrieved")
-        except Exception as e:
-            api_errors.append(f"Flights: {e}")
-            print(f"  ⚠ Flights: {e}")
-
-    if destination and dep_date and ret_date:
-        try:
-            hotels_data = search_hotels_comprehensive(destination, dep_date, ret_date, bpn, adults, 1)
-            print("  ✓ Hotels: data retrieved")
-        except Exception as e:
-            api_errors.append(f"Hotels: {e}")
-            print(f"  ⚠ Hotels: {e}")
-
-    if destination and interests:
-        try:
-            attractions_data = search_attractions(destination, interests, duration)
-            print("  ✓ Attractions: data retrieved")
-        except Exception as e:
-            api_errors.append(f"Attractions: {e}")
-            print(f"  ⚠ Attractions: {e}")
-
-    if destination:
-        try:
-            restaurants_data = search_restaurants(destination, interests, bpm)
-            print("  ✓ Restaurants: data retrieved")
-        except Exception as e:
-            api_errors.append(f"Restaurants: {e}")
-            print(f"  ⚠ Restaurants: {e}")
-
-    if api_errors:
-        print(f"\n  ⚠ {len(api_errors)} API error(s) — coordinator will work with available data")
-    else:
-        print(f"  ✅ All data retrieved successfully")
-
-    # ============================================================
-    # PHASE 4: Coordinator assembles itinerary
-    # ============================================================
-    print(f"\n{SEP}")
-    print("  ▶ PHASE 4: ASSEMBLING ITINERARY")
-    print(f"{SEP}")
-
-    data_block = f"""
-PREFERENCES:
-{json.dumps(prefs, indent=2)}
-
-FLIGHTS:
-{str(flights_data)[:3000]}
-
-HOTELS:
-{str(hotels_data)[:3000]}
-
-ATTRACTIONS:
-{str(attractions_data)[:3000]}
-
-RESTAURANTS:
-{str(restaurants_data)[:3000]}
-"""
-
-    coord_agent = Agent(
-        role="Itinerary Coordinator",
-        goal="Create day-by-day itinerary from provided data only",
-        backstory="Synthesize flight, hotel, and attraction data into a complete day-by-day itinerary.",
-        verbose=False,
-        allow_delegation=False,
-        llm=model,
-        tools=[],
-        max_iter=2,
-        max_rpm=5
-    )
-
-    coord_task = Task(
-        description=dedent(f"""
-            Create a complete day-by-day itinerary using ONLY the data below.
-            Do NOT search for additional information.
-
-            {data_block}
-
-            Requirements:
-            - Day-by-day schedule for each day of the trip
-            - Flight recommendations from flights data
-            - Hotel recommendations from hotels data
-            - Activities from attractions data
-            - Restaurants from restaurants data
-            - Budget breakdown
-            - Travel tips
-        """),
-        expected_output="Complete day-by-day itinerary",
-        agent=coord_agent
-    )
-
-    coord_crew = Crew(
-        agents=[coord_agent],
-        tasks=[coord_task],
-        process=Process.sequential,
-        verbose=False
-    )
-
-    print("  Itinerary Coordinator working...")
-    result = str(coord_crew.kickoff())
-    total_llm_calls += 1
-    total_time = time.time() - global_start
-
-    # ============================================================
-    # OUTPUT
-    # ============================================================
-    print(f"\n{SEP}")
-    print("  📋 YOUR COMPLETE TRAVEL ITINERARY")
-    print(f"{SEP}\n")
-    print(result)
-
-    print(f"\n{SEP}")
-    print("  SUMMARY")
-    print(f"{SEP}")
-    print(f"  LLM calls:     {total_llm_calls}")
-    print(f"  Total time:    {total_time:.1f}s")
-    print(f"  API errors:    {len(api_errors)}")
-    print(f"  Architecture:  3-Agent + Direct API")
-    for e in api_errors:
-        print(f"    ⚠ {e}")
-    print(f"{SEP}\n")
+    print(f"\n{SEP}\n  YOUR ITINERARY\n{SEP}\n")
+    print(itinerary)
+    print(f"\n{SEP}\n")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

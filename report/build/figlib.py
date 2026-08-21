@@ -116,14 +116,6 @@ class Box:
     def top(self) -> float:
         return self.y + self.h
 
-    def edge_point(self, side: str) -> Tuple[float, float]:
-        return {
-            "top": (self.cx, self.top),
-            "bottom": (self.cx, self.y),
-            "left": (self.x, self.cy),
-            "right": (self.right, self.cy),
-        }[side]
-
 
 @dataclass
 class Canvas:
