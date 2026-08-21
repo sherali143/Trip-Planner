@@ -179,7 +179,10 @@ and the stored file, so no key material reaches disk.
 | `python run_cli.py` | Plan a trip in the terminal | API keys |
 | `python run_web.py` | Plan a trip in the browser | API keys |
 
-Add `--live` to any demo to execute it for real instead of replaying.
+Add `--live` to any demo to run the **model** for real. Travel responses still
+replay from disk, so no flight or hotel quota is spent — the screen says so.
+Add `--live-apis` as well to call the travel APIs for real, which **does** spend
+the monthly allowance.
 
 ---
 

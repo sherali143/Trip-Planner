@@ -26,7 +26,8 @@ Add `--no-pause` to run straight through without the "press Enter" stops.
 | Mode | Command | What happens | Costs |
 |---|---|---|---|
 | **Playback** | *(default)* | Replays the measurement recorded in `evaluation/results/` — the same timings, the same cost, the same itinerary text that run really produced | Nothing at all |
-| **Live** | `--live` | Executes the architecture now, through the same code path the evaluation uses | Model quota, and travel-API quota unless `TRIP_PLANNER_API_MODE=replay` |
+| **Live** | `--live` | Executes the architecture now, through the same code path the evaluation uses. The model runs for real; travel responses replay from disk | Model quota only |
+| **Fully live** | `--live --live-apis` | As above, but the travel APIs are called for real too | Model quota **and** monthly flight/hotel quota |
 
 Playback is the default because it always works. It is labelled as playback on
 screen every time, with the date of the run it is replaying and the model that

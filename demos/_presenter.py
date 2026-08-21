@@ -270,5 +270,36 @@ def present(approach: Approach, argv: Optional[List[str]] = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     pause = "--no-pause" not in argv
     if "--live" in argv:
+        _protect_travel_quota(argv)
         return _live(approach, pause)
     return _playback(approach, pause)
+
+
+def _protect_travel_quota(argv: List[str]) -> None:
+    """
+    Run the MODEL live but replay the travel responses, unless told otherwise.
+
+    `--live` means "execute this architecture for real", and what a demonstration
+    needs from that is a real model doing real reasoning. It does not need to buy
+    flight data it already has on disk.
+
+    Without this the API layer defaults to `record`, which is cache-first but
+    calls the live API on a MISS. A miss is easy to cause by accident: the live
+    extractor may format a date or an airport slightly differently from the
+    recorded run, and that costs a request from an allowance of thirty a month
+    that does not refill before this project is submitted. Losing a month's quota
+    to a rehearsal is not a risk worth carrying for a demonstration.
+
+    `--live-apis` opts back in, and says so on screen.
+    """
+    if "--live-apis" in argv:
+        os.environ.pop("TRIP_PLANNER_API_MODE", None)   # let the default apply
+        print("  --live-apis: travel APIs will be called for real. This SPENDS")
+        print("               monthly flight and hotel quota.\n")
+        return
+    # An explicit setting in the environment is the operator's decision; honour it.
+    if os.environ.get("TRIP_PLANNER_API_MODE"):
+        return
+    os.environ["TRIP_PLANNER_API_MODE"] = "replay"
+    print("  The model runs live. Travel responses replay from disk, so no")
+    print("  flight or hotel quota is spent. Add --live-apis to change that.\n")
