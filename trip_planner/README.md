@@ -30,7 +30,8 @@ fare for a known route on a known date does not.
 | `server/` | The MCP server: 12 schema-validated tools over JSON-RPC and stdio. |
 | `tools/` | Everything that calls an external service — see below. |
 | `core/` | Infrastructure — see below. |
-| `ui/app.py` | The Streamlit web interface: one grouped form, live per-step progress, and the checks applied to the plan shown as badges. |
+| `ui/app.py` | The Streamlit web interface: one grouped form, live per-step progress, and the finished plan split into tabs. |
+| `ui/plan_layout.py` | Reads a finished plan's own section and day structure, so the page can show it in parts. No Streamlit import — it lived in `app.py`, where importing it ran the whole page. |
 
 ### `tools/` — three files, three jobs
 
