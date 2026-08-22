@@ -21,8 +21,22 @@ lifecycle (S3.5) and the "returns the top three choices, not the 12 kB API
 response" behaviour promised for the specialist agents (S3.4) — neither of
 which existed in the implementation.
 
-The underlying data path is unchanged from the naive arm, so the comparison
-isolates prompt economics rather than data quality.
+The DATA is unchanged from the naive arm: these wrappers call the same server
+functions, hitting the same APIs through the same recording layer, so the
+comparison isolates prompt economics rather than data quality.
+
+One difference worth stating, because "unchanged data path" would otherwise
+overstate it: the naive arm reaches those functions through the MCP client over
+JSON-RPC, which spawns the server as a subprocess, while these wrappers import and
+call them in-process. The responses are identical — same functions, same cache —
+but the transport is not. That adds a small, real amount to the naive arm's
+wall-clock time, on the order of a second or two per tool call against a total
+dominated by twenty-odd sequential model requests at roughly fifteen seconds each.
+
+It does not touch the token comparison, which is what the B-versus-C finding
+rests on: transport cannot change how many tokens a prompt contains. It is a minor
+confound in the latency comparison between those two arms, and the headline
+latency claim in Chapter 6 is C against D, both of which call in-process.
 """
 
 import json
