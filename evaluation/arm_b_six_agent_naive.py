@@ -5,7 +5,7 @@ Baseline: 6-Agent Architecture (per proposal)
 - Takes scenario input directly (no interactive conversation)
 """
 
-import os, time, uuid
+import time, uuid
 from textwrap import dedent
 from crewai import Agent, Task, Crew, Process
 

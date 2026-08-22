@@ -38,7 +38,6 @@ The underlying data path is identical to the naive arm, so the comparison
 isolates prompt economics rather than data quality.
 """
 
-import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from textwrap import dedent

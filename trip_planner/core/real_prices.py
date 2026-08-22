@@ -38,6 +38,19 @@ live product path passes a probe; the experiment does not.
 
 Every figure this returns carries where it came from, so a verdict can say
 "measured" or "estimated" rather than presenting both as the same kind of answer.
+
+FLIGHTS ONLY
+------------
+There was a hotel equivalent here and it is gone. It read for keys the recorded
+Booking.com replies do not contain, so it returned None for every destination
+ever asked about — a function that quietly always fails is worse than no function,
+because the calling code reads as though the capability exists.
+
+Reinstating it is real work rather than a regex fix: the replies carry `grossPrice`
+for the whole stay, so a per-night figure needs the stay length from the request
+that produced each recording. Worth doing, and honest to leave undone in the
+meantime, because the flight constant is the one shown to be wrong — 52% below a
+real fare — and the hotel constant has not been contradicted by anything measured.
 """
 
 from __future__ import annotations
@@ -47,7 +60,7 @@ import logging
 import os
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -212,57 +225,6 @@ def recorded_flight_price(origin: str, destination: str) -> Optional[RealPrice]:
                f"for this route, from the recorded responses")
 
 
-def recorded_hotel_price(destination: str) -> Optional[RealPrice]:
-    """
-    The cheapest nightly rate recorded for this destination, or None.
-
-    Matched on the destination name appearing in the recorded request, which is
-    how the hotel search was addressed.
-    """
-    if not os.path.isdir(CACHE_DIR) or not (destination or "").strip():
-        return None
-
-    needle = destination.strip().lower().split(",")[0]
-    cheapest: Optional[float] = None
-    count = 0
-    for name in sorted(os.listdir(CACHE_DIR)):
-        if not name.startswith("booking") or not name.endswith(".json"):
-            continue
-        try:
-            with open(os.path.join(CACHE_DIR, name), encoding="utf-8") as fh:
-                entry = json.load(fh)
-        except (OSError, json.JSONDecodeError):
-            continue
-
-        blob = json.dumps(entry.get("params") or {}).lower()
-        body = entry.get("body") or ""
-        if needle not in blob and needle not in body.lower():
-            continue
-
-        nightly = []
-        for match in re.finditer(
-                r'"(?:gross_amount_per_night|price_per_night|amount_per_night)"'
-                r'\s*:\s*\{[^{}]*?"value"\s*:\s*([0-9]+(?:\.[0-9]+)?)', body):
-            try:
-                value = float(match.group(1))
-            except ValueError:
-                continue
-            if 5 <= value <= 3000:
-                nightly.append(value)
-        if not nightly:
-            continue
-        count += len(nightly)
-        low = min(nightly)
-        cheapest = low if cheapest is None else min(cheapest, low)
-
-    if cheapest is None:
-        return None
-    return RealPrice(
-        amount=cheapest, source="recorded", samples=count,
-        detail=f"cheapest of {count} nightly rates the hotel API really returned "
-               f"for this city, from the recorded responses")
-
-
 def live_flight_price(origin: str, destination: str, departure_date: str,
                       return_date: Optional[str] = None,
                       adults: int = 1) -> Optional[RealPrice]:
@@ -334,9 +296,3 @@ class PriceProbe:
         return live_flight_price(origin, destination, self.departure_date,
                                  self.return_date or None, self.adults)
 
-    def hotel_per_night(self, destination: str) -> Optional[RealPrice]:
-        return recorded_hotel_price(destination)
-
-    def summary(self, origin: str, destination: str) -> Dict[str, Optional[RealPrice]]:
-        return {"flights": self.flight(origin, destination),
-                "accommodation": self.hotel_per_night(destination)}

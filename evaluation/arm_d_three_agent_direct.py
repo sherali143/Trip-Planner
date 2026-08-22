@@ -18,7 +18,7 @@ Skips the interactive conversation phase — a scenario string goes straight to
 extraction — since the evaluation runs unattended over twenty fixed requests.
 """
 
-import json, os, re, sys, time
+import json, re, sys, time
 from textwrap import dedent
 from crewai import Agent, Task, Crew, Process
 from dotenv import load_dotenv

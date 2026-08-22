@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
 
-from trip_planner.core.budget import CATEGORIES, build_allocation
+from trip_planner.core.budget import build_allocation
 
 TRIP = dict(total_budget=2000, trip_duration=4, num_travelers=1,
             origin="Lahore", destination="Istanbul")

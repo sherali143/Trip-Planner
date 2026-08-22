@@ -11,7 +11,6 @@ The six-agent variants used for the evaluation live in `comparison/`.
 
 from crewai import Agent
 from textwrap import dedent
-import os
 
 from trip_planner.core.budget import LEGACY_ALLOCATION as _DEFAULT_SPLIT
 from trip_planner.core.gemini_compat import model_string

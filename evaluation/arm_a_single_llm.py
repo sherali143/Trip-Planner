@@ -18,7 +18,6 @@ whether the itinerary refers to anything real.
 One LiteLLM completion, one prompt, no tool access.
 """
 
-import os
 import time
 
 from litellm import completion
