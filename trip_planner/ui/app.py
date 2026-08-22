@@ -102,7 +102,15 @@ QUESTIONS = [
     ("budget", "💰 What is your total budget for this trip, in US dollars (USD)?",
      "e.g., 3000  — please convert to USD before entering"),
     ("interests", "🎯 What interests you most?", "e.g., museums, food, nightlife, nature, adventure"),
-    ("travel_style", "✨ What's your travel style?", "Options: luxury, moderate, budget-friendly"),
+    # Asked in the traveller's own words rather than as three fixed options,
+    # because the allocation reads phrasing: "luxury stay" moves the room budget,
+    # "luxury trip" spreads it across the room, the food and the doing, and "I can
+    # compromise" moves money out of the room and airfare into experiences. A
+    # dropdown offering luxury/moderate/budget cannot express any of that.
+    ("travel_style",
+     "✨ What matters most on this trip? Say it however you like.",
+     "e.g. 'a luxury stay', 'luxury full trip', 'great food and lots to do', "
+     "'I can fully compromise to keep it cheap', or just 'moderate'"),
     ("special_requirements", "🔔 Any special requirements?", "e.g., dietary restrictions, accessibility needs (or type 'none')")
 ]
 

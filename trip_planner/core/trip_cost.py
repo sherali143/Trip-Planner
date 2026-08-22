@@ -50,7 +50,7 @@ Sources:
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 # --- destination price tiers ------------------------------------------------
 # Which tier a city sits in drives hotel, food and activity costs. Unknown
@@ -131,6 +131,11 @@ class CostEstimate:
     # trip costs" is overstating what it knows, and a traveller told a budget is
     # workable deserves to know the estimate behind that was a default.
     priced_from_data: bool = True
+    # Lines replaced by a price an API really quoted, e.g. {"flights": "cheapest
+    # of 183 fares recorded for this route"}. Empty means the whole estimate came
+    # from the table, which is the default and what every published measurement
+    # was produced with.
+    measured_lines: Dict[str, str] = field(default_factory=dict)
 
     def explain(self, currency: str = "$") -> str:
         d = self.destination or "your destination"
@@ -179,6 +184,10 @@ class BudgetVerdict:
     estimate: CostEstimate
     message: str
     suggestions: List[str] = field(default_factory=list)
+    # What the traveller asked for, so the verdict can say whether the budget
+    # reaches it. Someone who asks for luxury and is told only "workable" has been
+    # answered but not addressed.
+    requested_style: str = ""
 
     def __post_init__(self) -> None:
         """
@@ -194,6 +203,11 @@ class BudgetVerdict:
         The estimate is still returned and planning still proceeds. What changes
         is that the traveller is told which of the two kinds of answer they have.
         """
+        for line, detail in (self.estimate.measured_lines or {}).items():
+            self.message += (
+                "\n\n  " + line.upper()
+                + ": this figure is measured, not estimated — " + detail + ".")
+
         if self.estimate.priced_from_data:
             return
         dest = self.estimate.destination or "that destination"
@@ -205,6 +219,35 @@ class BudgetVerdict:
         )
         self.suggestions.append(
             f"Treat this figure as indicative: {dest} is not in the price table.")
+
+    def style_shortfall(self) -> Optional[str]:
+        """
+        Whether the budget reaches the standard the traveller asked for.
+
+        Being told "$1,200 is workable" answers a question nobody asked when the
+        request was for a luxury trip. This names the gap and the figure that
+        would close it, so the traveller can choose between spending more and
+        expecting less — rather than discovering the difference in the itinerary.
+        """
+        if not self.feasible or not self.requested_style:
+            return None
+        wants_luxury = any(w in self.requested_style.lower() for w in
+                           ("luxury", "premium", "high end", "high-end",
+                            "five star", "5 star", "money no object"))
+        if not wants_luxury:
+            return None
+        if self.stated_budget >= self.estimate.luxury:
+            return None
+        shortfall = self.estimate.luxury - self.stated_budget
+        reached = ("a comfortable trip" if self.stated_budget >= self.estimate.comfortable
+                   else "good value rather than luxury")
+        return (
+            f"You asked for a luxury trip. ${self.stated_budget:,.0f} buys "
+            f"{reached} here. Luxury for {self.estimate.nights} nights in "
+            f"{self.estimate.destination or 'this destination'} costs about "
+            f"${self.estimate.luxury:,.0f} — ${shortfall:,.0f} more than stated. "
+            f"Raise the budget to reach it, or keep this one and expect "
+            f"{reached}.")
 
 
 def classify_haul(destination: str) -> str:
@@ -248,6 +291,7 @@ def estimate_trip_cost(
     nights: int = 5,
     travelers: int = 1,
     origin: str = "",
+    price_probe=None,
 ) -> CostEstimate:
     """
     Estimate what this trip costs at minimum, comfortable and luxury standards.
@@ -262,6 +306,21 @@ def estimate_trip_cost(
     tier = classify_price_tier(destination)
 
     flights = _FLIGHT_COST[haul]
+    measured: Dict[str, str] = {}
+
+    # A price an API really quoted beats a constant somebody typed. The probe
+    # reads the recorded responses, so this costs nothing and needs no key; where
+    # it has no recording it returns None and the table stands, which is why the
+    # default behaviour and every published measurement are unchanged.
+    if price_probe is not None:
+        real = price_probe.flight(origin, destination)
+        if real is not None:
+            # The recorded figure is the cheapest fare actually offered, so it is
+            # the MINIMUM. "Typical" is scaled from it rather than kept from the
+            # table, or the two would disagree about the same route.
+            flights = {"minimum": real.amount, "typical": real.amount * 1.5}
+            measured["flights"] = real.detail
+
     # Rooms sleep two; three travellers need two rooms.
     rooms = max(1, (travelers + 1) // 2)
     days = nights + 1  # you eat on the day you arrive and the day you leave
@@ -301,7 +360,8 @@ def estimate_trip_cost(
         nights=nights,
         travelers=travelers,
         destination=destination,
-        priced_from_data=is_known_destination(destination),
+        priced_from_data=is_known_destination(destination) or bool(measured),
+        measured_lines=measured,
     )
 
 
@@ -311,6 +371,8 @@ def assess_budget(
     nights: int = 5,
     travelers: int = 1,
     origin: str = "",
+    price_probe=None,
+    travel_style: str = "",
 ) -> BudgetVerdict:
     """
     Judge a stated budget against what the trip actually costs.
@@ -319,7 +381,8 @@ def assess_budget(
     accepted — tight budgets get a warning and concrete options, not a block,
     because "tight" is a legitimate choice and only "impossible" is not.
     """
-    estimate = estimate_trip_cost(destination, nights, travelers, origin)
+    estimate = estimate_trip_cost(destination, nights, travelers, origin,
+                                  price_probe=price_probe)
     budget = float(total_budget or 0)
     dest = destination or "your destination"
 
@@ -355,6 +418,7 @@ def assess_budget(
             feasible=False,
             stated_budget=budget,
             estimate=estimate,
+            requested_style=travel_style,
             message=(
                 f"${budget:,.0f} cannot cover {nights} nights in {dest} for "
                 f"{travelers} traveller(s). The cheapest this trip can be done "
@@ -366,6 +430,7 @@ def assess_budget(
     if budget < estimate.minimum * 1.25:
         return BudgetVerdict(
             verdict=VERY_TIGHT, feasible=True, stated_budget=budget, estimate=estimate,
+            requested_style=travel_style,
             message=(
                 f"${budget:,.0f} is workable but very tight for {dest}. Expect "
                 f"hostels or budget hotels, street food, and mostly free "
@@ -378,6 +443,7 @@ def assess_budget(
     if budget < estimate.comfortable:
         return BudgetVerdict(
             verdict=WORKABLE, feasible=True, stated_budget=budget, estimate=estimate,
+            requested_style=travel_style,
             message=(
                 f"${budget:,.0f} works for {dest}. It sits between the minimum "
                 f"(${estimate.minimum:,.0f}) and a comfortable trip "
@@ -389,6 +455,7 @@ def assess_budget(
     if budget < estimate.luxury:
         return BudgetVerdict(
             verdict=COMFORTABLE, feasible=True, stated_budget=budget, estimate=estimate,
+            requested_style=travel_style,
             message=(
                 f"${budget:,.0f} is comfortable for {dest} — mid-range hotels, "
                 f"restaurant meals and paid attractions are all affordable."
@@ -397,6 +464,7 @@ def assess_budget(
 
     return BudgetVerdict(
         verdict=GENEROUS, feasible=True, stated_budget=budget, estimate=estimate,
+            requested_style=travel_style,
         message=(
             f"${budget:,.0f} is generous for {dest}. Four-star and above is "
             f"within reach (luxury level is about ${estimate.luxury:,.0f})."

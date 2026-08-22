@@ -1,0 +1,281 @@
+"""
+WHAT THIS FILE DOES
+===================
+Finds what a trip's parts REALLY cost, so the budget check can stop guessing.
+
+The problem it solves
+---------------------
+The feasibility check estimates from a table of about forty cities. Anything
+unlisted falls to the middle row — medium distance, moderate prices — and that is
+optimistic for anywhere expensive or far: "Kyoto" was costed at $614 for five
+nights where the truth is nearer $987. The table also carries a measured error
+where it can be checked at all: for Lahore-Istanbul it says a medium-haul flight
+starts at $350, and the cheapest fare the API actually returned was $734.
+
+So the estimate is only as good as constants somebody typed.
+
+Where the real numbers come from
+--------------------------------
+Two places, cheapest first:
+
+  1. THE RECORDED CACHE. Every API response this project has ever received is
+     saved under .api_cache/ and committed. Reading a fare out of it costs
+     nothing, needs no key, and is a price a real API really quoted. For any
+     route already recorded, this is strictly better than the table.
+
+  2. A LIVE CALL, and only when explicitly asked for. This costs quota from an
+     allowance of thirty flight searches a month, so it is never the default:
+     spending a month's quota to discover a budget was impossible would be a poor
+     trade, and the point of the free check is that a refusal costs nothing.
+
+What this deliberately does NOT do
+----------------------------------
+It does not replace the table. `assess_budget` still estimates exactly as before
+unless a caller passes a probe, because the twenty-scenario budget-gate
+evaluation and its Cohen's kappa of 0.643 are published against the table, and
+changing the default would mean those figures no longer describe the code. The
+live product path passes a probe; the experiment does not.
+
+Every figure this returns carries where it came from, so a verdict can say
+"measured" or "estimated" rather than presenting both as the same kind of answer.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import re
+from dataclasses import dataclass
+from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+CACHE_DIR = os.path.join(ROOT, ".api_cache")
+
+
+@dataclass
+class RealPrice:
+    """One price that an API actually quoted, and where it came from."""
+
+    amount: float
+    source: str            # "recorded" | "live"
+    detail: str            # human-readable provenance
+    samples: int = 1
+
+    def describe(self) -> str:
+        return f"${self.amount:,.0f} ({self.detail})"
+
+
+def _airport_codes(text: str) -> List[str]:
+    """Three- and four-letter codes appearing in a string, upper-cased."""
+    return re.findall(r"\b[A-Z]{3,4}\b", (text or "").upper())
+
+
+def _as_code(place: str) -> str:
+    """
+    Turn whatever the caller has into the code the recordings were made with.
+
+    The app passes city names — the traveller typed "Istanbul", not "IST" — while
+    the recordings are keyed by the code the request carried. Without this the
+    probe found nothing on the live path, because "Istanbul" holds no code and the
+    route could never be identified.
+
+    Reuses the resolver the flight tool itself uses, so the probe looks for
+    exactly what the request would have sent. A second copy of that table here
+    would give two answers to the same question.
+    """
+    text = (place or "").strip()
+    if not text:
+        return ""
+    try:
+        from trip_planner.tools.travel_apis import _resolve_sky_id
+        return (_resolve_sky_id(text) or text).strip().upper()
+    except Exception:                      # noqa: BLE001 - best effort only
+        return text.strip().upper()
+
+
+def _fares_in(body: str) -> List[float]:
+    """
+    Every fare in a recorded flight response, read from the formatted field.
+
+    The provider reports prices twice: as an integer in milli-units
+    ("amount": "1074000") and as text ("formatted": "$1,074"). The formatted field
+    is the one to read — a regex over the numeric one picks up milli-values, unit
+    codes and identifiers, and a first draft of this returned nothing at all
+    because it filtered 1,074,000 out as implausible.
+
+    This mirrors the extraction the budget-gate experiment already uses, so the
+    two cannot disagree about what the recordings say.
+    """
+    if "itineraries" not in body:
+        return []
+    try:
+        payload = json.loads(body).get("data") or {}
+    except json.JSONDecodeError:
+        return []
+
+    fares: List[float] = []
+    for itinerary in payload.get("itineraries") or []:
+        raw = ((itinerary.get("price") or {}).get("formatted") or "").replace(",", "")
+        match = re.search(r"([\d.]+)", raw)
+        if match:
+            try:
+                fares.append(float(match.group(1)))
+            except ValueError:
+                continue
+    return fares
+
+
+def recorded_flight_price(origin: str, destination: str) -> Optional[RealPrice]:
+    """
+    The cheapest fare recorded for this route, or None if it was never recorded.
+
+    Linking a fare to a route takes two steps, because the provider searches in
+    two phases. The first call carries the airport codes and returns a sessionId
+    with no fares; the fares arrive in a second call keyed only by that session.
+
+    So: find the requests for this route, read the session ids out of their
+    replies, and then accept fares from any poll made against one of those
+    sessions.
+
+    Two shortcuts were tried first and both were wrong. Matching only the request
+    parameters found no fares at all, because the recording that holds them is
+    keyed by session. Matching airport codes anywhere in the body then matched
+    everything, because a 2.3 MB reply listing connections mentions dozens of
+    airports — ISB-DOH was reported as $734, which is the Lahore-Istanbul fare.
+
+    A route with no recording returns None. Using another route's fare would be
+    worse than admitting there is no data, which is the whole point of this module.
+    """
+    if not os.path.isdir(CACHE_DIR):
+        return None
+
+    wanted = {code for code in (_as_code(origin), _as_code(destination))
+              if code and code.isalpha() and 3 <= len(code) <= 4}
+    if len(wanted) < 2:
+        return None
+
+    entries = []
+    for name in sorted(os.listdir(CACHE_DIR)):
+        if not name.startswith("fly-scraper") or not name.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(CACHE_DIR, name), encoding="utf-8") as fh:
+                entries.append(json.load(fh))
+        except (OSError, json.JSONDecodeError):
+            continue
+
+    def route_of(entry) -> set:
+        params = entry.get("params") or {}
+        codes = set()
+        for key in ("originSkyId", "destinationSkyId", "fromEntityId", "toEntityId"):
+            codes.update(_airport_codes(str(params.get(key, ""))))
+        return codes
+
+    # Sessions opened for this route, taken from the replies to its own requests.
+    sessions = set()
+    for entry in entries:
+        if wanted.issubset(route_of(entry)):
+            sessions.update(
+                re.findall(r'"sessionId"\s*:\s*"([^"]{10,})"', entry.get("body") or ""))
+
+    fares: List[float] = []
+    for entry in entries:
+        params = entry.get("params") or {}
+        session = str(params.get("sessionId", ""))
+        belongs = wanted.issubset(route_of(entry)) or (session and session in sessions)
+        if belongs:
+            fares.extend(_fares_in(entry.get("body") or ""))
+
+    if not fares:
+        return None
+    return RealPrice(
+        amount=min(fares), source="recorded", samples=len(fares),
+        detail=f"cheapest of {len(fares)} fares the flight API really returned "
+               f"for this route, from the recorded responses")
+
+
+def recorded_hotel_price(destination: str) -> Optional[RealPrice]:
+    """
+    The cheapest nightly rate recorded for this destination, or None.
+
+    Matched on the destination name appearing in the recorded request, which is
+    how the hotel search was addressed.
+    """
+    if not os.path.isdir(CACHE_DIR) or not (destination or "").strip():
+        return None
+
+    needle = destination.strip().lower().split(",")[0]
+    cheapest: Optional[float] = None
+    count = 0
+    for name in sorted(os.listdir(CACHE_DIR)):
+        if not name.startswith("booking") or not name.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(CACHE_DIR, name), encoding="utf-8") as fh:
+                entry = json.load(fh)
+        except (OSError, json.JSONDecodeError):
+            continue
+
+        blob = json.dumps(entry.get("params") or {}).lower()
+        body = entry.get("body") or ""
+        if needle not in blob and needle not in body.lower():
+            continue
+
+        nightly = []
+        for match in re.finditer(
+                r'"(?:gross_amount_per_night|price_per_night|amount_per_night)"'
+                r'\s*:\s*\{[^{}]*?"value"\s*:\s*([0-9]+(?:\.[0-9]+)?)', body):
+            try:
+                value = float(match.group(1))
+            except ValueError:
+                continue
+            if 5 <= value <= 3000:
+                nightly.append(value)
+        if not nightly:
+            continue
+        count += len(nightly)
+        low = min(nightly)
+        cheapest = low if cheapest is None else min(cheapest, low)
+
+    if cheapest is None:
+        return None
+    return RealPrice(
+        amount=cheapest, source="recorded", samples=count,
+        detail=f"cheapest of {count} nightly rates the hotel API really returned "
+               f"for this city, from the recorded responses")
+
+
+@dataclass
+class PriceProbe:
+    """
+    Real prices for a route, gathered without spending anything by default.
+
+    Pass one of these to assess_budget and the check uses measured fares where it
+    has them and the table only where it does not — and says which for each line.
+
+    `allow_live` exists but is off by default and is not used by anything in this
+    project. Turning it on would mean a budget check could spend a flight search
+    from a monthly allowance of thirty, including checks that end in a refusal.
+    That trade needs a deliberate decision by whoever is running it, not a default.
+    """
+
+    allow_live: bool = False
+
+    def flight(self, origin: str, destination: str) -> Optional[RealPrice]:
+        recorded = recorded_flight_price(origin, destination)
+        if recorded is not None:
+            return recorded
+        if not self.allow_live:
+            return None
+        logger.warning("live price probing is not implemented; refusing to guess")
+        return None
+
+    def hotel_per_night(self, destination: str) -> Optional[RealPrice]:
+        return recorded_hotel_price(destination)
+
+    def summary(self, origin: str, destination: str) -> Dict[str, Optional[RealPrice]]:
+        return {"flights": self.flight(origin, destination),
+                "accommodation": self.hotel_per_night(destination)}

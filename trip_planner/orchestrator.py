@@ -129,6 +129,7 @@ class TripPlannerCrew:
         London trip identically, accepting both — so London produced a
         confidently fictional itinerary. See trip_planner/core/trip_cost.py.
         """
+        from trip_planner.core.real_prices import PriceProbe
         from trip_planner.core.trip_cost import assess_budget
 
         prefs = self._parse_prefs(extraction_output)
@@ -138,12 +139,21 @@ class TripPlannerCrew:
             print("[Budget] Extractor flagged the budget as too low")
 
         travelers = int(prefs.get("num_adults", 1) or 1) + int(prefs.get("num_children", 0) or 0)
+        # A real fare beats a constant. The probe reads the recorded responses, so
+        # this costs no quota and needs no key; for a route with no recording it
+        # returns nothing and the price table stands. Passed here, on the live
+        # path, and deliberately NOT by evaluation/exp_budget_gate.py — that
+        # experiment's twenty scenarios and its Cohen's kappa are published
+        # against the table, and a different input would mean those figures no
+        # longer describe the code.
         verdict = assess_budget(
             total_budget=float(prefs.get("total_budget", 0) or 0),
             destination=prefs.get("destination", ""),
             nights=int(prefs.get("trip_duration", 5) or 5),
             travelers=max(1, travelers),
             origin=prefs.get("origin", ""),
+            price_probe=PriceProbe(),
+            travel_style=str(prefs.get("travel_style", "") or ""),
         )
 
         if not prefs.get("destination"):
@@ -444,6 +454,13 @@ class TripPlannerCrew:
         # legitimate choice, so this warns and proceeds rather than blocking.
         print(f"\n[Budget] {verdict.verdict.replace('_', ' ').title()}: "
               f"{verdict.message}\n")
+
+        # A budget can be workable and still not reach what was asked for. Saying
+        # so here lets the traveller choose between spending more and expecting
+        # less, rather than finding the difference in the finished itinerary.
+        shortfall = verdict.style_shortfall()
+        if shortfall:
+            print(f"[Budget] {shortfall}\n")
 
         allocation = None
         if confirm_allocation is not None:

@@ -68,6 +68,7 @@ are reported in the dissertation rather than quietly fixed.
 | `trip_cost.py` | Estimates what a trip costs at minimum, comfortable and luxury standards, and refuses budgets below the true floor. |
 | `validators.py` | Checks the generated itinerary contains every day it should. |
 | `log_setup.py` | Keeps the model API key out of the console — it travels as a URL parameter, which the HTTP client logs at INFO. |
+| `real_prices.py` | Finds what a trip's parts REALLY cost, by reading fares out of the recorded API responses. Costs nothing and needs no key. The budget check uses it where a route was recorded and the price table only where it was not — and says which. |
 | `gemini_compat.py` | Makes the agent arms runnable on current Gemini models, which reject a request whose last message is a model turn — exactly what a reasoning loop produces. Adds a short user turn to only those requests and counts how many it changed. Also holds the single default model string, so no module can fall back to the withdrawn one. |
 
 ## Four things that will bite you

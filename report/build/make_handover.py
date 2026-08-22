@@ -391,6 +391,10 @@ FILE_PURPOSE = {
     "trip_planner/core/budget.py":
         "Splits a budget across flights, hotels, food and activities based on what "
         "the trip actually costs, instead of a fixed percentage for every trip.",
+    "trip_planner/core/real_prices.py":
+        "Reads what flights really cost out of the saved API replies, so the "
+        "budget check can use a real fare instead of a number from a table. Free "
+        "— the replies are already on disk. Says which figure came from where.",
     "trip_planner/core/gemini_compat.py":
         "Keeps the project running on current Google AI models. The newer models "
         "reject a message pattern the agent loop produces; this fixes only those "
