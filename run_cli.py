@@ -169,7 +169,10 @@ def main() -> int:
         return 1
 
     print("\nDescribe your trip:")
-    print("   (for example: 'Plan a trip to Paris for 7 days with $3000')\n")
+    print("   (for example: 'Plan a trip to Paris for 7 days with $3000')")
+    # Budgets are read as US dollars everywhere in this project, so say so rather
+    # than leave a traveller to guess from a currency symbol in an example.
+    print("   Budgets are read as US DOLLARS. Please convert before entering.\n")
     try:
         request = input("You: ").strip()
     except (EOFError, KeyboardInterrupt):

@@ -95,7 +95,12 @@ QUESTIONS = [
     ("origin", "🏠 Where are you traveling from?", "e.g., New York, USA"),
     ("start_date", "📅 When do you want to start your trip?", "e.g., December 15, 2025"),
     ("end_date", "📅 When do you want to return?", "e.g., December 22, 2025"),
-    ("budget", "💰 What is your total budget for this trip?", "e.g., $3000"),
+    # The currency is stated because it is not optional information. Every figure
+    # in this system is US dollars — the APIs are queried in USD and the cost
+    # model's thresholds are USD amounts — so a traveller typing 200000 meaning
+    # rupees would have had the feasibility check call it a luxury trip.
+    ("budget", "💰 What is your total budget for this trip, in US dollars (USD)?",
+     "e.g., 3000  — please convert to USD before entering"),
     ("interests", "🎯 What interests you most?", "e.g., museums, food, nightlife, nature, adventure"),
     ("travel_style", "✨ What's your travel style?", "Options: luxury, moderate, budget-friendly"),
     ("special_requirements", "🔔 Any special requirements?", "e.g., dietary restrictions, accessibility needs (or type 'none')")
