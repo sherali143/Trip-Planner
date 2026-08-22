@@ -200,11 +200,17 @@ def _cost_derived_shares(
     # $350 in airfare, so the minimum-tier ratio puts flights at 51% — which on
     # a $3,000 budget would reserve $1,530 for a $350 flight.
     level, blend, label = _tier_for_budget(estimate, total_budget, travel_style)
+    bias = _style_bias(travel_style)
 
     def share_at(cat: str) -> float:
         low, high = blend
-        return (estimate.breakdown[cat][low] * (1 - level)
-                + estimate.breakdown[cat][high] * level)
+        # Each category sits at its own point between the two tiers: the budget
+        # sets the base, and the stated style moves the categories that style
+        # actually governs. A luxury request buys a better room, not a shorter
+        # flight.
+        at = min(1.0, max(0.0, level + bias * _STYLE_WEIGHT.get(cat, 0.0)))
+        return (estimate.breakdown[cat][low] * (1 - at)
+                + estimate.breakdown[cat][high] * at)
 
     costs = {c: share_at(c) for c in CATEGORIES}
     total = sum(costs.values())
@@ -219,6 +225,38 @@ def _cost_derived_shares(
     return {c: costs[c] / total for c in CATEGORIES}, reason
 
 
+# How much the stated travel style moves each category.
+#
+# Style is about the standard of the trip, not the distance flown. Someone asking
+# for a luxury stay wants a better room and better meals; they still have to cover
+# the same miles, and the airfare does not become optional because they said
+# "luxury". Applying one bias to all four categories equally — which is what this
+# did — moved everything together and so barely changed the RATIOS between them:
+# on a $2,000 Istanbul trip, "budget" and "luxury" differed by 1.3 percentage
+# points on accommodation, which is not a difference anyone would notice.
+#
+# Weighting the categories separately is what makes the style request visible.
+# Accommodation carries it fully, because that is what "luxury stay" means. Meals
+# and activities carry most of it. Flights carry none: the bracket the budget can
+# afford already decides those.
+_STYLE_WEIGHT: Dict[str, float] = {
+    "flights": 0.0,
+    "accommodation": 1.0,
+    "meals": 0.7,
+    "activities": 0.7,
+}
+
+
+def _style_bias(travel_style: str) -> float:
+    """How far the stated style pushes the standard, before per-category weighting."""
+    style = (travel_style or "").strip().lower()
+    if style in ("luxury", "premium", "high-end", "high end", "five star", "5 star"):
+        return 0.45
+    if style in ("budget", "backpacker", "cheap", "economy", "shoestring"):
+        return -0.45
+    return 0.0
+
+
 def _tier_for_budget(estimate, total_budget: float, travel_style: str):
     """
     Locate the budget between the costed standards and blend the two either side.
@@ -226,6 +264,11 @@ def _tier_for_budget(estimate, total_budget: float, travel_style: str):
     Returns (position, (low_tier, high_tier), label) where position is 0..1
     between the two named tiers, so the resulting shares move smoothly with the
     budget instead of jumping between three fixed ratios.
+
+    The position returned is the one the BUDGET justifies, with no style bias in
+    it. The stated style is applied per category by the caller, weighted by
+    _STYLE_WEIGHT, because a style request means different things to a hotel line
+    and to an airfare line.
     """
     budget = float(total_budget or 0)
     style = (travel_style or "moderate").strip().lower()
@@ -242,11 +285,7 @@ def _tier_for_budget(estimate, total_budget: float, travel_style: str):
     # it. Two people with the same money who describe themselves as "luxury" and
     # "budget" genuinely do want different splits — the first toward nicer
     # rooms, the second toward cheaper stays and more doing.
-    bias = 0.0
-    if style in ("luxury", "premium", "high-end"):
-        bias = 0.15
-    elif style in ("budget", "backpacker", "cheap", "economy"):
-        bias = -0.15
+    bias = 0.0   # style is applied per category by the caller, not here
 
     def clamp(value: float) -> float:
         return max(0.0, min(1.0, value))
