@@ -47,14 +47,15 @@ submitted is not a default.
 
 import datetime
 import html
-import io
 import re
+import sys
 import uuid
 from contextlib import redirect_stdout
 
 import streamlit as st
 from dotenv import load_dotenv
 
+from trip_planner.core.log_setup import TeeStream
 from trip_planner.orchestrator import TripPlannerCrew, set_progress_hook
 from trip_planner.ui.plan_layout import (DONE, IDLE, NOW, SEARCH_ROW, STEPS,
                                          group_into_tabs, plan_checks,
@@ -64,14 +65,14 @@ from trip_planner.ui.plan_layout import (DONE, IDLE, NOW, SEARCH_ROW, STEPS,
 load_dotenv()
 
 st.set_page_config(
-    page_title="Wayfinder — trip planning from real prices",
+    page_title="Trip Planner — planning from real prices",
     page_icon="✦",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 # The display name, in one place. Nothing else in the project depends on it.
-BRAND = "Wayfinder"
+BRAND = "Trip Planner"
 TAGLINE = ("Real fares. Real rooms. A day-by-day plan you could actually book — "
            "priced from live travel data, not guesswork.")
 
@@ -105,8 +106,8 @@ st.markdown("""
     text-transform: uppercase; color: var(--accent); margin: 0 0 0.35rem 0;
   }
   .wf-title {
-    font-size: 3.1rem; font-weight: 760; letter-spacing: -0.035em;
-    line-height: 1; margin: 0 0 0.55rem 0;
+    font-size: 4.4rem; font-weight: 780; letter-spacing: -0.04em;
+    line-height: 1.02; margin: 0 0 0.7rem 0;
     background: linear-gradient(96deg, #1E1B4B 8%, #4338CA 46%, #0EA5A4 96%);
     -webkit-background-clip: text; background-clip: text;
     -webkit-text-fill-color: transparent; color: var(--accent);
@@ -595,7 +596,13 @@ if not FINISHED:
                         unsafe_allow_html=True)
 
             set_progress_hook(on_progress)
-            captured = io.StringIO()
+            # Both places: the page's expander, and the console the demonstration
+            # is being watched from. sys.stdout rather than sys.__stdout__ so
+            # whatever Streamlit has put in front of the terminal is respected.
+            captured = TeeStream(sys.stdout)
+            print(f"\n  Planning {st.session_state.answers['destination']} "
+                  f"from the web interface "
+                  f"(conversation {st.session_state.conversation_id[:8]}).")
             try:
                 with redirect_stdout(captured):
                     if not st.session_state.crew:
