@@ -158,15 +158,20 @@ def _fares_in(body: str) -> List[float]:
 
 def recorded_flight_price(origin: str, destination: str) -> Optional[RealPrice]:
     """
-    The cheapest fare recorded for this route, or None if it was never recorded.
+    The cheapest recorded fare for this route, PER PERSON, or None if unrecorded.
+
+    Per person matters. The provider quotes a total for however many passengers
+    the search asked about, and the cost model multiplies its flight figure by the
+    number of travellers. Returning the total made that a double count: the
+    recorded London search was for two adults at $2,520, which the model then
+    doubled to $5,040 and used to refuse a $3,000 trip that the real fare left
+    $480 of room in. So each recording is divided by the passenger count it was
+    made with.
 
     Linking a fare to a route takes two steps, because the provider searches in
-    two phases. The first call carries the airport codes and returns a sessionId
-    with no fares; the fares arrive in a second call keyed only by that session.
-
-    So: find the requests for this route, read the session ids out of their
-    replies, and then accept fares from any poll made against one of those
-    sessions.
+    two phases. The first call carries the airport codes and the passenger count
+    and returns a sessionId with no fares; the fares arrive in a second call keyed
+    only by that session. So the session is what carries both facts forward.
 
     Two shortcuts were tried first and both were wrong. Matching only the request
     parameters found no fares at all, because the recording that holds them is
@@ -202,27 +207,41 @@ def recorded_flight_price(origin: str, destination: str) -> Optional[RealPrice]:
             codes.update(_airport_codes(str(params.get(key, ""))))
         return codes
 
-    # Sessions opened for this route, taken from the replies to its own requests.
-    sessions = set()
+    def adults_of(entry) -> int:
+        try:
+            return max(1, int((entry.get("params") or {}).get("adults", 1) or 1))
+        except (TypeError, ValueError):
+            return 1
+
+    # Sessions opened for this route, and how many passengers each was for, taken
+    # from the replies to its own requests.
+    session_adults = {}
     for entry in entries:
         if wanted.issubset(route_of(entry)):
-            sessions.update(
-                re.findall(r'"sessionId"\s*:\s*"([^"]{10,})"', entry.get("body") or ""))
+            for session in re.findall(r'"sessionId"\s*:\s*"([^"]{10,})"',
+                                      entry.get("body") or ""):
+                session_adults[session] = adults_of(entry)
 
-    fares: List[float] = []
+    per_person: List[float] = []
     for entry in entries:
         params = entry.get("params") or {}
         session = str(params.get("sessionId", ""))
-        belongs = wanted.issubset(route_of(entry)) or (session and session in sessions)
-        if belongs:
-            fares.extend(_fares_in(entry.get("body") or ""))
+        if wanted.issubset(route_of(entry)):
+            heads = adults_of(entry)
+        elif session and session in session_adults:
+            heads = session_adults[session]
+        else:
+            continue
+        per_person.extend(fare / heads for fare in _fares_in(entry.get("body") or ""))
 
-    if not fares:
+    if not per_person:
         return None
+    heads_seen = sorted(set(session_adults.values())) or [1]
     return RealPrice(
-        amount=min(fares), source="recorded", samples=len(fares),
-        detail=f"cheapest of {len(fares)} fares the flight API really returned "
-               f"for this route, from the recorded responses")
+        amount=min(per_person), source="recorded", samples=len(per_person),
+        detail=f"cheapest of {len(per_person)} fares the flight API really "
+               f"returned for this route, per person, from the recorded responses"
+               f" (searched for {'/'.join(str(h) for h in heads_seen)} passenger(s))")
 
 
 def live_flight_price(origin: str, destination: str, departure_date: str,

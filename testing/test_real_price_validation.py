@@ -308,3 +308,77 @@ def test_an_unresolvable_city_returns_no_code_rather_than_asking():
     assert _as_code("Ulaanbaatar") == ""
     assert _as_code("") == ""
     assert _as_code("Istanbul") == "IST"
+
+
+# ---------------------------------------------------------------------------
+# A recorded fare is PER PERSON
+# ---------------------------------------------------------------------------
+#
+# The provider quotes a total for however many passengers the search asked
+# about. `estimate_trip_cost` then multiplies its flight figure by the number of
+# travellers. Returning the provider's total therefore doubled a two-adult fare:
+# the recorded London search was $2,520 for two adults, the model made it $5,040,
+# and a $3,000 budget was refused as impossible when the real floor is $3,168 —
+# short $168, not short $2,688. Close enough to matter, and wrong either way.
+#
+# The passenger count is recoverable because the search request records
+# `adults`, and the reply that carries the fares is linked to it by sessionId.
+
+def test_a_two_adult_recording_is_reported_per_person():
+    """
+    London was searched for two adults. The probe must return half of what the
+    provider quoted, because the caller multiplies by travellers itself.
+    """
+    from trip_planner.core.real_prices import recorded_flight_price
+
+    price = recorded_flight_price("Lahore", "London")
+    if price is None:
+        pytest.skip("no recorded Lahore-London search in this checkout")
+
+    assert "per person" in price.detail
+    assert 400 < price.amount < 2000, (
+        f"${price.amount:,.0f} is not a plausible one-way-inclusive per-person "
+        "fare; a two-adult total would land near $2,520")
+
+
+def test_a_one_adult_recording_is_left_alone():
+    """
+    Dividing by the passenger count must not change a single-adult search. The
+    published Lahore-Istanbul figure is $734 and this is the number the
+    dissertation quotes as the table's measured error.
+    """
+    from trip_planner.core.real_prices import recorded_flight_price
+
+    price = recorded_flight_price("Lahore", "Istanbul")
+    if price is None:
+        pytest.skip("no recorded Lahore-Istanbul search in this checkout")
+
+    assert round(price.amount) == 734, (
+        f"the measured Istanbul fare moved to ${price.amount:,.0f}; the "
+        "dissertation quotes $734")
+
+
+def test_the_per_person_fare_is_not_multiplied_twice():
+    """
+    The end-to-end version of the bug: two travellers on a recorded two-adult
+    route must not cost four times the per-person fare.
+
+    This is the test that would have caught it. Neither of the two above would
+    have on their own — the probe could be correct and the caller still wrong.
+    """
+    from trip_planner.core.real_prices import recorded_flight_price, PriceProbe
+    from trip_planner.core.trip_cost import estimate_trip_cost
+
+    per_person = recorded_flight_price("Lahore", "London")
+    if per_person is None:
+        pytest.skip("no recorded Lahore-London search in this checkout")
+
+    estimate = estimate_trip_cost(
+        "London, United Kingdom", nights=6, travelers=2, origin="Lahore",
+        price_probe=PriceProbe())
+
+    expected = per_person.amount * 2
+    actual = estimate.breakdown["flights"]["minimum"]
+    assert abs(actual - expected) < 1, (
+        f"flights came to ${actual:,.0f} for two travellers at "
+        f"${per_person.amount:,.0f} each; expected ${expected:,.0f}")
