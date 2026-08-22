@@ -414,6 +414,21 @@ def appendices(report: Report) -> None:
             ["Priority queuing, four levels", "Three levels, no ordering",
              "Not implemented. Found by the conformance audit rather than by "
              "recollection, and reported rather than dropped (Section 6.4, check A2)"],
+            ["Search agents call the APIs via the MCP server",
+             "Only the naive six-agent arm does; the shipped path calls the same "
+             "functions in process",
+             "The proposal's Figure 1 put the MCP server on the retrieval path of "
+             "three parallel search agents. Removing retrieval from the agents left "
+             "no agent to route through it, so the shipped path imports the server's "
+             "tool functions instead. The JSON-RPC transport is still exercised by "
+             "the naive arm and by the conformance audit, which tests all twelve "
+             "declared schemas against their implementations (Sections 4.2, 7.2)"],
+            ["Three search agents running in parallel",
+             "Parallel in the tuned arm; sequential in the naive arm; absent from "
+             "the shipped path",
+             "Concurrency was one of the three proposal commitments missing from the "
+             "naive implementation, which is why that arm was tuned before being used "
+             "as a baseline rather than compared against as first built (Section 6.3)"],
             ["Bookability at least 80%",
              f"{val(measured.groundedness('D')['prices_grounded_pct'], '{:.0f}')}% of quoted "
              f"prices grounded",
