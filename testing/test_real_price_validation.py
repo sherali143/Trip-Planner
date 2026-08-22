@@ -195,3 +195,76 @@ class TestTheStyleShortfallFlag:
                                 travel_style="luxury")
         assert not verdict.feasible
         assert verdict.style_shortfall() is None
+
+
+class TestAskingForAPriceCostsQuotaAndIsRationed:
+    """
+    A live search spends one of thirty monthly flight requests, so when it may
+    happen is a decision, not a default.
+
+    None of these tests makes a network call. They check the gate rather than the
+    call: what would be attempted, and what would not.
+    """
+
+    def test_a_probe_will_not_ask_unless_told_to(self, monkeypatch):
+        called = []
+        import trip_planner.core.real_prices as rp
+        monkeypatch.setattr(rp, "live_flight_price",
+                            lambda *a, **k: called.append(a) or None)
+        rp.PriceProbe(allow_live=False, departure_date="2026-12-01").flight(
+            "Lahore", "Kyoto")
+        assert not called, "a probe asked for a live price without being allowed to"
+
+    def test_a_recorded_route_is_never_bought_again(self, monkeypatch):
+        """
+        The recording is free and is a real price. Buying the same route again
+        would spend quota to learn nothing.
+        """
+        called = []
+        import trip_planner.core.real_prices as rp
+        monkeypatch.setattr(rp, "live_flight_price",
+                            lambda *a, **k: called.append(a) or None)
+        price = rp.PriceProbe(allow_live=True,
+                              departure_date="2026-08-15").flight(*RECORDED_ROUTE)
+        assert price is not None and price.source == "recorded"
+        assert not called, "a route already on disk was bought again"
+
+    def test_no_date_means_no_request(self):
+        """
+        A fare is for a date. Asking without one would spend a request to receive
+        a price for a trip nobody is taking.
+        """
+        from trip_planner.core.real_prices import live_flight_price
+        assert live_flight_price("Lahore", "Kyoto", "") is None
+
+    def test_a_failed_request_returns_nothing_rather_than_a_number(self,
+                                                                  monkeypatch):
+        """
+        No key, no network, a tripped quota guard, an empty result: all of them
+        have to produce None. Returning a plausible figure from a failed lookup is
+        how a system starts reporting numbers nobody can account for.
+        """
+        import trip_planner.core.real_prices as rp
+
+        def explode(*_a, **_k):
+            raise RuntimeError("quota guard tripped")
+
+        monkeypatch.setattr("trip_planner.tools.travel_apis._call_fly_scraper_api",
+                            explode)
+        assert rp.live_flight_price("Lahore", "Kyoto", "2026-12-01") is None
+
+    def test_only_an_unlisted_destination_is_allowed_to_ask(self):
+        """
+        Read from the orchestrator's source, so the rule cannot quietly widen.
+
+        For a city the table knows, the estimate is already grounded and a purchase
+        buys nothing. The request is worth making exactly where the alternative is
+        a mid-tier default.
+        """
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        source = open(os.path.join(root, "trip_planner", "orchestrator.py"),
+                      encoding="utf-8").read()
+        assert "allow_live=unlisted" in source, (
+            "the orchestrator no longer gates live price checks on the "
+            "destination being unlisted")
+        assert "is_known_destination" in source

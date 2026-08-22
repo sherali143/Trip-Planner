@@ -130,7 +130,7 @@ class TripPlannerCrew:
         confidently fictional itinerary. See trip_planner/core/trip_cost.py.
         """
         from trip_planner.core.real_prices import PriceProbe
-        from trip_planner.core.trip_cost import assess_budget
+        from trip_planner.core.trip_cost import assess_budget, is_known_destination
 
         prefs = self._parse_prefs(extraction_output)
 
@@ -139,20 +139,42 @@ class TripPlannerCrew:
             print("[Budget] Extractor flagged the budget as too low")
 
         travelers = int(prefs.get("num_adults", 1) or 1) + int(prefs.get("num_children", 0) or 0)
-        # A real fare beats a constant. The probe reads the recorded responses, so
-        # this costs no quota and needs no key; for a route with no recording it
-        # returns nothing and the price table stands. Passed here, on the live
-        # path, and deliberately NOT by evaluation/exp_budget_gate.py — that
-        # experiment's twenty scenarios and its Cohen's kappa are published
-        # against the table, and a different input would mean those figures no
-        # longer describe the code.
+        # A real fare beats a constant. The probe reads the recorded responses
+        # first, which costs nothing and needs no key.
+        #
+        # When the destination is not in the price table it is allowed to ASK, and
+        # that spends one of thirty monthly flight searches. That trade is worth
+        # making precisely there and nowhere else: for an unlisted city the
+        # alternative is the middle row of every band — Kyoto costed as medium-haul
+        # at moderate prices, about $614 for five nights where the truth is nearer
+        # $987 — and a number nobody can account for is worse than a request. For a
+        # city the table knows, the estimate is already grounded and buying a fare
+        # would tell us nothing new.
+        #
+        # The reply is recorded, so asking once calibrates that route permanently
+        # and every later check for it is free.
+        #
+        # Deliberately NOT passed by evaluation/exp_budget_gate.py: that
+        # experiment's twenty scenarios and its Cohen's kappa are published against
+        # the table, and a different input would mean those figures no longer
+        # describe the code.
+        destination = prefs.get("destination", "")
+        unlisted = bool(destination) and not is_known_destination(destination)
+        if unlisted:
+            print(f"[Budget] '{destination}' is not in the price table — checking "
+                  f"the real fare rather than assuming a mid-range default. "
+                  f"This uses one flight search.")
         verdict = assess_budget(
             total_budget=float(prefs.get("total_budget", 0) or 0),
-            destination=prefs.get("destination", ""),
+            destination=destination,
             nights=int(prefs.get("trip_duration", 5) or 5),
             travelers=max(1, travelers),
             origin=prefs.get("origin", ""),
-            price_probe=PriceProbe(),
+            price_probe=PriceProbe(
+                allow_live=unlisted,
+                departure_date=str(prefs.get("departure_date", "") or ""),
+                return_date=str(prefs.get("return_date", "") or ""),
+                adults=max(1, travelers)),
             travel_style=str(prefs.get("travel_style", "") or ""),
         )
 

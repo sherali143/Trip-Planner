@@ -211,7 +211,12 @@ def _call_fly_scraper_api(
     dest_sky = _resolve_sky_id(dest_code)
     
     if origin_sky != origin_code or dest_sky != dest_code:
-        print(f"  Resolved {origin_code} → {origin_sky}, {dest_code} → {dest_sky}")
+        # ASCII deliberately. This printed "->" as an arrow character, which
+        # raises UnicodeEncodeError on a Windows console still using cp1252 — and
+        # it raised from inside the flight call, so the whole search failed on a
+        # progress message. It surfaced as "live price check failed: 'charmap'
+        # codec can't encode character", which reads like an API problem.
+        print(f"  Resolved {origin_code} -> {origin_sky}, {dest_code} -> {dest_sky}")
     
     fly_headers = {
         "x-rapidapi-key": RAPIDAPI_KEY,

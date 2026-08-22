@@ -248,21 +248,67 @@ def recorded_hotel_price(destination: str) -> Optional[RealPrice]:
                f"for this city, from the recorded responses")
 
 
+def live_flight_price(origin: str, destination: str, departure_date: str,
+                      return_date: Optional[str] = None,
+                      adults: int = 1) -> Optional[RealPrice]:
+    """
+    Ask the flight API what this route really costs, right now.
+
+    This SPENDS QUOTA — one search from an allowance of thirty a month — which is
+    why nothing calls it unless the destination has no price data at all. For a
+    city the table knows, guessing is not the problem and a purchase is not the
+    answer.
+
+    The call goes through the recording layer, so the reply is saved. The next
+    check for the same route is free and reads it back. In other words asking once
+    calibrates the model for that route permanently, which is the whole reason this
+    is worth the request.
+
+    Returns None rather than a fallback on any failure — no dates, no key, the
+    quota guard tripping, an empty result. The caller then knows it has no real
+    price and can say so, which is better than a number nobody can account for.
+    """
+    if not departure_date:
+        logger.info("no departure date, so no live price check")
+        return None
+    try:
+        from trip_planner.tools.travel_apis import _call_fly_scraper_api
+        raw = _call_fly_scraper_api(origin, destination, departure_date,
+                                    return_date, adults, None)
+    except Exception as exc:              # noqa: BLE001 - quota guard, network, key
+        logger.warning("live price check failed: %s", exc)
+        return None
+
+    fares = _fares_in(raw or "")
+    if not fares:
+        logger.info("live price check returned no fares for %s-%s",
+                    origin, destination)
+        return None
+    return RealPrice(
+        amount=min(fares), source="live", samples=len(fares),
+        detail=f"cheapest of {len(fares)} fares the flight API returned when "
+               f"asked just now for this route on {departure_date}")
+
+
 @dataclass
 class PriceProbe:
     """
-    Real prices for a route, gathered without spending anything by default.
+    Real prices for a route: from the recordings first, and only then by asking.
 
-    Pass one of these to assess_budget and the check uses measured fares where it
-    has them and the table only where it does not — and says which for each line.
+    Reading a recording costs nothing, so that is always tried. `allow_live` opens
+    the second door, and it is off by default because a live search spends one of
+    thirty monthly flight requests — including on a check that ends in a refusal.
 
-    `allow_live` exists but is off by default and is not used by anything in this
-    project. Turning it on would mean a budget check could spend a flight search
-    from a monthly allowance of thirty, including checks that end in a refusal.
-    That trade needs a deliberate decision by whoever is running it, not a default.
+    The intended use is narrow: turn it on when the destination is not in the
+    price table, because that is the case where the alternative is a mid-tier
+    default nobody can account for. For a city the table knows, the estimate is
+    already grounded and a purchase buys nothing.
     """
 
     allow_live: bool = False
+    departure_date: str = ""
+    return_date: str = ""
+    adults: int = 1
 
     def flight(self, origin: str, destination: str) -> Optional[RealPrice]:
         recorded = recorded_flight_price(origin, destination)
@@ -270,8 +316,8 @@ class PriceProbe:
             return recorded
         if not self.allow_live:
             return None
-        logger.warning("live price probing is not implemented; refusing to guess")
-        return None
+        return live_flight_price(origin, destination, self.departure_date,
+                                 self.return_date or None, self.adults)
 
     def hotel_per_night(self, destination: str) -> Optional[RealPrice]:
         return recorded_hotel_price(destination)
