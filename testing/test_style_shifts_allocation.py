@@ -154,3 +154,115 @@ def test_style_still_loses_to_an_explicit_user_split():
     assert explicit.source == "user"
     assert explicit.percent("flights") == pytest.approx(40.0, abs=0.5)
     assert explicit.percent("accommodation") == pytest.approx(30.0, abs=0.5)
+
+
+# ------------------------------------------------------------------ phrasing
+# What a traveller actually types, rather than the three words a dropdown offers.
+class TestPhrasingIsUnderstood:
+    """
+    The style is read from the traveller's own words.
+
+    Two implementations of this used to exist — one on the cost-derived path and
+    one on the fallback — with different word lists, so "five star" was understood
+    for a listed destination and ignored for an unlisted one. Both now come
+    through parse_style.
+    """
+
+    def test_a_luxury_stay_is_a_request_about_the_room(self):
+        from trip_planner.core.budget import parse_style
+        intent = parse_style("I want a luxury stay")
+        assert intent.level > 0
+        assert intent.weight("accommodation") == 1.0
+        assert intent.weight("flights") == 0.0, "taste cannot shorten a flight"
+
+    def test_a_luxury_trip_is_a_request_about_all_of_it(self):
+        from trip_planner.core.budget import parse_style
+        intent = parse_style("luxury full trip")
+        assert intent.weight("accommodation") == 1.0
+        assert intent.weight("meals") > 0.5, "a luxury trip includes the food"
+
+    def test_a_luxury_stay_buys_a_better_room_than_a_luxury_trip(self):
+        """
+        The same budget, spread differently.
+
+        "Luxury stay" concentrates on the room. "Luxury trip" spends some of that
+        on food and activities instead, so the room ends up smaller.
+        """
+        stay = allocation_for("I want a luxury stay")
+        trip = allocation_for("luxury full trip")
+        assert stay.amounts["accommodation"] > trip.amounts["accommodation"]
+        assert trip.amounts["meals"] > stay.amounts["meals"]
+
+    def test_compromising_moves_money_to_food_and_doing_things(self):
+        """
+        The split divides a fixed total, so "spend less" cannot lower it.
+
+        What it can do is move money out of the room and the airfare and into the
+        part of the trip the traveller was willing to keep. Pushing every category
+        down at once — which an earlier version did — changed almost nothing.
+        """
+        lean = allocation_for("I can fully compromise")
+        neutral = allocation_for("moderate")
+        assert lean.amounts["accommodation"] < neutral.amounts["accommodation"]
+        assert lean.amounts["meals"] > neutral.amounts["meals"]
+        assert lean.amounts["activities"] > neutral.amounts["activities"]
+
+    def test_moderate_is_neutral(self):
+        """
+        "Moderate" is this system's default answer to the style question.
+
+        Reading it as a mild upgrade — which one draft did — silently biased every
+        default trip toward a better room.
+        """
+        from trip_planner.core.budget import parse_style
+        assert parse_style("moderate").level == 0.0
+        assert parse_style("standard").level == 0.0
+        stated = allocation_for("moderate").amounts
+        unstated = allocation_for("").amounts
+        assert stated == unstated
+
+    def test_strength_is_graded_not_binary(self):
+        from trip_planner.core.budget import parse_style
+        assert (parse_style("money no object").level
+                > parse_style("luxury").level
+                > parse_style("comfortable").level
+                > parse_style("moderate").level
+                > parse_style("budget").level
+                > parse_style("shoestring").level)
+
+    def test_the_reason_names_what_was_understood(self):
+        """A traveller should be able to see their words were read correctly."""
+        allocation = allocation_for("I want a luxury stay")
+        assert any("stay" in r for r in allocation.reasons), allocation.reasons
+
+    def test_an_unlisted_destination_understands_the_same_words(self):
+        """
+        The regression the single parser exists to prevent.
+
+        The fallback path used to hold its own shorter word list, so this worked
+        for Istanbul and did nothing for Kyoto.
+        """
+        lux = build_allocation(total_budget=2000, trip_duration=4, num_travelers=1,
+                               travel_style="five star hotel", origin="Lahore",
+                               destination="Kyoto")
+        lean = build_allocation(total_budget=2000, trip_duration=4, num_travelers=1,
+                                travel_style="shoestring", origin="Lahore",
+                                destination="Kyoto")
+        assert lux.amounts["accommodation"] > lean.amounts["accommodation"]
+
+
+def test_no_category_is_handed_more_than_it_could_cost():
+    """
+    A fourteen-night Bangkok trip needs about $350 of airfare.
+
+    Shares are proportions, so money pushed out of one category lands wherever the
+    arithmetic puts it. On $6,000 with a strong economise request, flights were
+    handed 41% — $2,442 reserved for a $350 flight, which then makes the search
+    look for a fare ten times dearer than the trip needs.
+    """
+    generous = build_allocation(total_budget=6000, trip_duration=14, num_travelers=1,
+                                travel_style="budget", origin="Lahore",
+                                destination="Bangkok")
+    assert generous.percent("flights") < 35.0, (
+        f"flights took {generous.percent('flights')}% "
+        f"(${generous.amounts['flights']:,.0f}) of a $6,000 budget")

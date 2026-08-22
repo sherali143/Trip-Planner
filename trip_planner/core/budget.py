@@ -200,15 +200,15 @@ def _cost_derived_shares(
     # $350 in airfare, so the minimum-tier ratio puts flights at 51% — which on
     # a $3,000 budget would reserve $1,530 for a $350 flight.
     level, blend, label = _tier_for_budget(estimate, total_budget, travel_style)
-    bias = _style_bias(travel_style)
+    intent = parse_style(travel_style)
 
     def share_at(cat: str) -> float:
         low, high = blend
         # Each category sits at its own point between the two tiers: the budget
-        # sets the base, and the stated style moves the categories that style
-        # actually governs. A luxury request buys a better room, not a shorter
-        # flight.
-        at = min(1.0, max(0.0, level + bias * _STYLE_WEIGHT.get(cat, 0.0)))
+        # sets the base, and the traveller's words move the categories those
+        # words were about. A luxury STAY moves the room; a luxury TRIP moves
+        # the room, the food and the doing; neither shortens the flight.
+        at = min(1.0, max(0.0, level + intent.level * intent.weight(cat)))
         return (estimate.breakdown[cat][low] * (1 - at)
                 + estimate.breakdown[cat][high] * at)
 
@@ -217,12 +217,213 @@ def _cost_derived_shares(
     if total <= 0:
         return None
 
+    shares = _cap_at_what_it_can_cost(
+        {c: costs[c] / total for c in CATEGORIES}, estimate, total_budget)
+
     reason = (
         f"Based on what a {label} trip to {dest} actually costs: "
         f"{estimate.haul}-haul flights for {num_travelers} traveller(s), "
         f"{trip_duration} night(s) at {classify_price_tier(dest)}-tier prices."
     )
-    return {c: costs[c] / total for c in CATEGORIES}, reason
+    # Say what was understood from the traveller's own words. Without this the
+    # explanation described the trip's cost structure and never acknowledged the
+    # request, so someone who typed "I want a luxury stay" had no way to tell
+    # whether it had been read.
+    if intent.level:
+        reason += f" Adjusted for what you asked for: {intent.label}."
+    return shares, reason
+
+
+def _cap_at_what_it_can_cost(
+    shares: Dict[str, float], estimate, total_budget: float,
+) -> Dict[str, float]:
+    """
+    Stop a category being handed more money than it could possibly absorb.
+
+    Shares are proportions of a fixed budget, so whenever one category is pushed
+    down the others rise to fill the gap — and the gap lands wherever the
+    arithmetic puts it rather than where it is useful. A fourteen-night Bangkok
+    trip needs about $350 of airfare; on a $6,000 budget with a strong "spend as
+    little as possible" request, flights were being handed 41% of it, which is
+    $2,442 reserved for a $350 flight. The searches then look for a flight ten
+    times dearer than the trip needs.
+
+    So each category is capped at what its most expensive version actually costs,
+    and the surplus is offered to the categories still below their own ceiling.
+    Anything nobody can absorb stays put: a budget genuinely larger than the
+    luxury trip is a real situation, and inventing somewhere to put the remainder
+    would be worse than leaving it in proportion.
+    """
+    if total_budget <= 0 or not estimate.breakdown:
+        return shares
+
+    # The ceiling is the luxury tier with headroom, not the luxury tier exactly:
+    # these are estimates, and a cap that bites at the estimate would fight the
+    # cost model on every generous budget.
+    ceilings = {
+        c: (estimate.breakdown.get(c, {}).get("luxury", 0.0) * 1.3) / total_budget
+        for c in CATEGORIES
+    }
+
+    capped = dict(shares)
+    for _ in range(len(CATEGORIES)):
+        surplus = 0.0
+        for category in CATEGORIES:
+            ceiling = ceilings.get(category, 0.0)
+            if ceiling > 0 and capped[category] > ceiling:
+                surplus += capped[category] - ceiling
+                capped[category] = ceiling
+        if surplus <= 1e-9:
+            break
+        room = {c: max(0.0, ceilings.get(c, 0.0) - capped[c]) for c in CATEGORIES}
+        available = sum(room.values())
+        if available <= 1e-9:
+            break                      # nothing can take it; leave the split as is
+        for category in CATEGORIES:
+            capped[category] += surplus * (room[category] / available)
+
+    return _normalise(capped)
+
+
+@dataclass
+class StyleIntent:
+    """
+    What the traveller's own words asked for, as a direction and a scope.
+
+    `level` runs from -1 (compromise on everything) through 0 (no preference
+    stated) to +1 (luxury throughout). `scope` says which categories the request
+    was actually about, because "luxury stay" and "luxury trip" are different
+    requests and used to be treated as the same one.
+    """
+
+    level: float
+    scope: Dict[str, float]
+    label: str
+    whole_trip: bool = True
+
+    def weight(self, category: str) -> float:
+        """
+        How far this category should move, between 0 and 1.
+
+        Flights are asymmetric, and deliberately so. Asking to upgrade cannot buy
+        a shorter flight, so an upward request leaves the airfare where the
+        distance put it. But asking to spend as little as possible plainly does
+        include the flight — and treating it as fixed in that direction had the
+        opposite effect to the one requested: money pushed out of the room piled
+        onto the airfare instead, so a "spend as little as possible" trip reserved
+        a business-class fare it had not asked for.
+        """
+        return self.scope.get(category, 0.0)
+
+
+# Every category, for a request that was about the whole trip. Flights sit at zero
+# even here: distance decides the airfare, and no phrasing shortens a flight. What
+# a luxury request buys is a better room, better food and more to do.
+_SCOPE_WHOLE_TRIP = {"flights": 0.0, "accommodation": 1.0, "meals": 0.7,
+                     "activities": 0.7}
+# A request about where you sleep, and nothing else.
+_SCOPE_STAY_ONLY = {"flights": 0.0, "accommodation": 1.0, "meals": 0.15,
+                    "activities": 0.15}
+# A request about eating and doing, with no claim about the room.
+_SCOPE_EXPERIENCE = {"flights": 0.0, "accommodation": 0.15, "meals": 1.0,
+                     "activities": 1.0}
+# Economising on the whole trip. The reduction is carried by the flight and the
+# room, and meals and activities carry none of it — so the money freed lands on
+# food and doing things.
+#
+# This is what "I can fully compromise" actually asks for. The split divides a
+# FIXED total, so a downward request cannot lower the total: all it can do is move
+# money between categories. Pushing every category down at once therefore changes
+# almost nothing, which is what the first version of this did. Pushing the room
+# and the flight down moves real money to the part of the trip the traveller was
+# willing to keep.
+_SCOPE_ECONOMISE = {"flights": 0.8, "accommodation": 1.0, "meals": 0.0,
+                    "activities": 0.0}
+
+# Words that set the DIRECTION, strongest first so "not luxury" style phrasing
+# cannot match the wrong end. Each maps to how far up or down the standard moves.
+_DIRECTION_WORDS = (
+    (0.9, ("ultra luxury", "5 star", "five star", "five-star", "no expense",
+           "money no object", "best possible", "top end", "top-end")),
+    (0.65, ("luxury", "luxurious", "premium", "high end", "high-end", "upscale",
+            "lavish", "splurge", "treat", "indulgent", "4 star", "four star")),
+    # A mild upgrade: the traveller asked for something better than the floor,
+    # without asking for luxury.
+    (0.25, ("comfortable", "nice", "decent", "good")),
+    # Explicitly neutral. "Moderate" is this system's default answer to the style
+    # question, so it must mean "no preference stated" and leave the split exactly
+    # where the budget and the trip's shape put it. Reading it as a mild upgrade
+    # silently biased every default trip toward a better room.
+    (0.0, ("moderate", "standard", "average", "mid range", "mid-range", "normal",
+           "no preference", "either", "any")),
+    (-0.9, ("shoestring", "as cheap as possible", "cheapest possible",
+            "fully compromise", "compromise fully", "bare minimum",
+            "rock bottom", "hostel")),
+    (-0.65, ("budget", "backpacker", "cheap", "economy", "frugal", "thrifty",
+             "compromise", "save money", "spend less", "low cost", "low-cost")),
+)
+
+# Words that narrow the SCOPE to part of the trip.
+_STAY_WORDS = ("stay", "hotel", "room", "accommodation", "resort", "lodging",
+               "sleep", "suite")
+_EXPERIENCE_WORDS = ("food", "eat", "eating", "dining", "restaurant", "meal",
+                     "experience", "activities", "activity", "tours", "doing",
+                     "attractions")
+_WHOLE_TRIP_WORDS = ("trip", "everything", "throughout", "whole", "all of it",
+                     "overall", "holiday", "vacation", "travel")
+
+
+def parse_style(travel_style: str) -> StyleIntent:
+    """
+    Read the traveller's own phrasing into a direction and a scope.
+
+    This replaced two separate implementations that had drifted apart: the
+    cost-derived path recognised one list of words and the fallback path another,
+    each with its own hardcoded adjustments, so "five star" worked on a listed
+    destination and did nothing on an unlisted one. Both now come through here.
+
+    It reads the words rather than matching an enum, because that is what a
+    traveller types. "I want a luxury stay" is a request about the room. "Luxury
+    trip" is a request about all of it. "I can fully compromise" is a request to
+    spend as little as possible. Those used to be the same input.
+
+    An empty or unrecognised description returns level 0, which leaves the split
+    exactly where the budget and the trip's shape put it — the honest answer when
+    nothing was asked for.
+    """
+    text = (travel_style or "").strip().lower()
+    if not text:
+        return StyleIntent(0.0, _SCOPE_WHOLE_TRIP, "no style stated")
+
+    level = 0.0
+    matched = ""
+    for strength, words in _DIRECTION_WORDS:
+        hit = next((w for w in words if w in text), None)
+        if hit:
+            level, matched = strength, hit
+            break
+
+    if not matched:
+        return StyleIntent(0.0, _SCOPE_WHOLE_TRIP, "no clear preference")
+    if level == 0.0:
+        return StyleIntent(0.0, _SCOPE_WHOLE_TRIP, f"{matched} — no preference stated")
+
+    # Scope: what was the request actually about? A phrase naming the whole trip
+    # wins over one naming the room, because "luxury trip including the hotel"
+    # mentions both and means the trip.
+    if any(w in text for w in _WHOLE_TRIP_WORDS):
+        scope = _SCOPE_WHOLE_TRIP if level > 0 else _SCOPE_ECONOMISE
+        where, whole = "the whole trip", True
+    elif any(w in text for w in _STAY_WORDS):
+        scope, where, whole = _SCOPE_STAY_ONLY, "the stay", False
+    elif any(w in text for w in _EXPERIENCE_WORDS):
+        scope, where, whole = _SCOPE_EXPERIENCE, "food and activities", False
+    else:
+        scope = _SCOPE_WHOLE_TRIP if level > 0 else _SCOPE_ECONOMISE
+        where, whole = "the whole trip", True
+
+    direction = "upgrade" if level > 0 else "economise"
+    return StyleIntent(level, scope, f"{matched} — {direction} {where}", whole)
 
 
 # How much the stated travel style moves each category.
@@ -245,16 +446,6 @@ _STYLE_WEIGHT: Dict[str, float] = {
     "meals": 0.7,
     "activities": 0.7,
 }
-
-
-def _style_bias(travel_style: str) -> float:
-    """How far the stated style pushes the standard, before per-category weighting."""
-    style = (travel_style or "").strip().lower()
-    if style in ("luxury", "premium", "high-end", "high end", "five star", "5 star"):
-        return 0.45
-    if style in ("budget", "backpacker", "cheap", "economy", "shoestring"):
-        return -0.45
-    return 0.0
 
 
 def _tier_for_budget(estimate, total_budget: float, travel_style: str):
@@ -373,18 +564,23 @@ def suggest_allocation(
                        "person, but a room is shared.")
 
     # --- style ---------------------------------------------------------------
-    style = (travel_style or "moderate").strip().lower()
-    if style in ("luxury", "premium", "high-end"):
-        shares["accommodation"] += 0.07
-        shares["meals"] += 0.03
-        shares["activities"] -= 0.02
-        reasons.append("Luxury style — accommodation is the largest category for "
-                       "luxury travellers.")
-    elif style in ("budget", "backpacker", "cheap", "economy"):
-        shares["accommodation"] -= 0.06
-        shares["activities"] += 0.03
-        shares["meals"] += 0.03
-        reasons.append("Budget style — cheaper stays leave more for food and doing things.")
+    # Through the same parser the cost-derived path uses. This block used to hold
+    # its own adjustments and its own shorter list of words, so "five star" was
+    # understood for a listed destination and ignored for an unlisted one.
+    intent = parse_style(travel_style)
+    if intent.level:
+        moved = []
+        for category in ("accommodation", "meals", "activities"):
+            shift = 0.09 * intent.level * intent.weight(category)
+            if shift:
+                shares[category] += shift
+                moved.append(category)
+        if moved:
+            direction = "more" if intent.level > 0 else "less"
+            reasons.append(
+                f"You asked for '{travel_style.strip()}' ({intent.label}), so "
+                f"{direction} of the budget goes to "
+                f"{', '.join(m.replace('accommodation', 'the stay') for m in moved)}.")
 
     shares = _normalise(shares)
     allocation = Allocation(
