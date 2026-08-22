@@ -1,7 +1,7 @@
 # Tests
 
 ```bash
-python -m pytest -q        # 308 tests, from the project root
+python -m pytest -q        # 311 tests, from the project root
 ```
 
 No API keys required and no network access — every test here is pure logic.
