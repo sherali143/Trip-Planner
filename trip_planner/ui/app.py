@@ -2,46 +2,47 @@
 WHAT THIS FILE DOES
 ===================
 The web interface. Collects the trip details, runs the planner, and shows the
-itinerary alongside the checks that were applied to it.
-
-Everything below the form is approach D: extraction by a model, then retrieval in
-plain Python, then assembly by a model.
+finished plan section by section.
 
 The page has two states, and they want different shapes
 -------------------------------------------------------
 Asking and showing are different jobs. Asking wants a narrow column — a form
-80 characters wide is harder to read, not easier. Showing wants the whole page: a
-finished itinerary is around 24,000 characters across eight sections and one block
-per day, and it was being poured into a 55%-wide column as a single markdown
-string. That is 380 lines of vertical scroll with no way to reach the third day
-except by dragging past the first two.
+spread across a wide screen is harder to read, not easier. Showing wants the
+whole page: a finished plan is around 24,000 characters across eight sections
+with a block per day, and it was once poured into a 55%-wide column as a single
+markdown string. That is 380 lines of vertical scroll, and reaching the third day
+meant dragging past the first two.
 
 So the form is centred and grouped while it is being filled in, and the results
-take the full width and are split into tabs, one per section the itinerary
-actually contains, with a block per day inside the day-by-day tab.
+take the full width, split into tabs, with each part of a section rendered as its
+own card rather than run together into a column of text.
 
-The sections are read from the itinerary rather than assumed. A model asked for a
-plan usually produces the eight headings the coordinator's prompt requests, but
-not always — so anything unrecognised keeps its own tab, and text with no headings
-at all falls back to being shown whole. A tab that hid part of the plan would be
-worse than a long page.
+The structure is READ from the plan, not assumed — see `plan_layout.py`, which
+also explains why those functions do not live here.
 
-THREE THINGS THAT WERE WRONG, BEYOND THE LAYOUT
+WHAT IT SHOWS WHILE IT WORKS
+----------------------------
+Seven named steps, in the order they happen: the conversation, the preferences,
+then flights, hotels, attractions and restaurants, then the itinerary. The
+orchestrator reports four phases and, inside the third, one line per search — so
+this maps those reports onto the seven rows rather than inventing progress. A
+spinner reading "Planning your amazing trip..." used to cover the whole run,
+which is several minutes, so a frozen page and a working page looked identical.
+
+The first row is marked done as the run starts, because on this page the form IS
+the conversation: the questions were asked and answered before the button was
+pressed.
+
+TWO THINGS THAT WERE WRONG, BEYOND PRESENTATION
 -----------------------------------------------
-It never asked how many people were travelling. The command-line agent asks that
-second; this form did not ask at all, so the extractor supplied the number from
-context — and it multiplies airfare and meals inside the feasibility check. A
-budget was being called possible or impossible partly on a figure nobody entered.
+It never asked how many people were travelling, so the extractor supplied the
+number from context — and it multiplies airfare and meals inside the feasibility
+check. A budget was being called possible or impossible partly on a figure nobody
+had entered.
 
 Both date fields opened on today, so the first press of the button always failed
 with "the return date is not after the departure date". A default that cannot be
 submitted is not a default.
-
-The progress it showed was not real. A spinner reading "Planning your amazing
-trip..." covered the entire run, which is several minutes, so a frozen page and a
-working page looked identical. The orchestrator now reports each step as it
-begins, through `set_progress_hook`, and what appears here is the same four steps
-the terminal prints.
 """
 
 import datetime
@@ -55,148 +56,204 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from trip_planner.orchestrator import TripPlannerCrew, set_progress_hook
-from trip_planner.ui.plan_layout import (group_into_tabs, plan_checks,
+from trip_planner.ui.plan_layout import (DONE, IDLE, NOW, SEARCH_ROW, STEPS,
+                                         group_into_tabs, plan_checks,
+                                         progress_states, split_blocks,
                                          split_days)
 
 load_dotenv()
 
 st.set_page_config(
-    page_title="Trip Planner — multi-agent itinerary builder",
-    page_icon="✈",
+    page_title="Wayfinder — trip planning from real prices",
+    page_icon="✦",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
+# The display name, in one place. Nothing else in the project depends on it.
+BRAND = "Wayfinder"
+TAGLINE = ("Real fares. Real rooms. A day-by-day plan you could actually book — "
+           "priced from live travel data, not guesswork.")
+
 # ---------------------------------------------------------------------------
 # Styling
-#
-# Type, spacing and one accent. The previous version drew chat bubbles in raw
-# HTML under a 3rem centred heading, which read as a demonstration of Streamlit
-# rather than as a travel tool.
 # ---------------------------------------------------------------------------
 st.markdown("""
 <style>
   :root {
-    --ink:        #1F2430;
-    --ink-soft:   #5A6274;
+    --ink:        #161A23;
+    --ink-soft:   #545C6E;
     --ink-faint:  #8A91A0;
-    --line:       #E4E7EF;
+    --line:       #E3E7F0;
+    --line-soft:  #EEF1F7;
     --surface:    #FFFFFF;
     --surface-2:  #F7F8FC;
     --accent:     #4338CA;
+    --accent-2:   #0EA5A4;
     --good:       #0F7B4F;
     --warn:       #A85B00;
     --bad:        #B3261E;
   }
 
-  .block-container { padding-top: 2rem; }
+  /* Wider than Streamlit's default, because the plan is the point. */
+  .block-container { padding-top: 1.6rem; max-width: 1560px; }
 
-  /* Masthead ------------------------------------------------------------- */
-  .tp-mast {
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 1.1rem; margin-bottom: 1.6rem;
+  /* ---- Masthead ------------------------------------------------------- */
+  .wf-mast { margin-bottom: 1.5rem; }
+  .wf-eyebrow {
+    font-size: 0.68rem; font-weight: 680; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 0.35rem 0;
   }
-  .tp-mast h1 {
-    font-size: 1.55rem; font-weight: 640; letter-spacing: -0.02em;
-    color: var(--ink); margin: 0 0 0.3rem 0; line-height: 1.2;
+  .wf-title {
+    font-size: 3.1rem; font-weight: 760; letter-spacing: -0.035em;
+    line-height: 1; margin: 0 0 0.55rem 0;
+    background: linear-gradient(96deg, #1E1B4B 8%, #4338CA 46%, #0EA5A4 96%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: var(--accent);
   }
-  .tp-mast p { font-size: 0.88rem; color: var(--ink-soft); margin: 0; max-width: 68ch; }
-  .tp-tags { margin-top: 0.7rem; display: flex; gap: 0.4rem; flex-wrap: wrap; }
-  .tp-tag {
-    font-size: 0.68rem; font-weight: 560; letter-spacing: 0.03em;
-    text-transform: uppercase; color: var(--accent);
-    background: #EEF0FF; border: 1px solid #DDE0FB;
-    padding: 0.18rem 0.48rem; border-radius: 3px;
+  .wf-tag {
+    font-size: 0.98rem; color: var(--ink-soft); margin: 0; max-width: 74ch;
+    line-height: 1.5;
+  }
+  .wf-rule {
+    height: 3px; width: 74px; margin: 1rem 0 0 0; border-radius: 3px;
+    background: linear-gradient(90deg, #4338CA, #0EA5A4);
   }
 
-  /* Section labels ------------------------------------------------------- */
-  .tp-sect {
-    font-size: 0.7rem; font-weight: 660; letter-spacing: 0.09em;
+  /* ---- Sidebar -------------------------------------------------------- */
+  .wf-brandbox {
+    background: linear-gradient(150deg, #1E1B4B 0%, #312E81 52%, #0F766E 100%);
+    border-radius: 10px; padding: 1.05rem 1.1rem; margin-bottom: 1.15rem;
+    color: #fff;
+  }
+  .wf-brandbox__name {
+    font-size: 1.22rem; font-weight: 720; letter-spacing: -0.02em;
+    margin: 0 0 0.2rem 0;
+  }
+  .wf-brandbox__sub {
+    font-size: 0.735rem; color: #C7D2FE; margin: 0; line-height: 1.45;
+  }
+
+  .wf-sect {
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.13em;
     text-transform: uppercase; color: var(--ink-faint);
-    margin: 0 0 0.5rem 0;
+    margin: 1.25rem 0 0.55rem 0; display: flex; align-items: center; gap: 0.5rem;
   }
-  .tp-groupno {
-    display: inline-block; width: 1.25rem; height: 1.25rem; line-height: 1.25rem;
-    text-align: center; border-radius: 50%; background: var(--accent);
-    color: #fff; font-size: 0.68rem; font-weight: 700; margin-right: 0.45rem;
-  }
-  .tp-grouphead {
-    font-size: 0.95rem; font-weight: 620; color: var(--ink);
-    margin: 0 0 0.15rem 0;
-  }
-  .tp-groupsub {
-    font-size: 0.78rem; color: var(--ink-soft); margin: 0 0 0.7rem 1.7rem;
+  .wf-sect::after {
+    content: ""; flex: 1 1 auto; height: 1px; background: var(--line);
   }
 
-  .tp-card {
+  .wf-source {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.775rem; color: var(--ink-soft); padding: 0.28rem 0;
+  }
+  .wf-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex: none;
+    background: var(--accent-2);
+  }
+  .wf-source__what { color: var(--ink-faint); font-size: 0.72rem; }
+
+  /* ---- Cards ---------------------------------------------------------- */
+  .wf-card {
     background: var(--surface); border: 1px solid var(--line);
-    border-radius: 6px; padding: 1rem 1.15rem; margin-bottom: 0.85rem;
+    border-radius: 8px; padding: 0.95rem 1.1rem; margin-bottom: 0.8rem;
   }
 
-  /* Step list ------------------------------------------------------------ */
-  .tp-step {
-    display: flex; gap: 0.7rem; align-items: baseline;
-    padding: 0.48rem 0; border-bottom: 1px solid var(--line);
+  /* ---- Progress rows -------------------------------------------------- */
+  .wf-step {
+    display: flex; gap: 0.65rem; align-items: flex-start;
+    padding: 0.42rem 0; border-bottom: 1px solid var(--line-soft);
   }
-  .tp-step:last-child { border-bottom: none; }
-  .tp-step__mark { width: 1.1rem; flex: none; font-size: 0.9rem; }
-  .tp-step__who { font-size: 0.85rem; font-weight: 580; color: var(--ink); display: block; }
-  .tp-step__what { font-size: 0.77rem; color: var(--ink-soft); display: block; margin-top: 0.1rem; }
-  .tp-step--idle .tp-step__who,
-  .tp-step--idle .tp-step__what { color: var(--ink-faint); }
+  .wf-step:last-child { border-bottom: none; }
+  .wf-step__mark {
+    width: 1.15rem; flex: none; text-align: center; font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  .wf-step__who {
+    font-size: 0.835rem; font-weight: 600; color: var(--ink); display: block;
+  }
+  .wf-step__what {
+    font-size: 0.735rem; color: var(--ink-soft); display: block;
+    margin-top: 0.06rem; line-height: 1.4;
+  }
+  .wf-step--done .wf-step__mark { color: var(--good); }
+  .wf-step--now  .wf-step__mark { color: var(--accent); }
+  .wf-step--now  .wf-step__who  { color: var(--accent); }
+  .wf-step--idle .wf-step__mark { color: var(--ink-faint); }
+  .wf-step--idle .wf-step__who,
+  .wf-step--idle .wf-step__what { color: var(--ink-faint); }
 
-  /* Label / value rows --------------------------------------------------- */
-  .tp-fact {
-    display: flex; justify-content: space-between; gap: 1rem;
-    font-size: 0.81rem; padding: 0.28rem 0;
+  /* ---- Label / value rows --------------------------------------------- */
+  .wf-fact {
+    display: flex; justify-content: space-between; gap: 0.9rem;
+    font-size: 0.795rem; padding: 0.29rem 0;
     border-bottom: 1px dotted var(--line);
   }
-  .tp-fact:last-child { border-bottom: none; }
-  .tp-fact__k { color: var(--ink-soft); }
-  .tp-fact__v { color: var(--ink); font-weight: 550; text-align: right; }
+  .wf-fact:last-child { border-bottom: none; }
+  .wf-fact__k { color: var(--ink-soft); flex: none; }
+  .wf-fact__v { color: var(--ink); font-weight: 560; text-align: right; }
 
-  /* Badges --------------------------------------------------------------- */
-  .tp-badge {
-    display: inline-block; font-size: 0.73rem; font-weight: 580;
-    padding: 0.2rem 0.52rem; border-radius: 3px; border: 1px solid;
+  /* ---- Badges --------------------------------------------------------- */
+  .wf-badge {
+    display: inline-block; font-size: 0.735rem; font-weight: 600;
+    padding: 0.24rem 0.6rem; border-radius: 999px; border: 1px solid;
+    margin-right: 0.3rem;
   }
-  .tp-badge--good { color: var(--good); background: #EAF6F0; border-color: #C6E5D6; }
-  .tp-badge--warn { color: var(--warn); background: #FDF3E4; border-color: #F0DCBC; }
-  .tp-badge--bad  { color: var(--bad);  background: #FCEDEC; border-color: #F4D3D1; }
-  .tp-badge--flat { color: var(--ink-soft); background: var(--surface-2); border-color: var(--line); }
+  .wf-badge--good { color: var(--good); background: #EAF6F0; border-color: #C6E5D6; }
+  .wf-badge--warn { color: var(--warn); background: #FDF3E4; border-color: #F0DCBC; }
+  .wf-badge--bad  { color: var(--bad);  background: #FCEDEC; border-color: #F4D3D1; }
+  .wf-badge--flat { color: var(--ink-soft); background: var(--surface-2); border-color: var(--line); }
 
-  /* Itinerary body ------------------------------------------------------- */
-  .tp-body { max-width: 86ch; }
-  .tp-body h1, .tp-body h2 { display: none; }   /* the tab already names it */
-
-  .tp-empty {
-    border: 1px dashed var(--line); border-radius: 6px;
-    padding: 2.2rem 1.5rem; text-align: center; color: var(--ink-faint);
-    font-size: 0.85rem; line-height: 1.6;
+  /* ---- Numbered form groups ------------------------------------------- */
+  .wf-groupno {
+    display: inline-block; width: 1.4rem; height: 1.4rem; line-height: 1.4rem;
+    text-align: center; border-radius: 50%;
+    background: linear-gradient(140deg, #4338CA, #0EA5A4);
+    color: #fff; font-size: 0.72rem; font-weight: 720; margin-right: 0.5rem;
   }
-  .tp-note { font-size: 0.755rem; color: var(--ink-faint); line-height: 1.5; }
+  .wf-grouphead {
+    font-size: 1rem; font-weight: 650; color: var(--ink); margin: 0 0 0.12rem 0;
+  }
+  .wf-groupsub {
+    font-size: 0.78rem; color: var(--ink-soft); margin: 0 0 0.75rem 1.9rem;
+    line-height: 1.45;
+  }
 
-  /* Streamlit's own chrome ---------------------------------------------- */
+  /* ---- The plan itself ------------------------------------------------ */
+  .wf-blockhead {
+    font-size: 0.93rem; font-weight: 650; color: var(--ink);
+    margin: 0 0 0.5rem 0; padding-bottom: 0.38rem;
+    border-bottom: 2px solid var(--line);
+  }
+  .wf-plan { font-size: 0.945rem; line-height: 1.68; }
+  .wf-plan h1 { font-size: 1.3rem; }
+  .wf-plan h2 { font-size: 1.12rem; }
+
+  .wf-empty {
+    border: 1px dashed var(--line); border-radius: 8px;
+    padding: 2.4rem 1.5rem; text-align: center; color: var(--ink-faint);
+    font-size: 0.86rem; line-height: 1.65;
+  }
+  .wf-note { font-size: 0.755rem; color: var(--ink-faint); line-height: 1.55; }
+
+  /* ---- Streamlit's own chrome ----------------------------------------- */
   div[data-testid="stForm"] { border: none; padding: 0; }
-  .stButton > button { font-weight: 560; border-radius: 4px; }
-  button[data-baseweb="tab"] { font-size: 0.86rem; font-weight: 560; }
+  .stButton > button, .stDownloadButton > button {
+    font-weight: 600; border-radius: 6px;
+  }
+  button[data-baseweb="tab"] { font-size: 0.9rem; font-weight: 600; }
   #MainMenu, footer { visibility: hidden; }
 
-  /* Tables inside the plan must not push the page sideways. */
+  /* Wide tables scroll inside themselves rather than widening the page. */
   .stMarkdown table { display: block; overflow-x: auto; max-width: 100%; }
 </style>
 """, unsafe_allow_html=True)
 
 
-# ---------------------------------------------------------------------------
-# Small render helpers
-# ---------------------------------------------------------------------------
-
-STEPS = [
-    ("Conversational agent", "Collecting the details the plan needs"),
-    ("Preferences extractor", "Turning the request into structured fields, then checking the budget"),
-    ("Retrieval", "Fetching flights, hotels and venues in plain Python"),
-    ("Itinerary coordinator", "Assembling the day-by-day plan"),
+DATA_SOURCES = [
+    ("Flight fares", "live search, recorded and replayed"),
+    ("Hotel rates", "live search, recorded and replayed"),
+    ("Attractions and dining", "live venue lookups"),
 ]
 
 DEFAULTS = {
@@ -217,39 +274,42 @@ def _reset() -> None:
         st.session_state[key] = value
 
 
+# ---------------------------------------------------------------------------
+# Render helpers
+# ---------------------------------------------------------------------------
+
 def _badge(text: str, tone: str = "flat") -> str:
-    return f'<span class="tp-badge tp-badge--{tone}">{html.escape(text)}</span>'
+    return f'<span class="wf-badge wf-badge--{tone}">{html.escape(text)}</span>'
 
 
 def _facts(rows) -> str:
     body = "".join(
-        f'<div class="tp-fact"><span class="tp-fact__k">{html.escape(str(k))}</span>'
-        f'<span class="tp-fact__v">{html.escape(str(v))}</span></div>'
+        f'<div class="wf-fact"><span class="wf-fact__k">{html.escape(str(k))}</span>'
+        f'<span class="wf-fact__v">{html.escape(str(v))}</span></div>'
         for k, v in rows if v not in (None, "", 0))
-    return f'<div class="tp-card">{body}</div>'
+    return f'<div class="wf-card">{body}</div>'
+
+
+def _progress(states, container) -> None:
+    """Draw the seven rows from a list of IDLE / NOW / DONE."""
+    marks = {DONE: "✓", NOW: "▸", IDLE: "○"}
+    names = {DONE: "done", NOW: "now", IDLE: "idle"}
+    rows = "".join(
+        f'<div class="wf-step wf-step--{names[state]}">'
+        f'<span class="wf-step__mark">{marks[state]}</span>'
+        f'<span><span class="wf-step__who">{html.escape(who)}</span>'
+        f'<span class="wf-step__what">{html.escape(what)}</span></span></div>'
+        for (who, what), state in zip(STEPS, states))
+    container.markdown(f'<div class="wf-card">{rows}</div>',
+                       unsafe_allow_html=True)
 
 
 def _group_head(number: int, title: str, subtitle: str) -> None:
-    """A numbered heading for one group of questions."""
     st.markdown(
-        f'<p class="tp-grouphead"><span class="tp-groupno">{number}</span>'
+        f'<p class="wf-grouphead"><span class="wf-groupno">{number}</span>'
         f'{html.escape(title)}</p>'
-        f'<p class="tp-groupsub">{html.escape(subtitle)}</p>',
+        f'<p class="wf-groupsub">{html.escape(subtitle)}</p>',
         unsafe_allow_html=True)
-
-
-def _render_steps(reached: int, container) -> None:
-    """Draw the step list with everything before `reached` marked done."""
-    rows = []
-    for index, (who, what) in enumerate(STEPS, start=1):
-        mark = "✓" if index < reached else ("▸" if index == reached else "·")
-        cls = "" if index <= reached else " tp-step--idle"
-        rows.append(
-            f'<div class="tp-step{cls}"><span class="tp-step__mark">{mark}</span>'
-            f'<span><span class="tp-step__who">{html.escape(who)}</span>'
-            f'<span class="tp-step__what">{html.escape(what)}</span></span></div>')
-    container.markdown(f'<div class="tp-card">{"".join(rows)}</div>',
-                       unsafe_allow_html=True)
 
 
 def _travellers(answers) -> str:
@@ -261,20 +321,38 @@ def _travellers(answers) -> str:
     return text
 
 
+def _render_section(body: str) -> None:
+    """
+    Show one section as cards, one per part, or plainly if it has only one part.
+
+    A flight or hotel section is three recommended options and a table of the
+    rest, each under its own sub-heading. Run together as one markdown string
+    they become a column of text with the boundaries buried in it.
+    """
+    blocks = split_blocks(body)
+    if len(blocks) < 2:
+        st.markdown(f'<div class="wf-plan">', unsafe_allow_html=True)
+        st.markdown(blocks[0][1] if blocks else body)
+        st.markdown("</div>", unsafe_allow_html=True)
+        return
+    for heading, text in blocks:
+        with st.container(border=True):
+            if heading:
+                st.markdown(
+                    f'<p class="wf-blockhead">{html.escape(heading)}</p>',
+                    unsafe_allow_html=True)
+            st.markdown(text)
+
+
 # ---------------------------------------------------------------------------
 # Masthead
 # ---------------------------------------------------------------------------
-st.markdown("""
-<div class="tp-mast">
-  <h1>Trip Planner</h1>
-  <p>A day-by-day itinerary built from real flight, hotel and venue data. Two
-     model steps with retrieval in plain Python between them, exchanging typed
-     messages over an A2A protocol.</p>
-  <div class="tp-tags">
-    <span class="tp-tag">Approach D &middot; three agents</span>
-    <span class="tp-tag">A2A protocol</span>
-    <span class="tp-tag">MCP tools</span>
-  </div>
+st.markdown(f"""
+<div class="wf-mast">
+  <p class="wf-eyebrow">Trip planning studio</p>
+  <p class="wf-title">{BRAND}</p>
+  <p class="wf-tag">{TAGLINE}</p>
+  <div class="wf-rule"></div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -284,9 +362,18 @@ FINISHED = bool(st.session_state.itinerary or st.session_state.failure)
 # Sidebar
 # ---------------------------------------------------------------------------
 with st.sidebar:
+    st.markdown(f"""
+<div class="wf-brandbox">
+  <p class="wf-brandbox__name">✦ {BRAND}</p>
+  <p class="wf-brandbox__sub">Every price here was quoted by a real travel API.
+     Where a figure had to be estimated instead, the plan says so.</p>
+</div>
+""", unsafe_allow_html=True)
+
     if FINISHED:
         answers = st.session_state.answers
-        st.markdown('<div class="tp-sect">The request</div>', unsafe_allow_html=True)
+        st.markdown('<div class="wf-sect">Your trip</div>',
+                    unsafe_allow_html=True)
         st.markdown(_facts([
             ("Destination", answers.get("destination")),
             ("From", answers.get("origin")),
@@ -300,65 +387,63 @@ with st.sidebar:
             ("Requirements", answers.get("special_requirements")),
         ]), unsafe_allow_html=True)
 
-        st.markdown('<div class="tp-sect">Steps</div>', unsafe_allow_html=True)
-        _render_steps(len(STEPS) + 1, st)
+        st.markdown('<div class="wf-sect">Steps</div>', unsafe_allow_html=True)
+        _progress([DONE] * len(STEPS), st)
 
         if st.session_state.facts:
-            st.markdown('<div class="tp-sect">What the run reported</div>',
+            st.markdown('<div class="wf-sect">What each step found</div>',
                         unsafe_allow_html=True)
             st.markdown(_facts(st.session_state.facts), unsafe_allow_html=True)
 
-        st.markdown("---")
-        if st.button("Plan another trip", use_container_width=True):
+        st.write("")
+        if st.button("Plan another trip", use_container_width=True,
+                     type="primary"):
             _reset()
             st.rerun()
     else:
-        st.markdown('<div class="tp-sect">What the model does</div>',
+        st.markdown('<div class="wf-sect">Steps it will run</div>',
                     unsafe_allow_html=True)
-        st.markdown("""
-<p class="tp-note">
-A model is used where the step needs a judgement that cannot be written as code —
-reading a request, and arranging retrieved options into a sensible plan. Fetching
-a fare for a known route on a known date is not such a step, so it runs as plain
-Python. That division is the argument this project tests.
-</p>
-""", unsafe_allow_html=True)
+        _progress([IDLE] * len(STEPS), st)
 
-        st.markdown('<div class="tp-sect">Prices</div>', unsafe_allow_html=True)
-        st.markdown("""
-<p class="tp-note">
-Flights, hotels and venues come from live APIs, recorded on first use and replayed
-after. Where a route has been recorded the budget check uses the fare that was
-really quoted; where it has not, it estimates from a price table and says so.
-</p>
-""", unsafe_allow_html=True)
-
-        st.markdown('<div class="tp-sect">Steps it will run</div>',
+        st.markdown('<div class="wf-sect">Where the prices come from</div>',
                     unsafe_allow_html=True)
-        _render_steps(0, st)
+        st.markdown(
+            '<div class="wf-card">' + "".join(
+                f'<div class="wf-source"><span class="wf-dot"></span>'
+                f'<span>{html.escape(name)}<br>'
+                f'<span class="wf-source__what">{html.escape(what)}</span>'
+                f'</span></div>'
+                for name, what in DATA_SOURCES) + '</div>',
+            unsafe_allow_html=True)
+
+        st.markdown(
+            '<p class="wf-note">Responses are recorded the first time they are '
+            'fetched and replayed afterwards, so the same trip can be shown '
+            'again without spending a monthly allowance.</p>',
+            unsafe_allow_html=True)
 
 
 # ===========================================================================
-# STATE 1 — asking. A centred form, grouped and numbered.
+# STATE 1 — asking
 # ===========================================================================
 submitted = False
 
 if not FINISHED:
-    gutter_l, middle, gutter_r = st.columns([0.14, 0.72, 0.14])
+    gutter_l, middle, gutter_r = st.columns([0.17, 0.66, 0.17])
     with middle:
         with st.form("trip", clear_on_submit=False, border=False):
 
             with st.container(border=True):
                 _group_head(1, "Where and when",
-                            "The route and the dates. Both are used to fetch real "
-                            "fares, so they need to be the dates you would book.")
+                            "The route and the dates. Both are used to fetch "
+                            "real fares, so they should be the dates you would "
+                            "actually book.")
                 destination = st.text_input(
                     "Destination", placeholder="Istanbul, Turkey")
                 origin = st.text_input(
                     "Travelling from", placeholder="Lahore, Pakistan")
-                # Defaulted a month out, not to today. Both fields used to open on
-                # today's date, so the first press of the button always failed with
-                # "the return date is not after the departure date".
+                # A month out, not today. Both fields used to open on today's
+                # date, so the first press of the button always failed.
                 today = datetime.date.today()
                 date_a, date_b = st.columns(2)
                 start_date = date_a.date_input(
@@ -378,20 +463,19 @@ if not FINISHED:
 
             with st.container(border=True):
                 _group_head(3, "Budget and style",
-                            "The total, and what matters most. The wording of the "
-                            "second changes how the money is divided.")
+                            "The total, and what matters most to you. The "
+                            "wording of the second changes how the money is "
+                            "divided, not just how much is spent.")
                 budget = st.number_input(
                     "Total budget for the whole trip, in US dollars",
                     min_value=0, value=3000, step=100,
                     help="Every figure in this system is USD — the APIs are "
-                         "queried in USD and the cost model's thresholds are USD "
-                         "amounts. Please convert before entering.")
-                # Free text rather than three options. The allocation reads
-                # phrasing: "luxury stay" moves the room budget, "luxury trip"
-                # spreads it across room, food and activities, and "I can
-                # compromise" moves money out of the room and airfare into
-                # experiences. A luxury/moderate/budget dropdown expresses none
-                # of that.
+                         "queried in USD and the cost model's thresholds are "
+                         "USD amounts. Please convert before entering.")
+                # Free text rather than three options. "luxury stay" moves the
+                # room budget; "luxury trip" spreads it across room, food and
+                # activities; "I can compromise" moves money out of the room and
+                # the airfare into experiences. A dropdown expresses none of it.
                 travel_style = st.text_input(
                     "What matters most on this trip?",
                     placeholder="a luxury stay / great food and lots to do / "
@@ -399,8 +483,8 @@ if not FINISHED:
 
             with st.container(border=True):
                 _group_head(4, "Preferences",
-                            "What to fill the days with, and anything that has to "
-                            "be worked around.")
+                            "What to fill the days with, and anything that has "
+                            "to be worked around.")
                 interests = st.text_input(
                     "Interests", placeholder="museums, food, nightlife, hiking")
                 special_requirements = st.text_input(
@@ -409,7 +493,7 @@ if not FINISHED:
 
             st.write("")
             submitted = st.form_submit_button(
-                "Build itinerary", type="primary", use_container_width=True)
+                "Build my itinerary", type="primary", use_container_width=True)
 
         problems = []
         if submitted:
@@ -424,10 +508,10 @@ if not FINISHED:
 
         if not submitted:
             st.markdown("""
-<div class="tp-empty">
-  The plan appears here once this is built.<br>
-  Flights and hotels are fetched, the budget is checked against what the trip
-  really costs, and the day count is verified before anything is shown.
+<div class="wf-empty">
+  Your plan appears here.<br>
+  Fares and rooms are fetched, the budget is checked against what the trip really
+  costs, and every day is verified present before anything is shown.
 </div>
 """, unsafe_allow_html=True)
 
@@ -476,31 +560,38 @@ if not FINISHED:
         ]) + "\n"
 
         with middle:
-            st.markdown('<div class="tp-sect">Working</div>',
+            st.markdown('<div class="wf-sect">Working</div>',
                         unsafe_allow_html=True)
             step_box, note_box, fact_box = st.empty(), st.empty(), st.empty()
-            _render_steps(1, step_box)
-            state = {"facts": []}
+
+            # The events the run reports, in order, replayed into step states by
+            # progress_states — so what is shown here is derived from the run
+            # rather than tracked separately and allowed to drift from it.
+            state = {"events": [], "facts": []}
+            _progress(progress_states([], conversation_done=True), step_box)
+
+            def redraw():
+                _progress(progress_states(state["events"],
+                                          conversation_done=True), step_box)
 
             def on_progress(kind, *parts):
-                """
-                Told by the orchestrator as each step begins and each fact lands.
-
-                The same four steps the terminal prints, and the same detail
-                lines — route, dates, the budget handed to each search, and what
-                each search came back with.
-                """
+                """Told by the orchestrator as each phase begins and each search lands."""
                 if kind == "step":
-                    match = re.search(r"(\d+)", parts[0])   # "STEP 2 of 4"
+                    match = re.search(r"(\d+)", parts[0])     # "STEP 2 of 4"
                     if match:
-                        _render_steps(int(match.group(1)), step_box)
+                        state["events"].append(("phase", int(match.group(1))))
+                        redraw()
                 elif kind == "detail":
-                    state["facts"].append((parts[0], parts[1]))
+                    label, value = parts[0], parts[1]
+                    state["facts"].append((label, value))
                     fact_box.markdown(_facts(state["facts"]),
                                       unsafe_allow_html=True)
+                    if label in SEARCH_ROW:
+                        state["events"].append(("search", label))
+                        redraw()
                 elif kind == "budget":
                     note_box.markdown(
-                        f'<p class="tp-note">{html.escape(parts[1])}</p>',
+                        f'<p class="wf-note">{html.escape(parts[1])}</p>',
                         unsafe_allow_html=True)
 
             set_progress_hook(on_progress)
@@ -522,11 +613,11 @@ if not FINISHED:
 
 
 # ===========================================================================
-# STATE 2 — showing. Full width, one tab per section the plan contains.
+# STATE 2 — showing
 # ===========================================================================
 else:
     if st.session_state.failure:
-        st.markdown('<div class="tp-sect">The run did not finish</div>',
+        st.markdown('<div class="wf-sect">The run did not finish</div>',
                     unsafe_allow_html=True)
         st.error(st.session_state.failure)
         if st.session_state.console:
@@ -540,19 +631,20 @@ else:
 
         # The budget check can refuse a trip outright, in which case what came
         # back is the refusal and its reasoning rather than a plan. Presenting
-        # that under the heading "Itinerary" would be a lie about what it is.
+        # that under the heading "Itinerary" would misdescribe it.
         refused = "CANNOT BE PLANNED WITHIN THAT BUDGET" in itinerary
 
-        heading = (f"{answers.get('destination', 'Trip')} · "
-                   f"{answers.get('nights', '?')} nights · "
-                   f"{_travellers(answers)}")
-        st.markdown(f'<div class="tp-sect">{html.escape(heading)}</div>',
-                    unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="wf-sect">'
+            f'{html.escape(str(answers.get("destination", "Your trip")))} · '
+            f'{html.escape(str(answers.get("nights", "?")))} nights · '
+            f'{html.escape(_travellers(answers))}</div>',
+            unsafe_allow_html=True)
 
         checks = [_badge(text, tone)
                   for text, tone in plan_checks(console, refused)]
         if checks:
-            st.markdown(" ".join(checks), unsafe_allow_html=True)
+            st.markdown("".join(checks), unsafe_allow_html=True)
 
         # Only values the run established. A cheapest fare appears when the route
         # had been recorded and a real price was read out of it; when it had not,
@@ -574,8 +666,7 @@ else:
         else:
             tabs = group_into_tabs(itinerary)
             if not tabs:
-                # No headings at all. Show the whole thing rather than nothing.
-                st.markdown(itinerary)
+                st.markdown(itinerary)          # no headings: show it whole
             else:
                 for tab, (name, sections) in zip(
                         st.tabs([name for name, _ in tabs]), tabs):
@@ -585,27 +676,21 @@ else:
                                 days = split_days(body)
                                 if len(days) > 1:
                                     for index, (label, text) in enumerate(days):
-                                        with st.expander(label, expanded=index == 0):
-                                            st.markdown(
-                                                f'<div class="tp-body">',
-                                                unsafe_allow_html=True)
-                                            st.markdown(text)
-                                            st.markdown('</div>',
-                                                        unsafe_allow_html=True)
+                                        with st.expander(label,
+                                                         expanded=index == 0):
+                                            _render_section(text)
                                     continue
-                            if title and len(sections) > 1:
-                                st.markdown(f"##### {title}")
-                            st.markdown(body)
+                            _render_section(body)
 
         st.write("")
-        download, terminal = st.columns([0.32, 0.68])
+        download, terminal = st.columns([0.3, 0.7])
         download.download_button(
             "Download the plan",
             data=itinerary,
             file_name=("itinerary-" +
                        re.sub(r"[^A-Za-z0-9]+", "-",
-                              answers.get("destination", "trip")).strip("-") +
-                       ".md"),
+                              str(answers.get("destination", "trip"))
+                              ).strip("-") + ".md"),
             mime="text/markdown",
             use_container_width=True,
         )

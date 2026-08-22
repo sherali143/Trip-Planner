@@ -52,6 +52,66 @@ DISPLAY_ORDER = ["Overview", "Flights", "Hotels", "Day by day", "Budget",
 
 MAX_DAY_LABEL = 72          # Streamlit renders this in an expander header.
 
+# ---------------------------------------------------------------------------
+# Progress: seven named steps, built from what the orchestrator reports
+#
+# The orchestrator reports four phases, and inside the third it reports one line
+# per search. Showing four rows hid the interesting part — three of the four
+# searches happen inside one of them — so the rows are those reports spread out
+# rather than a different account of the run.
+# ---------------------------------------------------------------------------
+STEPS = [
+    ("Conversation",  "Collecting the details the plan needs"),
+    ("Preferences",   "Reading the request and checking the budget is possible"),
+    ("Flights",       "Finding real fares for the route and dates"),
+    ("Hotels",        "Finding rooms inside the nightly budget"),
+    ("Attractions",   "Finding things to do that match the interests"),
+    ("Restaurants",   "Finding places to eat at the right price"),
+    ("Itinerary",     "Arranging all of it into a day-by-day plan"),
+]
+
+PHASE_ROW = {1: 0, 2: 1, 3: 2, 4: 6}
+SEARCH_ROW = {"flight": 2, "hotel": 3, "attraction": 4, "restaurant": 5}
+
+IDLE, NOW, DONE = 0, 1, 2
+
+
+def progress_states(events, conversation_done: bool = False):
+    """
+    Turn the run's reports into one state per step: IDLE, NOW or DONE.
+
+    `events` is a list of ("phase", number) and ("search", label) pairs in the
+    order they were reported. `conversation_done` marks the first row complete
+    from the start, which is right on the web page: the form IS the conversation,
+    so those questions were answered before the button was pressed. The
+    orchestrator never announces phase 1 on that path, so without this the first
+    row would sit unstarted for the whole run.
+
+    A phase beginning marks every earlier row done, because the orchestrator only
+    reports a phase when the one before it has returned. A search reports its own
+    completion, so it marks its row done and starts the next.
+    """
+    states = [IDLE] * len(STEPS)
+    if conversation_done:
+        states[0] = DONE
+    for kind, value in events or []:
+        if kind == "phase":
+            row = PHASE_ROW.get(value)
+            if row is None:
+                continue
+            for earlier in range(row):
+                states[earlier] = DONE
+            if states[row] != DONE:
+                states[row] = NOW
+        elif kind == "search":
+            row = SEARCH_ROW.get(value)
+            if row is None:
+                continue
+            states[row] = DONE
+            if row + 1 < len(STEPS) and states[row + 1] == IDLE:
+                states[row + 1] = NOW
+    return states
+
 
 def section_level(itinerary: str) -> int:
     """
@@ -178,6 +238,45 @@ def split_days(body: str):
             chunk.append(line)
     flush()
     return days
+
+
+def split_blocks(body: str):
+    """
+    Break one section's body into its own sub-blocks, as (heading, text) pairs.
+
+    A flight or hotel section is not prose — it is three recommended options and
+    a table of the rest, each under its own sub-heading. Rendered as one markdown
+    string they run together into a column of text where the reader has to find
+    the boundaries. Split, each becomes a card.
+
+    Uses the same "a level used once is a title, a level used repeatedly is a
+    divider" rule as `section_level`, applied inside the section. A body with
+    nothing repeated comes back as one block, which is the signal to render it
+    plainly rather than as a single pointless card.
+    """
+    text = body or ""
+    hashes = "#" * section_level(text)
+    pattern = re.compile(rf"^{hashes}\s+(.*\S)\s*$")
+    blocks, heading, chunk = [], None, []
+
+    def flush():
+        joined = "\n".join(chunk).strip()
+        if heading is not None or re.search(r"[A-Za-z0-9]", joined):
+            blocks.append((heading, joined))
+
+    for line in text.splitlines():
+        match = pattern.match(line)
+        if match:
+            flush()
+            # The coordinator writes "### **YOUR TOP 3 RECOMMENDED FLIGHTS:**",
+            # so the markers come through with the words. They are decoration for
+            # a markdown reader, not part of the name of anything.
+            heading = match.group(1).strip().strip("*#: ").strip()
+            chunk = []
+        else:
+            chunk.append(line)
+    flush()
+    return blocks or [(None, text.strip())]
 
 
 def plan_checks(console: str, refused: bool = False):
