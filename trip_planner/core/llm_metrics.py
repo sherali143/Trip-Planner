@@ -190,6 +190,20 @@ class LLMSession:
             "wall_time_s": round(end - self.started_at, 2),
             "models_used": sorted({c["model"] for c in calls if c["model"]}),
             "failure_details": failures,
+            # One row per request, in the order they were made. The totals above
+            # say what an architecture cost; this says WHERE it went, which is
+            # the part that explains itself: in a reasoning loop the prompt grows
+            # on every iteration because the whole conversation is re-sent, and
+            # seeing that column climb is more convincing than being told it does.
+            "per_call": [
+                {
+                    "n": i,
+                    "prompt_tokens": c["prompt_tokens"],
+                    "completion_tokens": c["completion_tokens"],
+                    "latency_s": round(c["latency_s"], 2),
+                }
+                for i, c in enumerate(calls, start=1)
+            ],
         }
 
 

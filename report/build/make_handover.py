@@ -301,6 +301,10 @@ FILE_PURPOSE = {
     "demos/approach_b_six_agent_naive.py": "Approach B on its own, explained.",
     "demos/approach_c_six_agent_tuned.py": "Approach C on its own, explained.",
     "demos/approach_d_three_agent_direct.py": "Approach D on its own, explained.",
+    "demos/show_agent_messages.py":
+        "Shows the agents talking to each other: who is allowed to message whom, a "
+        "real exchange being sent, an undeclared pair being refused, and the whole "
+        "conversation replayed. Costs nothing and takes a second.",
     "demos/_presenter.py":
         "The narration, written once and shared, so each approach file only has to "
         "describe its own approach.",

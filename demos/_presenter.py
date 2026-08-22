@@ -114,8 +114,10 @@ def _show_measurements(record: dict, approach: Approach) -> None:
     llm = record.get("llm") or {}
     _section("WHAT IT COST")
     print(f"    Model requests      {record.get('llm_calls', 0)}")
+    # Neutral label: for the agent arms this is largely re-sent context, for the
+    # three-agent arm it is largely retrieved data. The timeline below says which.
     print(f"    Prompt tokens       {llm.get('prompt_tokens', 0):,}"
-          f"   (re-sent context and tool schemas)")
+          f"   (everything sent TO the model)")
     print(f"    Completion tokens   {llm.get('completion_tokens', 0):,}"
           f"   (the itinerary text itself)")
     print(f"    Total tokens        {record.get('total_tokens', 0):,}")
@@ -130,6 +132,59 @@ def _show_measurements(record: dict, approach: Approach) -> None:
             label = label[1:].strip() if label[:1].isdigit() else label
             print(f"      {label:<28}{value}s")
 
+    _show_call_timeline(llm.get("per_call") or [], approach.code)
+    _show_groundedness(record)
+
+
+def _show_call_timeline(per_call: List[dict], code: str) -> None:
+    """
+    One row per model request, so the cost explains itself.
+
+    The totals say an architecture spent 120,000 tokens. This says why: in a
+    reasoning loop the prompt column climbs on every request, because each
+    iteration re-sends the whole conversation and every tool schema. Watching
+    that column grow is the clearest single piece of evidence in the project,
+    and it needs no interpretation from the person presenting it.
+    """
+    if not per_call:
+        return
+    print("\n    Every model request, in order:")
+    print(f"      {'#':>3}  {'prompt':>9}  {'reply':>8}  {'seconds':>8}   growth")
+    first_prompt = per_call[0]["prompt_tokens"] or 1
+    for row in per_call:
+        growth = row["prompt_tokens"] / first_prompt
+        bar = "#" * min(28, max(1, int(growth * 2)))
+        print(f"      {row['n']:>3}  {row['prompt_tokens']:>9,}  "
+              f"{row['completion_tokens']:>8,}  {row['latency_s']:>8.1f}   {bar}")
+    if len(per_call) > 1:
+        last = per_call[-1]["prompt_tokens"]
+        print(f"\n      The prompt grew from {first_prompt:,} to {last:,} tokens "
+              f"({last / first_prompt:.1f}x).")
+        print(f"      {_growth_reason(code)}")
+
+
+def _growth_reason(code: str) -> str:
+    """
+    Say what the growing prompt actually consists of, which differs by approach.
+
+    This was one sentence for all four and it was wrong for the shipped one. In a
+    reasoning loop the prompt grows because the conversation and every tool schema
+    are re-sent — waste. In the three-agent design it grows because the retrieved
+    flights and hotels are handed to the writer — the entire point. Same shape on
+    the screen, opposite meanings, and calling both "re-sent context" would have
+    argued against the approach this project recommends.
+    """
+    if code in ("B", "C"):
+        return ("That growth is the conversation and tool schemas being re-sent on "
+                "each loop step — it is not new information.")
+    if code == "D":
+        return ("That growth is the retrieved flights and hotels being handed to "
+                "the writer — it IS new information, fetched without a model.")
+    return "Each request carries whatever the previous step produced."
+
+
+def _show_groundedness(record: dict) -> None:
+    """How much of what the plan says was actually retrieved."""
     ground = record.get("groundedness") or {}
     if ground.get("scored"):
         _section("WAS ANY OF IT REAL?")
@@ -200,6 +255,88 @@ def _playback(approach: Approach, pause: bool) -> int:
     return 0
 
 
+class _RetryCounter:
+    """
+    Collapse the framework's parse-retry messages into one measured number.
+
+    The agent framework prints this, once per occurrence, sometimes six times in
+    a row:
+
+        Error parsing LLM output, agent will retry: I did it wrong. Tried to both
+        perform Action and give a Final Answer at the same time...
+
+    It is not a crash and it is not a misconfiguration. The reasoning loop asks
+    the model to answer in a strict format — either call a tool OR give a final
+    answer — and the model sometimes does both in one reply. The framework throws
+    that reply away and asks again.
+
+    Every retry is a FULL model request: the whole conversation and every tool
+    schema, re-sent. So it is a real cost, and it is already inside the request
+    and token counts this demo reports. What was missing was a name for it. Six
+    identical red lines read as "this project is broken"; "6 model calls were
+    spent re-asking because the framework could not parse the reply" reads as
+    what it is — a measured weakness of giving an agent many tools and a long
+    leash, which is exactly what approach C tightens and approach D removes.
+
+    Suppressed rather than hidden: the count is printed, and it is printed even
+    when it is zero for the approaches that do not suffer from it.
+    """
+
+    PHRASE = "Error parsing LLM output"
+
+    def __init__(self) -> None:
+        self.count = 0
+        self._real_stdout = None
+        self._real_stderr = None
+
+    def _filter(self, stream):
+        counter = self
+
+        class _Filtered:
+            def write(self, text):
+                if counter.PHRASE in text:
+                    counter.count += 1
+                    # Print one dot per retry so the screen shows something is
+                    # happening during a six-minute run, without six paragraphs.
+                    stream.write(".")
+                    stream.flush()
+                    return len(text)
+                return stream.write(text)
+
+            def flush(self):
+                return stream.flush()
+
+            def __getattr__(self, name):
+                return getattr(stream, name)
+
+        return _Filtered()
+
+    def __enter__(self):
+        self._real_stdout, self._real_stderr = sys.stdout, sys.stderr
+        sys.stdout = self._filter(self._real_stdout)
+        sys.stderr = self._filter(self._real_stderr)
+        return self
+
+    def __exit__(self, *exc):
+        sys.stdout, sys.stderr = self._real_stdout, self._real_stderr
+        return False
+
+    def report(self) -> None:
+        _section("WAS ANYTHING WASTED?")
+        if not self.count:
+            print("    Parse retries                   0")
+            print("\n    Every reply the framework asked for came back in a shape")
+            print("    it could read. Nothing was re-asked.")
+            return
+        print(f"    Parse retries                   {self.count}")
+        print(f"\n    {self.count} model call(s) were spent re-asking, because the agent")
+        print("    replied in a shape the framework could not parse — it tried to")
+        print("    call a tool and give a final answer in the same breath.")
+        print("    Each retry re-sends the whole conversation and every tool schema.")
+        print("    This is counted in the totals above, and it is a cost of giving")
+        print("    one agent many tools and a long reasoning leash.")
+
+
 def _live(approach: Approach, pause: bool) -> int:
     if approach.runner is None:
         print("  This approach has no live runner; playback only.")
@@ -231,8 +368,10 @@ def _live(approach: Approach, pause: bool) -> int:
 
     print("\n  Running...\n")
     started = time.time()
+    retries = _RetryCounter()
     try:
-        record = approach.runner(request, "demo")
+        with retries:
+            record = approach.runner(request, "demo")
     except Exception as exc:
         print(f"  FAILED: {type(exc).__name__}: {exc}")
         print("\n  If the model quota is exhausted, run without --live to play back")
@@ -252,6 +391,7 @@ def _live(approach: Approach, pause: bool) -> int:
 
     _show_output(record)
     _show_measurements(record, approach)
+    retries.report()
 
     print(f"\n{RULE}")
     print(f"  Live run complete in {time.time() - started:.1f}s. "

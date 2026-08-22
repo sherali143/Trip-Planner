@@ -66,6 +66,7 @@ the dissertation says so.
 | `approach_b_six_agent_naive.py` | Approach B, in detail |
 | `approach_c_six_agent_tuned.py` | Approach C, in detail |
 | `approach_d_three_agent_direct.py` | Approach D, in detail |
+| `show_agent_messages.py` | The A2A protocol working, message by message: who may talk to whom, a real exchange, an undeclared pair being refused, and the conversation replayed from its own history. No model, no network, under a second. |
 | `_presenter.py` | The narration, in one place. The approach files hold only their own description |
 
 Each approach file describes its own approach and nothing else; the presentation
