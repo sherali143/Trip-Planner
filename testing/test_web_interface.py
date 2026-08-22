@@ -20,6 +20,7 @@ at here.
 """
 
 import datetime
+import re
 
 import pytest
 
@@ -461,6 +462,167 @@ def test_an_unrecognised_heading_still_gets_somewhere():
     assert tab_for("WEATHER AND WHAT IT MEANS") == "More"
     tabs = dict(group_into_tabs("# WEATHER\nRain.\n# CLIMATE\nHot.\n"))
     assert "More" in tabs
+
+
+# ---------------------------------------------------------------------------
+# The seven named steps
+# ---------------------------------------------------------------------------
+#
+# The orchestrator reports four phases and, inside the third, one line per
+# search. Four rows hid the interesting part — three of the four searches happen
+# inside one phase — so the rows are those reports spread out. This checks the
+# spreading, because a progress display that drifts from the run is worse than
+# none: it says work is finished that has not started.
+
+def test_there_are_seven_named_steps():
+    from trip_planner.ui.plan_layout import STEPS
+
+    assert [name for name, _ in STEPS] == [
+        "Conversation", "Preferences", "Flights", "Hotels", "Attractions",
+        "Restaurants", "Itinerary"]
+    assert all(what.strip() for _, what in STEPS), "a step has no description"
+
+
+def test_nothing_is_claimed_before_the_run_starts():
+    from trip_planner.ui.plan_layout import IDLE, progress_states, STEPS
+
+    assert progress_states([]) == [IDLE] * len(STEPS)
+
+
+def test_the_form_counts_as_the_conversation_having_happened():
+    """
+    The orchestrator never announces phase 1 on the web path — the transcript
+    arrives already written. Without this the first row would sit unstarted for
+    the whole run, which reads as a step that failed.
+    """
+    from trip_planner.ui.plan_layout import DONE, progress_states
+
+    assert progress_states([], conversation_done=True)[0] == DONE
+
+
+def test_a_phase_marks_everything_before_it_finished():
+    """
+    The orchestrator only reports a phase once the previous one has returned, so
+    reaching phase 3 is evidence that phases 1 and 2 completed.
+    """
+    from trip_planner.ui.plan_layout import DONE, NOW, progress_states
+
+    states = progress_states([("phase", 2), ("phase", 3)],
+                             conversation_done=True)
+    assert states[0] == DONE          # conversation
+    assert states[1] == DONE          # preferences
+    assert states[2] == NOW           # flights, in progress
+
+
+def test_each_search_completes_its_own_row_and_starts_the_next():
+    from trip_planner.ui.plan_layout import DONE, NOW, progress_states
+
+    states = progress_states(
+        [("phase", 2), ("phase", 3), ("search", "flight"), ("search", "hotel")],
+        conversation_done=True)
+    assert states[2] == DONE          # flights found
+    assert states[3] == DONE          # hotels found
+    assert states[4] == NOW           # attractions, in progress
+
+
+def test_a_finished_run_shows_every_row_done():
+    """The full sequence a real run reports, in the order it reports it."""
+    from trip_planner.ui.plan_layout import DONE, STEPS, progress_states
+
+    events = [("phase", 2), ("phase", 3), ("search", "flight"),
+              ("search", "hotel"), ("search", "attraction"),
+              ("search", "restaurant"), ("phase", 4)]
+    states = progress_states(events, conversation_done=True)
+    assert states[:6] == [DONE] * 6
+    assert len(states) == len(STEPS)
+
+
+def test_an_unknown_report_changes_nothing():
+    """
+    A phase number or search label this does not recognise must be ignored, not
+    crash the page and not silently mark the wrong row.
+    """
+    from trip_planner.ui.plan_layout import progress_states
+
+    baseline = progress_states([("phase", 2)], conversation_done=True)
+    noisy = progress_states(
+        [("phase", 2), ("phase", 99), ("search", "helicopter")],
+        conversation_done=True)
+    assert noisy == baseline
+
+
+def test_the_search_labels_match_what_the_orchestrator_emits():
+    """
+    These keys are the labels the retrieval step passes to _detail. If one is
+    renamed there, its row would silently never light up.
+    """
+    import inspect
+
+    from trip_planner import orchestrator
+    from trip_planner.ui.plan_layout import SEARCH_ROW
+
+    source = inspect.getsource(orchestrator._retrieve_and_announce
+                               if hasattr(orchestrator, "_retrieve_and_announce")
+                               else orchestrator.TripPlannerCrew._retrieve_and_announce)
+    for label in SEARCH_ROW:
+        assert f'"{label}"' in source, (
+            f"the page expects a search labelled {label!r}, which the "
+            f"orchestrator no longer emits")
+
+
+# ---------------------------------------------------------------------------
+# Sections rendered as cards rather than one column of text
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("name", sorted(PLANS))
+def test_a_flight_section_breaks_into_parts(name):
+    """
+    A flight section is three recommended options plus a table of the rest, each
+    under its own sub-heading. As one markdown string the boundaries are buried.
+    """
+    from trip_planner.ui.plan_layout import group_into_tabs, split_blocks
+
+    body = dict(group_into_tabs(PLANS[name]))["Flights"][0][1]
+    blocks = split_blocks(body)
+    assert len(blocks) >= 2, [h for h, _ in blocks]
+
+
+@pytest.mark.parametrize("name", sorted(PLANS))
+def test_splitting_a_section_keeps_all_of_its_text(name):
+    """
+    Cards are a presentation change. Losing a line to one would be a content
+    change, and the reader has no way to know.
+    """
+    from trip_planner.ui.plan_layout import group_into_tabs, split_blocks
+
+    for _, sections in group_into_tabs(PLANS[name]):
+        for _, body in sections:
+            joined = " ".join(text for _, text in split_blocks(body))
+            for word in re.findall(r"\$[\d,]+", body):
+                assert word in joined, f"{name}: lost {word}"
+
+
+def test_block_headings_lose_their_markdown_decoration():
+    """
+    The coordinator writes "### **YOUR TOP 3 RECOMMENDED FLIGHTS:**". The stars
+    are decoration for a markdown reader, not part of the name of anything, and
+    this heading is rendered as a card title rather than as markdown.
+    """
+    from trip_planner.ui.plan_layout import split_blocks
+
+    body = "\n".join(["### **TOP 3 FLIGHTS:**", "One.",
+                      "### **THE REST:**", "Two."])
+    headings = [h for h, _ in split_blocks(body)]
+    assert headings == ["TOP 3 FLIGHTS", "THE REST"], headings
+
+
+def test_a_section_with_nothing_to_split_comes_back_whole():
+    """One card holding an entire section is a border for no reason."""
+    from trip_planner.ui.plan_layout import split_blocks
+
+    blocks = split_blocks("Just a paragraph, no sub-headings at all.")
+    assert len(blocks) == 1
+    assert blocks[0][0] is None
 
 
 # ---------------------------------------------------------------------------
