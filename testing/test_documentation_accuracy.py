@@ -173,7 +173,8 @@ def test_every_module_is_named_in_its_package_readme():
     """
     packages = {
         "trip_planner": ["trip_planner", "trip_planner/core", "trip_planner/tools",
-                         "trip_planner/comms", "trip_planner/server"],
+                         "trip_planner/comms", "trip_planner/server",
+                         "trip_planner/ui"],
         "evaluation": ["evaluation"],
         "demos": ["demos"],
     }

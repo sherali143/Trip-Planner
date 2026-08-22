@@ -1,7 +1,7 @@
 # Tests
 
 ```bash
-python -m pytest -q        # 329 tests, from the project root
+python -m pytest -q        # 358 tests, from the project root
 ```
 
 No API keys required and no network access — every test here is pure logic.
@@ -19,7 +19,7 @@ No API keys required and no network access — every test here is pure logic.
 | `test_unpriced_destination.py` | 36 | That an estimate built on mid-tier defaults says so. An unlisted destination used to produce a figure indistinguishable from a priced one. |
 | `test_a2a_protocol.py` | 19 | Message serialisation, dispatch and permission refusal. Covers the slice of the protocol library the shipped path records but never dispatches. |
 | `test_documentation_accuracy.py` | 18 | That the READMEs still tell the truth about the code |
-| `test_web_interface.py` | 18 | That the page renders, asks how many people are travelling, and refuses a form it cannot plan. Nothing tested the page at all, which is how it came to collect eight facts without ever asking the traveller count — a number the feasibility check multiplies by. |
+| `test_web_interface.py` | 47 | That the page renders, asks how many people are travelling, and refuses a form it cannot plan. Nothing tested the page at all, which is how it came to collect eight facts without ever asking the traveller count — a number the feasibility check multiplies by. |
 | `test_budget_validation.py` | 16 | Budget parsing and breakdown |
 | `test_extraction_parsing.py` | 11 | That the extractor's output stays readable to everything downstream. Written after a silent bug turned the budget feasibility check off entirely. |
 
