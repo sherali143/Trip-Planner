@@ -382,3 +382,52 @@ def test_the_per_person_fare_is_not_multiplied_twice():
     assert abs(actual - expected) < 1, (
         f"flights came to ${actual:,.0f} for two travellers at "
         f"${per_person.amount:,.0f} each; expected ${expected:,.0f}")
+
+
+# ---------------------------------------------------------------------------
+# One cache directory, wherever python was started
+# ---------------------------------------------------------------------------
+#
+# Two modules touch the recordings: http_cache writes them, real_prices reads
+# them. They have to mean the same directory.
+#
+# http_cache used to say ".api_cache" — a relative path, so which directory it
+# meant depended on the working directory. Starting anything from inside demos/
+# created demos/.api_cache and used that: a replay that found nothing and looked
+# broken, or a recording that spent real quota into a directory nothing else
+# reads. An empty demos/.api_cache left behind is what gave it away.
+
+def test_both_modules_mean_the_same_cache_directory():
+    """
+    One writes what the other reads. If they disagree, the reader silently finds
+    no recordings and every route falls back to the price table.
+    """
+    import os
+
+    from trip_planner.core.http_cache import DEFAULT_CACHE_DIR
+    from trip_planner.core.real_prices import CACHE_DIR
+
+    assert (os.path.normcase(os.path.realpath(DEFAULT_CACHE_DIR))
+            == os.path.normcase(os.path.realpath(CACHE_DIR)))
+
+
+def test_the_cache_directory_does_not_depend_on_the_working_directory():
+    """
+    A demo run from inside demos/ must read the committed recordings, not create
+    a second empty cache beside itself.
+    """
+    import os
+
+    from trip_planner.core.http_cache import _cache_dir
+
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    here = os.getcwd()
+    try:
+        os.chdir(os.path.join(root, "demos"))
+        from_subdir = os.path.realpath(_cache_dir())
+    finally:
+        os.chdir(here)
+
+    assert from_subdir == os.path.realpath(os.path.join(root, ".api_cache"))
+    assert not os.path.isdir(os.path.join(root, "demos", ".api_cache")), (
+        "resolving the cache created demos/.api_cache again")

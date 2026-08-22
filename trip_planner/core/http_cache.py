@@ -51,7 +51,18 @@ MODE_REPLAY = "replay"
 MODE_LIVE = "live"
 _VALID_MODES = (MODE_RECORD, MODE_REPLAY, MODE_LIVE)
 
-DEFAULT_CACHE_DIR = ".api_cache"
+# Anchored to the project root, not to the working directory.
+#
+# This was ".api_cache", a relative path, so the directory it meant depended on
+# where python was started. Running a demo from inside demos/ created
+# demos/.api_cache and used it — a replay that found nothing and looked broken,
+# or a recording that spent real quota into a directory nothing else reads. The
+# empty demos/.api_cache left behind is what led to this being found.
+#
+# real_prices.py already resolved the same directory from __file__; now both
+# agree, and they must, because one reads the recordings the other writes.
+DEFAULT_CACHE_DIR = str(
+    Path(__file__).resolve().parent.parent.parent / ".api_cache")
 
 
 class CacheMiss(RuntimeError):
