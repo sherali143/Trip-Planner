@@ -89,6 +89,60 @@ DIAGRAM_C = """\
   Same six agents as B. Shorter prompts, fewer tools each, results
   trimmed before being passed on, and a hard cap of 3 loop steps."""
 
+# How a tool call physically travels, per approach. Drawn because "we built an MCP
+# server" and "the shipped system calls it over the protocol" are different claims,
+# and only the first is true of every approach. Section 4 of the dissertation says
+# the same thing in prose; a supervisor asking the question deserves the picture.
+DIAGRAM_B_TOOLCALL = """\
+  APPROACH B  --  goes through the MCP server over JSON-RPC
+
+  [ hotel agent ]
+        |  "call search_hotel_destination"
+        v
+  [ tool wrapper ]  trip_planner/tools/agent_tools.py
+        |
+        v
+  [ MCP client ]  starts the server as a SEPARATE PROGRAM
+        |
+        |  ==== JSON-RPC down a pipe ====
+        v
+  [ MCP SERVER ]  a separate process holding 12 tools
+        |         checks the input against the tool's declared schema
+        v
+  [ Booking.com / fly-scraper ]  the real API
+        |
+        v
+  [ recorded-response cache ]  saves it, or replays a saved one
+        |
+        |  ==== JSON-RPC back up the pipe ====
+        v
+  the FULL reply (about 12,000 characters) goes to the AI"""
+
+DIAGRAM_C_TOOLCALL = """\
+  APPROACH C  --  calls the same functions directly, no pipe
+
+  [ hotel agent ]
+        |  "call find_hotels"
+        v
+  [ distilled tool ]  evaluation/distilled_tools.py
+        |
+        |  imports the server's own function and calls it here.
+        |  No separate program. No JSON-RPC.
+        v
+  [ the same server function ]  search_hotels_comprehensive
+        |
+        v
+  [ Booking.com / fly-scraper ]  the same real API
+        |
+        v
+  [ recorded-response cache ]  the same cache
+        |
+        v
+  [ TRIM to the best 3 ]  <-- this is the change that matters
+        |
+        v
+  3 short lines go to the AI"""
+
 DIAGRAM_D = """\
   your request
        |
@@ -203,6 +257,69 @@ class Doc:
 # with no entry shows up as "(not yet described)" rather than being silently
 # omitted — the same reason the test suite checks that every module is named in its
 # package README.
+# Every tool each agent holds, and what it does in one line. Taken from the agent
+# definitions in evaluation/arm_b_six_agent_naive.py and arm_c_six_agent_tuned.py.
+# The point of listing them is not completeness for its own sake — it is that the
+# duplication becomes visible. search_internet and calculate appear on all four of
+# the naive arm's agents, which is 8 of its 20 slots spent on two tools.
+TOOLS_B = [
+    ("Extractor", []),
+    ("Flight agent", [
+        ("search_comprehensive_flights", "Finds flights with all the details"),
+        ("search_round_trip_flights", "Finds return flights specifically"),
+        ("search_internet", "Searches the web for anything"),
+        ("calculate", "Does sums"),
+    ]),
+    ("Hotel agent", [
+        ("search_hotels_comprehensive", "Finds hotels with prices and ratings"),
+        ("search_accommodations_with_location", "Finds places to stay near a spot"),
+        ("search_hotel_destination", "Looks up a city's internal ID code"),
+        ("search_hotels_by_dest_id", "Finds hotels using that ID code"),
+        ("get_hotel_reviews", "Gets a hotel's review scores"),
+        ("get_attractions_near_hotel", "Finds things to do near a hotel"),
+        ("search_internet", "Searches the web for anything"),
+        ("calculate", "Does sums"),
+    ]),
+    ("Attraction agent", [
+        ("search_attractions", "Finds places to visit"),
+        ("search_restaurants", "Finds places to eat"),
+        ("search_internet", "Searches the web for anything"),
+        ("calculate", "Does sums"),
+    ]),
+    ("Coordinator", [
+        ("calculate", "Does sums"),
+        ("search_internet", "Searches the web for anything"),
+        ("search_attractions", "Finds places to visit"),
+        ("search_restaurants", "Finds places to eat"),
+    ]),
+]
+
+TOOLS_C = [
+    ("Extractor", []),
+    ("Flight agent", [
+        ("distilled_search_flights", "Finds flights, returns only the cheapest few"),
+    ]),
+    ("Hotel agent", [
+        ("distilled_search_hotels", "Finds hotels, returns only the best-rated few"),
+    ]),
+    ("Attraction agent", [
+        ("distilled_search_attractions", "Finds places to visit, top few only"),
+        ("distilled_search_restaurants", "Finds places to eat, top few only"),
+    ]),
+    ("Coordinator", []),
+]
+
+# What each agent is ALLOWED to do, read from the agent definitions. Not how many
+# times it actually did — the code does not tag a model request with the agent that
+# caused it, and inventing that attribution would be worse than leaving it out.
+LIMITS = {
+    "Extractor": (3, 3),
+    "Flight agent": (8, 3),
+    "Hotel agent": (10, 3),
+    "Attraction agent": (10, 3),
+    "Coordinator": (15, 3),
+}
+
 FILE_PURPOSE = {
     # top level
     "run_cli.py": "Plan a trip by typing in the terminal. Runs the shipped design.",
@@ -501,7 +618,170 @@ def build() -> str:
     """)
 
     # ------------------------------------------------------------------
-    doc.h("5. How many calls each approach makes")
+    doc.h("5. Approach B against approach C, in detail")
+    doc.p("""
+        These two are the pair worth understanding, because they are the SAME six
+        agents doing the SAME jobs with the SAME data. Only the configuration
+        differs. That makes them the cleanest comparison in the project, and the
+        source of its most useful engineering lesson.
+    """)
+
+    doc.h2("The one fact that explains everything below")
+    doc.p("""
+        An AI has no memory. Every time you ask it something, the program has to
+        re-send everything: the request, the description of every tool that agent
+        holds, and the whole conversation so far. Think of an assistant with total
+        amnesia — before every single step you must read the instructions out
+        again from the beginning.
+    """)
+    doc.p("""
+        So the cost of giving an agent a tool is not paid once. It is paid on every
+        step that agent takes.
+    """)
+
+    doc.h2("Who holds what")
+    for label, tool_sets in (("Approach B", TOOLS_B), ("Approach C", TOOLS_C)):
+        rows = []
+        total = 0
+        for agent, tools in tool_sets:
+            b_steps, c_steps = LIMITS[agent]
+            steps = b_steps if label == "Approach B" else c_steps
+            if not tools:
+                rows.append([agent, "(none)", "—", str(steps)])
+                continue
+            for i, (tool, job) in enumerate(tools):
+                rows.append([agent if i == 0 else "", tool, job,
+                             str(steps) if i == 0 else ""])
+                total += 1
+        rows.append(["TOTAL", f"{total} tool slots", "", ""])
+        doc.h2(f"{label} — {total} tool slots")
+        doc.table(["Agent", "Tool it holds", "What that tool does",
+                   "Steps allowed"], rows, widths=[1.15, 2.05, 2.4, 0.75], font_pt=8.5)
+
+    doc.h2("What the tool lists show")
+    doc.bullets([
+        "search_internet and calculate are held by ALL FOUR of approach B's "
+        "agents. That is 8 of its 20 slots spent on two tools, and both "
+        "descriptions are re-sent by every agent on every step.",
+
+        "Approach B's hotel agent has two tools that do one job in two steps — "
+        "look up the city's ID code, then search with it — when "
+        "search_hotels_comprehensive already does both in one call. So the agent "
+        "can spend a whole AI request choosing the slow route.",
+
+        "Approach B's hotel agent also holds get_attractions_near_hotel, which is "
+        "the attraction agent's job. It can wander off instead of finishing.",
+
+        "Approach B's coordinator holds four search tools, although its job is only "
+        "to write the plan from what the others already found. It can search all "
+        "over again.",
+
+        "Approach C removes all of that. One tool per specialist, none for the "
+        "coordinator, and each tool returns the best few options instead of the "
+        "full reply. Nothing the system needs was lost.",
+    ])
+
+    doc.h2("How a tool call actually travels — and whether the MCP server is used")
+    doc.p("""
+        This is worth being exact about, because "we built a tool server" and "the
+        system calls it over the protocol" are different claims, and only the first
+        is true of every approach.
+    """)
+    doc.table(
+        ["Approach", "How it reaches a tool"],
+        [["A — single AI", "No tools at all. It calls nothing."],
+         ["B — six agents, naive",
+          "Through the MCP SERVER over JSON-RPC. The server runs as a separate "
+          "program and validates every input against the tool's declared schema. "
+          "This is the only approach that exercises the protocol."],
+         ["C — six agents, tuned",
+          "Imports the server's own tool functions and calls them in-process. Same "
+          "functions, same APIs, same data — no separate program, no JSON-RPC."],
+         ["D — three agents (ships)",
+          "The same in-process calls, made by plain Python instead of by an agent."]],
+        widths=[1.5, 4.9],
+    )
+    doc.p("""
+        So the honest answer to "does the shipped system use the MCP server?" is:
+        it calls the same twelve tool functions the server exposes, but in-process
+        rather than over the protocol. The JSON-RPC transport is genuinely
+        exercised — by approach B, and by the conformance audit that tests the
+        server's twelve declared schemas against their implementations. Section 4
+        of the dissertation states this, and Section 7.2 assesses what it means for
+        the objective the server was built to satisfy.
+    """)
+
+    doc.h2("The same tool call, drawn both ways")
+    doc.code(DIAGRAM_B_TOOLCALL)
+    doc.code(DIAGRAM_C_TOOLCALL)
+
+    doc.h2("The hotel agent, step by step")
+    doc.p("""
+        The same job in both: find a hotel in Istanbul, 15 to 19 August, about $80
+        a night.
+    """)
+    doc.table(
+        ["Step", "Approach B", "Approach C"],
+        [["1",
+          "Sent to the AI: the request plus all EIGHT tool descriptions in full. "
+          "The AI replies: 'look up Istanbul's ID code.' (one AI call)",
+          "Sent to the AI: the request plus ONE short tool description. The AI "
+          "replies: 'find_hotels(Istanbul, 15 Aug, 19 Aug, 80).' (one AI call)"],
+         ["2",
+          "The tool runs, through the MCP server over JSON-RPC, and returns the ID "
+          "code.",
+          "The tool runs, calling the function directly, and returns the full "
+          "reply — which is then TRIMMED to the best three hotels."],
+         ["3",
+          "The AI has forgotten everything, so all eight descriptions are sent "
+          "AGAIN, plus the conversation so far. The AI replies: 'now search "
+          "hotels.' (another AI call)",
+          "Sent: the request, the one description, and three short lines. The AI "
+          "replies: 'Theodora Pension. Done.' (another AI call)"],
+         ["4",
+          "The tool runs again and returns about 12,000 characters of hotel data.",
+          "FINISHED — two AI calls."],
+         ["5",
+          "All eight descriptions are sent a THIRD time, plus the whole "
+          "conversation, plus all 12,000 characters for the AI to read. This can "
+          "keep looping, up to ten steps.",
+          "—"]],
+        widths=[0.45, 2.95, 2.95], font_pt=8.5)
+
+    doc.h2("And they run in a different order")
+    doc.code(
+        "  B:  extractor -> flight -> hotel -> attraction -> coordinator\n"
+        "      each one waits for the one before it to finish\n"
+        "\n"
+        "  C:  extractor -> flight     |\n"
+        "                   hotel      |  all three at the same time\n"
+        "                   attraction |   -> coordinator")
+
+    doc.h2("What changed, and what each change bought")
+    doc.table(
+        ["What changed", "From", "To", "What it fixed"],
+        [["Tools per agent", "up to 8", "1", "Fewer descriptions re-sent every step"],
+         ["Thinking steps allowed", "8 to 15", "3", "Re-sent fewer times"],
+         ["What the AI is shown", "the full reply", "the best 3 lines",
+          "The AI reads far less"],
+         ["When agents run", "one after another", "all at once",
+          "Cuts the clock, not the tokens"]],
+        widths=[1.5, 1.3, 1.3, 2.3],
+    )
+    doc.p(f"""
+        The first three cut token use by about {_tuning_reduction_pct():.0f}%. The
+        fourth is why it finished roughly ten times faster. Nothing about the
+        architecture changed — no agent added, no agent removed, no API swapped.
+    """)
+    doc.p("""
+        And that is what raised the question approach D answers. In step 1 above,
+        approach B spent an entire AI call deciding "look up Istanbul's ID code" —
+        but there was exactly one correct thing to do there. No judgement at all.
+        So why is the AI in the lookup step? It is not, in approach D.
+    """)
+
+    # ------------------------------------------------------------------
+    doc.h("6. How many calls each approach makes")
     calls = measured.api_calls_per_arm()
     doc.p(f"""
         Counted by watching the real calls go past, with travel responses replayed
@@ -531,7 +811,7 @@ def build() -> str:
                  for code in ("A", "B", "C", "D")])
 
     # ------------------------------------------------------------------
-    doc.h("6. What we found")
+    doc.h("7. What we found")
     rows = []
     for code in ("A", "B", "C", "D"):
         arm = measured.arm(code)
@@ -598,7 +878,7 @@ def build() -> str:
     """)
 
     # ------------------------------------------------------------------
-    doc.h("7. Budget validation (the change the supervisor asked for)")
+    doc.h("8. Budget validation (the change the supervisor asked for)")
     doc.p("""
         The supervisor asked for the budget handling to be improved. Two things
         were wrong with the original version, and both are fixed.
@@ -656,7 +936,7 @@ def build() -> str:
     """)
 
     # ------------------------------------------------------------------
-    doc.h("8. Known issues, stated honestly")
+    doc.h("9. Known issues, stated honestly")
     protocol = measured.protocol_summary()
     doc.p(f"""
         We wrote a test that checks whether our own communication and tool layers
@@ -684,14 +964,14 @@ def build() -> str:
              f"scenarios measured",
              "The travel websites' free monthly limit. Nothing to do with the code."],
             ["Google retired the AI model we measured on",
-             "Handled — see section 11. The old numbers stay valid for the model "
+             "Handled — see section 12. The old numbers stay valid for the model "
              "that produced them."],
         ],
         widths=[2.1, 4.3],
     )
 
     # ------------------------------------------------------------------
-    doc.h("9. How to run it")
+    doc.h("10. How to run it")
     doc.p("""
         Put the project folder somewhere with a SHORT path, for example
         C:\\trip_planner. Windows cannot handle very long folder paths and the
@@ -728,7 +1008,7 @@ def build() -> str:
     """)
 
     # ------------------------------------------------------------------
-    doc.h("10. How to show it to the supervisor")
+    doc.h("11. How to show it to the supervisor")
     doc.p("""
         Fifteen minutes, in this order. Everything here works offline, so nothing
         can fail on the day.
@@ -773,7 +1053,7 @@ def build() -> str:
     """)
 
     # ------------------------------------------------------------------
-    doc.h("11. About the AI model")
+    doc.h("12. About the AI model")
     doc.p(f"""
         The first round of measurements used Google's Gemini 2.5 Flash. Google
         then stopped giving that model to new accounts, so it could no longer be
@@ -799,7 +1079,7 @@ def build() -> str:
     """)
 
     # ------------------------------------------------------------------
-    doc.h("12. Folder structure")
+    doc.h("13. Folder structure")
     doc.code(
         "trip_planner\\\n"
         "  run.bat                  <- START HERE. Sets up everything, then a menu.\n"
@@ -843,7 +1123,7 @@ def build() -> str:
     )
 
     # ------------------------------------------------------------------
-    doc.h("13. Every file, and what it does")
+    doc.h("14. Every file, and what it does")
     doc.p("""
         The whole system, file by file. The list is read from the folders
         themselves when this document is generated, so it cannot describe a file
@@ -857,7 +1137,7 @@ def build() -> str:
         doc.table(["File", "What it does"], rows, widths=[1.9, 4.5], font_pt=9)
 
     # ------------------------------------------------------------------
-    doc.h("14. Important files, if you only look at a few")
+    doc.h("15. Important files, if you only look at a few")
     doc.table(
         ["File", "Why it matters"],
         [
@@ -883,7 +1163,7 @@ def build() -> str:
     )
 
     # ------------------------------------------------------------------
-    doc.h("15. The APIs used, and how much is left")
+    doc.h("16. The APIs used, and how much is left")
     doc.table(
         ["What", "Service", "Free limit", "Used for"],
         [
@@ -944,7 +1224,7 @@ def build() -> str:
     """)
 
     # ------------------------------------------------------------------
-    doc.h("16. If something goes wrong")
+    doc.h("17. If something goes wrong")
     doc.table(
         ["Problem", "What to do"],
         [
