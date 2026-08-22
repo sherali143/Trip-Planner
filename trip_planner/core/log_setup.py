@@ -30,6 +30,18 @@ _NOISY = (
     "litellm",
     "openai",
     "urllib3",
+    # The agent framework and its tracing. "Overriding of current TracerProvider
+    # is not allowed" appears mid-run and tells the reader nothing they can act on.
+    "opentelemetry",
+    "opentelemetry.trace",
+    "crewai",
+    "chromadb",
+    # Our own protocol layer. It logs every message twice at INFO — once on
+    # enqueue and once on send — and the orchestrator then prints the same
+    # message a third time in a form a person can read. Three lines per message
+    # buried the parts of the run that matter. The log is still there at DEBUG,
+    # which is where an audit trail belongs.
+    "trip_planner.comms.protocol",
 )
 
 

@@ -42,6 +42,77 @@ load_dotenv(override=True)
 os.environ.setdefault("SERPER_API_KEY", os.getenv("SERPER_API_KEY", ""))
 
 
+def _step(number: str, actor: str, doing: str) -> None:
+    """
+    Announce a step as: who is working, and on what.
+
+    A live run used to print about five hundred lines, most of it the agents'
+    own prompts and the same A2A message logged three times — twice by the
+    protocol at INFO and once again in readable form. The parts a reader
+    actually needs were somewhere in the middle of that.
+    """
+    rule = "=" * 74
+    print("\n" + rule)
+    print(f"  {number}  {actor}")
+    print(f"      {doing}")
+    print(rule)
+
+
+def _detail(label: str, value: str) -> None:
+    """One indented fact under the current step."""
+    print(f"      {label:<22} {value}")
+
+
+def _framework_verbose() -> bool:
+    """Whether to let the agent framework print its own prompts and reasoning."""
+    return os.getenv("TRIP_PLANNER_VERBOSE", "").strip() in ("1", "true", "yes")
+
+
+def _summarise(label: str, data: str) -> str:
+    """
+    One line saying what a search actually came back with.
+
+    "Flight data retrieved (3431 chars)" is a length, not a result. A reader
+    watching this wants to know whether anything usable arrived and roughly what
+    it costs — and the raw payloads are 3 kB of JSON, so printing them is not the
+    alternative.
+
+    Deliberately forgiving: a shape this does not recognise falls back to the
+    size, because a narration helper must never be the reason a run fails.
+    """
+    import json as _json
+    import re as _re
+
+    if not data:
+        return "nothing returned"
+    try:
+        if label == "flight":
+            payload = _json.loads(data)
+            flights = payload.get("flights") or []
+            if not flights:
+                return f"no flights found ({len(data):,} chars)"
+            prices = [f.get("total_price") for f in flights
+                      if isinstance(f.get("total_price"), (int, float))]
+            cheapest = f", cheapest ${min(prices):,.0f}" if prices else ""
+            return f"{len(flights)} options{cheapest}"
+
+        if label == "hotel":
+            found = _re.search(r"Found (\d+) hotels", data)
+            rates = [float(m) for m in _re.findall(r"\(\$([\d.]+)/night\)", data)]
+            cheapest = f", cheapest ${min(rates):,.0f}/night" if rates else ""
+            if found:
+                return f"{found.group(1)} hotels{cheapest}"
+            return f"returned {len(data):,} chars{cheapest}"
+
+        # The web searches come back as titled blocks.
+        results = data.count("Title:")
+        if results:
+            return f"{results} results"
+    except Exception:                      # noqa: BLE001 - narration only
+        pass
+    return f"returned {len(data):,} chars"
+
+
 class TripPlannerCrew:
     """
     Main Trip Planner Crew orchestrating A2A communication and MCP tool usage
@@ -65,9 +136,11 @@ class TripPlannerCrew:
         self.preferences_extractor = self.agents_class.preferences_extractor_agent()
         self.coordinator_agent = self.agents_class.itinerary_coordinator_agent()
         
-        print("✅ All agents initialized")
-        print(f"✅ A2A Protocol active with {len(AGENT_REGISTRY)} registered agent cards")
-        print(f"✅ Parallel mode: {'ENABLED' if parallel_mode else 'DISABLED'}")
+        print(f"  Ready: 3 agents that use the model, "
+              f"{len(AGENT_REGISTRY)} A2A agent cards registered.")
+        print(f"  Retrieval runs in plain Python between the model steps."
+              + ("" if _framework_verbose() else
+                 "  (TRIP_PLANNER_VERBOSE=1 for the framework's own trace)"))
     
     def _kickoff_with_retry(self, crew, max_retries=4, base_delay=12):
         import time
@@ -426,7 +499,8 @@ class TripPlannerCrew:
 
         self.a2a_protocol.start_conversation(conversation_id, {"user_input": user_input})
 
-        print("\nPHASE 1: Starting conversation with Travel Assistant...\n")
+        _step("STEP 1 of 4", "CONVERSATIONAL AGENT  (uses the model)",
+              "Asking the traveller for the details the plan needs")
         transcript = self.have_conversation(user_input, conversation_id)
         return self._plan(transcript, conversation_id, confirm_allocation)
 
@@ -508,7 +582,8 @@ class TripPlannerCrew:
     # ------------------------------------------------------------------
     def _extract_preferences(self, transcript: str, conversation_id: str):
         """Turn the conversation into structured fields. This needs a model."""
-        print("\nPHASE 2: Extracting structured preferences and validating budget...")
+        _step("STEP 2 of 4", "PREFERENCES EXTRACTOR  (uses the model)",
+              "Turning the conversation into structured fields, then checking the budget")
 
         conversation_task = self.tasks_class.conversation_task(
             agent=self.conversational_agent,
@@ -524,7 +599,11 @@ class TripPlannerCrew:
             agents=[self.conversational_agent, self.preferences_extractor],
             tasks=[conversation_task, extraction_task],
             process=Process.sequential,
-            verbose=True,
+            # Off deliberately. Verbose prints each agent's whole task prompt —
+            # several hundred lines per run — and the step banners above already
+            # say which agent is working and what it was given. Set
+            # TRIP_PLANNER_VERBOSE=1 for the framework's own trace when debugging.
+            verbose=_framework_verbose(),
         )
         extraction_output = self._as_json_text(self._kickoff_with_retry(crew))
         self._extraction_output = extraction_output
@@ -658,15 +737,32 @@ class TripPlannerCrew:
                  p["destination"], p["interests"], p["budget_per_meal"])),
         ]
 
+        _step("STEP 3 of 4", "PLAIN PYTHON  (no model, no agent)",
+              "Fetching the data. Four calls, each decided by an if statement.")
+        _detail("route", f"{p['origin'] or '?'} to {p['destination'] or '?'}")
+        _detail("dates", f"{p['departure_date'] or '?'} to "
+                         f"{p['return_date'] or '?'}  "
+                         f"({p['nights']} nights, {p['adults']} traveller(s))")
+        _detail("budget passed in", f"flights ${p['flight_budget']:,.0f} | "
+                                    f"hotel ${p['budget_per_night']:,.0f}/night | "
+                                    f"meals ${p['budget_per_meal']:,.0f}/meal")
+        print()
+
         for sender, field, label, have_parameters, call in fetches:
             data = ""
-            if have_parameters:
-                print(f"\nFetching {label} data...")
+            if not have_parameters:
+                print(f"      {label:<12} SKIPPED - the request did not contain "
+                      f"what this search needs")
+            else:
                 try:
                     data = call()
-                    print(f"  {label.title()} data retrieved ({len(data)} chars)")
+                    print(f"      {label:<12} {_summarise(label, data)}")
                 except Exception as exc:
-                    print(f"  {label.title()} search failed: {exc}")
+                    # The type as well as the message: several exceptions on this
+                    # path stringify to nothing, and "search failed:" with an
+                    # empty reason is not something anyone can act on.
+                    print(f"      {label:<12} FAILED - {type(exc).__name__}: "
+                          f"{exc or 'no message given'}")
                     data = json.dumps({"success": False, "error": str(exc)})
 
             self._send_a2a_message(
@@ -675,11 +771,14 @@ class TripPlannerCrew:
                  "success": bool(data and "error" not in data.lower())},
                 conversation_id, MessageType.RESPONSE,
             )
+            print(f"      {'':<12} -> handed to itinerary_coordinator over A2A "
+                  f"({len(data):,} chars)")
 
     # ------------------------------------------------------------------
     def _assemble_itinerary(self, extraction_task, conversation_id: str) -> str:
         """Arrange the retrieved options into a plan. This needs a model."""
-        print("\nPHASE 4: Itinerary Coordinator synthesizing all data...")
+        _step("STEP 4 of 4", "ITINERARY COORDINATOR  (uses the model)",
+              "Writing the day-by-day plan from the retrieved data only")
 
         coordination_task = self.tasks_class.coordination_task(
             agent=self.coordinator_agent,
@@ -691,6 +790,10 @@ class TripPlannerCrew:
             agents=[self.coordinator_agent],
             tasks=[coordination_task],
             process=Process.sequential,
-            verbose=True,
+            # Off deliberately. Verbose prints each agent's whole task prompt —
+            # several hundred lines per run — and the step banners above already
+            # say which agent is working and what it was given. Set
+            # TRIP_PLANNER_VERBOSE=1 for the framework's own trace when debugging.
+            verbose=_framework_verbose(),
         )
         return str(self._kickoff_with_retry(crew))

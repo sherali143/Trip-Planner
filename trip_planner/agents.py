@@ -15,6 +15,19 @@ from textwrap import dedent
 from trip_planner.core.budget import LEGACY_ALLOCATION as _DEFAULT_SPLIT
 from trip_planner.core.gemini_compat import model_string
 
+
+def _framework_verbose() -> bool:
+    """
+    Whether the agent framework may print its own prompts and reasoning.
+
+    Off by default. Verbose prints each agent's entire task prompt —
+    several hundred lines per run — which buried the parts of a run a
+    reader needs: which agent is working, what it was handed, and what came
+    back. Set TRIP_PLANNER_VERBOSE=1 to see the framework's own trace.
+    """
+    import os
+    return os.getenv("TRIP_PLANNER_VERBOSE", "").strip() in ("1", "true", "yes")
+
 # Tools needed by the coordinator agent
 from trip_planner.tools import (
     search_internet,
@@ -57,7 +70,7 @@ class TripPlannerAgents:
 
                 Rules: Never assume dates or traveler count - always ask explicitly.
             """),
-            verbose=True,
+            verbose=_framework_verbose(),
             allow_delegation=False,
             llm=self.llm_conversation,
             tools=[],
@@ -89,7 +102,7 @@ class TripPlannerAgents:
                 f"{_DEFAULT_SPLIT['activities']:.0%}, meals "
                 f"{_DEFAULT_SPLIT['meals']:.0%}"
             )),
-            verbose=True,
+            verbose=_framework_verbose(),
             allow_delegation=False,
             llm=self.llm_standard,
             tools=[],
@@ -121,7 +134,7 @@ class TripPlannerAgents:
                 - If trip is 5 days, you must have: DAY 1, DAY 2, DAY 3, DAY 4, DAY 5
                 - Use calculator to verify budget math
             """),
-            verbose=True,
+            verbose=_framework_verbose(),
             allow_delegation=True,
             llm=self.llm_coordinator,
             tools=[

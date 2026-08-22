@@ -33,6 +33,12 @@ import sys
 
 logger = logging.getLogger(__name__)
 
+# How long to wait for the server. Generous because the server is started fresh
+# for every call and imports the whole package on the way up — about six seconds
+# idle, more when the machine is busy. Raise it rather than lower it: a timeout
+# here loses a tool result, and the agent then answers without the data.
+MCP_TIMEOUT_S = 120
+
 MCP_SERVERS_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "server")
 UNIFIED_SERVER_PATH = os.path.join(MCP_SERVERS_PATH, "mcp_server.py")
 
@@ -78,7 +84,7 @@ class MCPClient:
             # Read initialization response with larger buffer
             init_response = await asyncio.wait_for(
                 process.stdout.readline(),  # type: ignore
-                timeout=60
+                timeout=MCP_TIMEOUT_S
             )
             if init_response:
                 init_data = json.loads(init_response.decode().strip())
@@ -104,7 +110,7 @@ class MCPClient:
                 # Read all available output
                 tool_response = await asyncio.wait_for(
                     process.stdout.readline(),  # type: ignore
-                    timeout=60
+                    timeout=MCP_TIMEOUT_S
                 )
             except asyncio.TimeoutError:
                 logger.error("MCP server response timeout")
@@ -128,8 +134,28 @@ class MCPClient:
             else:
                 return {"success": False, "error": "No response from MCP server"}
                 
+        except asyncio.TimeoutError:
+            # Named separately because str(asyncio.TimeoutError()) is the EMPTY
+            # STRING. This surfaced as "MCP client error: " with nothing after it,
+            # twice, during a live London run — a failure with no message at all,
+            # which is the hardest kind to chase.
+            #
+            # It times out because every call spawns a fresh server process, and
+            # that process imports the whole package. Roughly six seconds on an
+            # idle machine; under a live run with the model working it can exceed
+            # the timeout entirely.
+            logger.error(
+                "MCP call to %r timed out after %ss. Each call starts a new "
+                "server process, which is slow enough to miss this deadline when "
+                "the machine is busy.", tool_name, MCP_TIMEOUT_S)
+            return {"success": False,
+                    "error": f"MCP call to {tool_name!r} timed out after "
+                             f"{MCP_TIMEOUT_S}s (the server is started per call)"}
         except Exception as e:
-            logger.error(f"MCP client error: {e}")
+            # The type matters as much as the message, because several exceptions
+            # on this path stringify to nothing.
+            logger.error("MCP client error calling %r: %s: %s",
+                         tool_name, type(e).__name__, e)
             return {"success": False, "error": str(e)}
 
 
