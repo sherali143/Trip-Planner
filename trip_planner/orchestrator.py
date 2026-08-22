@@ -7,6 +7,7 @@ This is the main orchestration file that brings together:
 - Multi-agent workflow for trip planning
 """
 
+import logging
 import os
 import uuid
 import time
@@ -23,9 +24,9 @@ from trip_planner.comms.registry import AGENT_REGISTRY
 from trip_planner.core.gemini_compat import model_string
 
 # Import utility modules for enhanced functionality.
-# `regenerate_if_incomplete` and `src.core.cache.get_cache` were imported here
+# `regenerate_if_incomplete` and `core.cache.get_cache` were imported here
 # but never called. API response caching is now handled at the HTTP layer by
-# src.core.http_cache, which every API call actually goes through.
+# trip_planner.core.http_cache, which every API call actually goes through.
 from trip_planner.core.validators import (
     validate_day_count,
     extract_trip_duration_from_extraction,
@@ -40,6 +41,41 @@ load_dotenv(override=True)
 # GOOGLE_API_KEY to itself — or to "" when only GEMINI_API_KEY was set, which is
 # the case it was presumably meant to handle.
 os.environ.setdefault("SERPER_API_KEY", os.getenv("SERPER_API_KEY", ""))
+
+logger = logging.getLogger(__name__)
+
+_PROGRESS_HOOK = None
+
+
+def set_progress_hook(hook) -> None:
+    """
+    Register something to be told about each step, as well as the console.
+
+    The web interface used to show a spinner reading "Planning your amazing
+    trip..." for the whole run, which is several minutes, and an `st.info` saying
+    "Creating travel plan with AI agents..." that was printed once before
+    anything started. Neither reflected what was happening, so a page that
+    appeared frozen and a page that was working looked identical.
+
+    A hook rather than the UI scraping stdout: the steps are already named at the
+    point they begin, so the interface can report the same thing the terminal
+    does instead of guessing from captured text.
+
+    Pass None to unregister. Errors raised by a hook are swallowed — reporting
+    progress must never be the reason a plan fails.
+    """
+    global _PROGRESS_HOOK
+    _PROGRESS_HOOK = hook
+
+
+def _announce(kind: str, *parts: str) -> None:
+    """Tell the registered hook, if any, and never let it break the run."""
+    if _PROGRESS_HOOK is None:
+        return
+    try:
+        _PROGRESS_HOOK(kind, *parts)
+    except Exception:                          # noqa: BLE001 - progress only
+        logger.debug("progress hook raised", exc_info=True)
 
 
 def _step(number: str, actor: str, doing: str) -> None:
@@ -56,11 +92,13 @@ def _step(number: str, actor: str, doing: str) -> None:
     print(f"  {number}  {actor}")
     print(f"      {doing}")
     print(rule)
+    _announce("step", number, actor, doing)
 
 
 def _detail(label: str, value: str) -> None:
     """One indented fact under the current step."""
     print(f"      {label:<22} {value}")
+    _announce("detail", label, value)
 
 
 def _framework_verbose() -> bool:
@@ -300,11 +338,18 @@ class TripPlannerCrew:
         
         if expected_days is None:
             print("   ⚠️ Could not determine trip duration for validation")
+            _announce("days", "unknown", "", "")
             return itinerary
-        
+
         # Validate day count
         is_valid, actual_count, found_days = validate_day_count(itinerary, expected_days)
-        
+
+        # Reported to the hook as well, so the web interface can show the same
+        # result as a badge rather than leaving the reader to notice a warning
+        # paragraph appended to the bottom of a long itinerary.
+        _announce("days", "complete" if is_valid else "short",
+                  str(actual_count), str(expected_days))
+
         if is_valid:
             print(f"   ✅ Itinerary validation passed: {actual_count}/{expected_days} days found")
             return itinerary
@@ -396,13 +441,16 @@ class TripPlannerCrew:
             arrow = "→" if mtype in ("request", "info") else "←"
             print(f"     [{i+1}] {sender} {arrow} {receiver} ({mtype})")
         
-        # Print stats
+        # Counted, not asserted. This line used to read "Protocol errors: 0" as a
+        # literal, which was a claim the code had no way to make — nothing counts
+        # protocol errors, and the conformance audit reports 3 of 5 A2A checks
+        # failing. A printed zero that cannot go up is worse than no line at all.
+        errors = sum(1 for m in history if m.message_type == MessageType.ERROR)
         print(f"\n  📊 Stats:")
-        print(f"     Total messages: {len(history)}")
-        print(f"     Unique agents:  {len(agents_seen)}")
-        print(f"     Protocol errors: 0")
-        print(f"     Conversation ID: {conversation_id}")
-        print("\n" + "=" * 70 + "\n")
+        print(f"     Total messages:  {len(history)}")
+        print(f"     Unique agents:   {len(agents_seen)}")
+        print(f"     Error messages:  {errors}")
+        print("=" * 70 + "\n")
     
     def have_conversation(self, initial_input: str, conversation_id: str) -> str:
         from litellm import completion
@@ -426,12 +474,11 @@ class TripPlannerCrew:
             After ALL 8 are answered, say "CONVERSATION_COMPLETE" at the end.
         """)}, {"role": "user", "content": initial_input}]
         
-        print("\n" + "="*80)
-        print("INTERACTIVE CONVERSATION WITH TRAVEL ASSISTANT")
-        print("="*80)
-        print("(Type your responses below. The agent will let you know when enough info is gathered.)")
-        print("="*80 + "\n")
-        
+        # The step banner immediately above already names this agent and says it
+        # is collecting details, so this only needs to explain the one thing the
+        # banner cannot: that the reader is expected to type.
+        print("      Type your answers below; it will say when it has enough.\n")
+
         full_transcript = f"User: {initial_input}\n\n"
         
         while True:
@@ -494,8 +541,10 @@ class TripPlannerCrew:
         has what it needs, then plans.
         """
         conversation_id = str(uuid.uuid4())
-        print(f"\n{'=' * 80}\nTRIP PLANNER STARTED\n{'=' * 80}")
-        print(f"Conversation ID: {conversation_id}\n{'=' * 80}\n")
+        # One line, not a banner. There used to be three stacked rule-and-title
+        # blocks before the first question — this one, the conversation's own, and
+        # the step banner — each restating that a trip planner had started.
+        print(f"\n  Conversation {conversation_id[:8]} started.")
 
         self.a2a_protocol.start_conversation(conversation_id, {"user_input": user_input})
 
@@ -550,6 +599,7 @@ class TripPlannerCrew:
         # legitimate choice, so this warns and proceeds rather than blocking.
         print(f"\n[Budget] {verdict.verdict.replace('_', ' ').title()}: "
               f"{verdict.message}\n")
+        _announce("budget", verdict.verdict, verdict.message)
 
         # A budget can be workable and still not reach what was asked for. Saying
         # so here lets the traveller choose between spending more and expecting
@@ -575,7 +625,8 @@ class TripPlannerCrew:
         )
         self.a2a_protocol.end_conversation(conversation_id)
 
-        print(f"\n{'=' * 80}\nTRIP PLANNING COMPLETED\n{'=' * 80}\n")
+        # No "COMPLETED" banner here: the A2A summary that follows opens with its
+        # own rule and title, so the two ran together as one wall of equals signs.
         self._display_a2a_message_flow(conversation_id)
         return itinerary
 
@@ -750,19 +801,22 @@ class TripPlannerCrew:
 
         for sender, field, label, have_parameters, call in fetches:
             data = ""
+            # Through _detail rather than print, so the web interface is told what
+            # each search returned and can show the same four lines the terminal
+            # does. It used to show a spinner for the whole of this.
             if not have_parameters:
-                print(f"      {label:<12} SKIPPED - the request did not contain "
-                      f"what this search needs")
+                _detail(label, "SKIPPED - the request did not contain what this "
+                               "search needs")
             else:
                 try:
                     data = call()
-                    print(f"      {label:<12} {_summarise(label, data)}")
+                    _detail(label, _summarise(label, data))
                 except Exception as exc:
                     # The type as well as the message: several exceptions on this
                     # path stringify to nothing, and "search failed:" with an
                     # empty reason is not something anyone can act on.
-                    print(f"      {label:<12} FAILED - {type(exc).__name__}: "
-                          f"{exc or 'no message given'}")
+                    _detail(label, f"FAILED - {type(exc).__name__}: "
+                                   f"{exc or 'no message given'}")
                     data = json.dumps({"success": False, "error": str(exc)})
 
             self._send_a2a_message(
