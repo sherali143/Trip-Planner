@@ -58,7 +58,7 @@ def fig_architecture() -> str:
         c.label(0, y + 4.5, name, ha="left", fontsize=8.5, weight="bold",
                 colour=INK_2, opaque=False)
 
-    ui_web = c.box(G, 72.5, W, 9.0, "Streamlit web app\nsrc/ui/app.py",
+    ui_web = c.box(G, 72.5, W, 9.0, "Streamlit web app\ntrip_planner/ui/app.py",
                    edge=GREY, fill=GREY_FILL, fontsize=8.5, name="web")
     ui_cli = c.box(G + 29, 72.5, W, 9.0, "Command line\nrun_cli.py",
                    edge=GREY, fill=GREY_FILL, fontsize=8.5, name="cli")
@@ -69,7 +69,7 @@ def fig_architecture() -> str:
                     fontsize=8.5, name="extractor")
 
     mcp = c.box(G, 28.0, W, 15.0,
-                "MCP server\n12 tools, JSON-RPC over stdio\nsrc/server/mcp_server.py",
+                "MCP server\n12 tools, JSON-RPC over stdio\ntrip_planner/server/mcp_server.py",
                 edge=AQUA, fill=AQUA_FILL, fontsize=8.5, weight="bold", name="mcp")
     apis = [
         c.box(G + 29, 38.0, 22, 5.0, "fly-scraper  ·  flights",

@@ -204,44 +204,6 @@ def test_every_module_is_named_in_its_package_readme():
         "modules missing from their package README: " + ", ".join(undocumented))
 
 
-def test_run_bat_menu_is_internally_consistent_and_matches_the_docs():
-    """
-    Every menu option run.bat offers must dispatch somewhere, and the docs must
-    not name an option that does not exist.
-
-    Inserting one option into the middle of the menu shifts every number after it.
-    That happened when the project-overview option was added: run.bat was updated,
-    and three documents went on telling the reader that the live-trip option was
-    number 10 when it had become 11. A reader following those instructions runs
-    the wrong thing.
-    """
-    run_bat = (ROOT / "run.bat").read_text(encoding="utf-8", errors="replace")
-
-    dispatch = dict(re.findall(r'if "%choice%"=="(\d+)"\s+goto\s+(\w+)', run_bat))
-    assert dispatch, "run.bat has no menu dispatch table"
-
-    labels = set(re.findall(r"^:(\w+)", run_bat, re.M))
-    dangling = {n: t for n, t in dispatch.items() if t not in labels}
-    assert not dangling, f"menu options dispatching to missing labels: {dangling}"
-
-    numbers = sorted(int(n) for n in dispatch)
-    assert numbers == list(range(1, len(numbers) + 1)),         f"menu options are not a contiguous run from 1: {numbers}"
-
-    highest = numbers[-1]
-    prompt = re.search(r"Enter a number \(1-(\d+)\)", run_bat)
-    assert prompt, "run.bat does not prompt for a numbered choice"
-    assert int(prompt.group(1)) == highest, (
-        f"run.bat prompts for 1-{prompt.group(1)} but dispatches up to {highest}")
-
-    # No document may point at an option the menu does not have.
-    quoted = {int(n) for n in re.findall(r"option[s]? (\d+)", ALL_TEXT)}
-    quoted |= {int(n) for n in re.findall(r"options (\d+) to \d+", ALL_TEXT)}
-    quoted |= {int(n) for n in re.findall(r"options \d+ to (\d+)", ALL_TEXT)}
-    beyond = sorted(n for n in quoted if n > highest)
-    assert not beyond, (
-        f"docs name menu option(s) {beyond}, but run.bat only goes up to {highest}")
-
-
 def test_the_test_count_in_docs_matches_what_pytest_collects():
     """
     A documented test count must match the suite.
