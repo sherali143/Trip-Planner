@@ -106,6 +106,20 @@ def _framework_verbose() -> bool:
     return os.getenv("TRIP_PLANNER_VERBOSE", "").strip() in ("1", "true", "yes")
 
 
+# What a tool says when it failed. These come back as ordinary strings with a
+# 200-shaped payload — the search layer catches its own errors and returns an
+# explanation — so nothing downstream raises, and without this list the
+# explanation was reported as a byte count.
+_FAILURE_MARKERS = (
+    "❌",                       # the cross the hotel search prefixes
+    "ERROR:",
+    "Sorry, I couldn't find anything",
+    "No recorded response",
+    '"success": false',
+    '"success":false',
+)
+
+
 def _summarise(label: str, data: str) -> str:
     """
     One line saying what a search actually came back with.
@@ -115,6 +129,13 @@ def _summarise(label: str, data: str) -> str:
     it costs — and the raw payloads are 3 kB of JSON, so printing them is not the
     alternative.
 
+    A FAILURE IS NOT A LENGTH EITHER. The search layer catches its own errors and
+    returns an explanation as an ordinary string, so a failed hotel search came
+    back as 371 readable characters beginning "ERROR: Failed to find
+    destination" — and this reported it as "returned 371 chars". A demonstration
+    would have shown a step that looked like it worked, and an itinerary built
+    from nothing. Failures are now named.
+
     Deliberately forgiving: a shape this does not recognise falls back to the
     size, because a narration helper must never be the reason a run fails.
     """
@@ -123,6 +144,19 @@ def _summarise(label: str, data: str) -> str:
 
     if not data:
         return "nothing returned"
+
+    if any(marker in data for marker in _FAILURE_MARKERS):
+        if "No recorded response" in data:
+            return ("NO DATA - this exact request is not in the recorded cache "
+                    "(replay mode)")
+        # The first line that reads like the reason, rather than the whole page.
+        for line in data.splitlines():
+            cleaned = line.strip().strip("❌").strip()
+            if cleaned and ("error" in cleaned.lower()
+                            or cleaned.lower().startswith("sorry")):
+                return f"NO DATA - {cleaned[:110]}"
+        return "NO DATA - the search reported a failure"
+
     try:
         if label == "flight":
             payload = _json.loads(data)
