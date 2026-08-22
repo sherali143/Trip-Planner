@@ -124,6 +124,13 @@ class CostEstimate:
     nights: int = 0
     travelers: int = 1
     destination: str = ""
+    # False when the destination matched nothing in the price table and the
+    # estimate therefore rests on the middle row of every band rather than on
+    # data for this place. The figure is still returned — planning should not
+    # stop because a city is unlisted — but a caller quoting it as "what this
+    # trip costs" is overstating what it knows, and a traveller told a budget is
+    # workable deserves to know the estimate behind that was a default.
+    priced_from_data: bool = True
 
     def explain(self, currency: str = "$") -> str:
         d = self.destination or "your destination"
@@ -132,7 +139,9 @@ class CostEstimate:
             f"{self.travelers} traveller(s)",
             "=" * 66,
             f"  {d.title()} is a {self.price_tier}-priced destination on a "
-            f"{self.haul}-haul flight.",
+            f"{self.haul}-haul flight."
+            + ("" if self.priced_from_data else
+               "  <-- NOT IN THE PRICE TABLE: these are mid-tier defaults"),
             "",
             f"  {'':<16}{'Minimum':>12}{'Comfortable':>14}{'Luxury':>12}",
             "  " + "-" * 54,
@@ -170,6 +179,32 @@ class BudgetVerdict:
     estimate: CostEstimate
     message: str
     suggestions: List[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        """
+        Attach the caveat when the estimate rests on defaults, not on data.
+
+        Done here rather than in each of the five verdict branches, so a new
+        branch cannot be added that forgets it. An unlisted destination used to
+        produce a figure indistinguishable from a priced one: "Kyoto" was costed
+        as medium-haul at moderate prices — about $614 for five nights where the
+        real figure is nearer Toronto's $987 — and a $700 budget was called
+        workable with nothing on screen to suggest the number was a default.
+
+        The estimate is still returned and planning still proceeds. What changes
+        is that the traveller is told which of the two kinds of answer they have.
+        """
+        if self.estimate.priced_from_data:
+            return
+        dest = self.estimate.destination or "that destination"
+        self.message += (
+            f"\n\n  NOTE: {dest} is not in the price table, so this estimate uses "
+            f"mid-range defaults — a medium-haul flight at moderate prices. It is "
+            f"likely to be optimistic for an expensive or distant destination. "
+            f"Naming a major city gives a figure based on price data for that place."
+        )
+        self.suggestions.append(
+            f"Treat this figure as indicative: {dest} is not in the price table.")
 
 
 def classify_haul(destination: str) -> str:
@@ -266,6 +301,7 @@ def estimate_trip_cost(
         nights=nights,
         travelers=travelers,
         destination=destination,
+        priced_from_data=is_known_destination(destination),
     )
 
 
