@@ -143,6 +143,50 @@ DIAGRAM_C_TOOLCALL = """\
         v
   3 short lines go to the AI"""
 
+# What "steps allowed" means, shown rather than defined. It is the single setting
+# that most explains the cost difference, and "max_iter=10" means nothing to a
+# reader until they watch an agent use up ten of them.
+ITERATIONS_B = """\
+  APPROACH B  --  hotel agent: 8 tools, 10 steps allowed
+
+  STEP 1   AI is sent: the job + ALL 8 tool descriptions
+           AI answers: "look up Istanbul's ID code"        <- 1 AI call
+           tool runs -> gets: dest_id -755070
+
+  STEP 2   AI is sent: the job + ALL 8 descriptions AGAIN + what happened
+           AI answers: "now search hotels with that code"  <- 1 AI call
+           tool runs -> gets: 12,000 characters of hotels
+
+  STEP 3   AI is sent: the job + ALL 8 descriptions AGAIN + everything so far
+                       + all 12,000 characters
+           AI answers: "let me check the reviews too"      <- 1 AI call
+
+  STEP 4   ...again... "let me look at nearby attractions" <- 1 AI call
+  STEP 5   ...again... "let me search the web to compare"  <- 1 AI call
+  STEP 6   ...again... "let me total up 4 nights"          <- 1 AI call
+  STEP 7-10  it may keep going. At step 10 it is cut off and
+             must answer with whatever it has.
+
+  Result: about 6 AI calls for one hotel, and 8 descriptions re-sent
+          on every single one of them."""
+
+ITERATIONS_C = """\
+  APPROACH C  --  hotel agent: 1 tool, 3 steps allowed
+
+  STEP 1   AI is sent: the job + ONE short description
+           AI answers: "find_hotels('Istanbul', 15 Aug, 19 Aug, 80)"  <- 1 AI call
+           tool runs -> gets 12,000 characters -> TRIMMED to the best 3
+
+  STEP 2   AI is sent: the job + the one description + 3 short lines
+                       Theodora Pension  $33/night  10/10
+                       Hotel Sultania    $41/night   9/10
+                       Ada Homes         $38/night   9/10
+           AI answers: "Theodora Pension. Done."                      <- 1 AI call
+
+  STEP 3   not needed. It finished on its own.
+
+  Result: 2 AI calls, and there was nothing to wander off to."""
+
 DIAGRAM_D = """\
   your request
        |
@@ -620,19 +664,16 @@ def build() -> str:
     # ------------------------------------------------------------------
     doc.h("5. Approach B against approach C, in detail")
     doc.p("""
-        These two are the pair worth understanding, because they are the SAME six
-        agents doing the SAME jobs with the SAME data. Only the configuration
-        differs. That makes them the cleanest comparison in the project, and the
-        source of its most useful engineering lesson.
+        The same six agents, the same jobs, the same data. Only the configuration
+        differs — which makes this the cleanest comparison in the project.
     """)
 
     doc.h2("The one fact that explains everything below")
     doc.p("""
-        An AI has no memory. Every time you ask it something, the program has to
-        re-send everything: the request, the description of every tool that agent
-        holds, and the whole conversation so far. Think of an assistant with total
-        amnesia — before every single step you must read the instructions out
-        again from the beginning.
+        An AI has no memory. Every time you ask it something, the program re-sends
+        everything: the request, every tool description, and the whole conversation
+        so far. Like an assistant with amnesia — you read the instructions out again
+        before every step.
     """)
     doc.p("""
         So the cost of giving an agent a tool is not paid once. It is paid on every
@@ -659,33 +700,29 @@ def build() -> str:
                    "Steps allowed"], rows, widths=[1.15, 2.05, 2.4, 0.75], font_pt=8.5)
 
     doc.h2("What the tool lists show")
-    doc.bullets([
-        "search_internet and calculate are held by ALL FOUR of approach B's "
-        "agents. That is 8 of its 20 slots spent on two tools, and both "
-        "descriptions are re-sent by every agent on every step.",
-
-        "Approach B's hotel agent has two tools that do one job in two steps — "
-        "look up the city's ID code, then search with it — when "
-        "search_hotels_comprehensive already does both in one call. So the agent "
-        "can spend a whole AI request choosing the slow route.",
-
-        "Approach B's hotel agent also holds get_attractions_near_hotel, which is "
-        "the attraction agent's job. It can wander off instead of finishing.",
-
-        "Approach B's coordinator holds four search tools, although its job is only "
-        "to write the plan from what the others already found. It can search all "
-        "over again.",
-
-        "Approach C removes all of that. One tool per specialist, none for the "
-        "coordinator, and each tool returns the best few options instead of the "
-        "full reply. Nothing the system needs was lost.",
-    ])
+    doc.table(
+        ["What the lists show about approach B", "What approach C did"],
+        [["search_internet and calculate sit on ALL FOUR agents — 8 of the 20 "
+          "slots on two tools, re-sent by every agent on every step.",
+          "Removed from all of them."],
+         ["The hotel agent has two tools doing one job in two steps (look up the "
+          "city code, then search) when one tool does both.",
+          "Kept only the tool that does both."],
+         ["The hotel agent also holds an attractions tool, so it can wander off "
+          "instead of finishing.",
+          "One tool only. Nothing to wander to."],
+         ["The coordinator holds four search tools, though its job is only to "
+          "write the plan. It can re-search work already done.",
+          "No tools at all."],
+         ["Tools hand the AI the full API reply.",
+          "Trimmed to the best few first."]],
+        widths=[3.6, 2.8], font_pt=9)
 
     doc.h2("How a tool call actually travels — and whether the MCP server is used")
     doc.p("""
-        This is worth being exact about, because "we built a tool server" and "the
-        system calls it over the protocol" are different claims, and only the first
-        is true of every approach.
+        Worth being exact about: "we built a tool server" and "the system calls it
+        over the protocol" are different claims, and only the first is true of
+        every approach.
     """)
     doc.table(
         ["Approach", "How it reaches a tool"],
@@ -702,51 +739,33 @@ def build() -> str:
         widths=[1.5, 4.9],
     )
     doc.p("""
-        So the honest answer to "does the shipped system use the MCP server?" is:
-        it calls the same twelve tool functions the server exposes, but in-process
-        rather than over the protocol. The JSON-RPC transport is genuinely
-        exercised — by approach B, and by the conformance audit that tests the
-        server's twelve declared schemas against their implementations. Section 4
-        of the dissertation states this, and Section 7.2 assesses what it means for
-        the objective the server was built to satisfy.
+        So: does the shipped system use the MCP server? It calls the same twelve
+        tool functions the server exposes, but in-process rather than over the
+        protocol. The JSON-RPC transport is exercised by approach B and by the
+        conformance audit, which tests all twelve declared schemas against their
+        implementations. Sections 4 and 7.2 of the dissertation state and assess this.
     """)
 
     doc.h2("The same tool call, drawn both ways")
     doc.code(DIAGRAM_B_TOOLCALL)
     doc.code(DIAGRAM_C_TOOLCALL)
 
-    doc.h2("The hotel agent, step by step")
+    doc.h2('What "steps allowed" means')
     doc.p("""
-        The same job in both: find a hotel in Istanbul, 15 to 19 August, about $80
-        a night.
+        An agent does not answer in one go. It loops: think, use a tool, read the
+        result, think again. "Steps allowed" is how many times it may go round
+        that loop before the framework stops it and forces an answer.
     """)
-    doc.table(
-        ["Step", "Approach B", "Approach C"],
-        [["1",
-          "Sent to the AI: the request plus all EIGHT tool descriptions in full. "
-          "The AI replies: 'look up Istanbul's ID code.' (one AI call)",
-          "Sent to the AI: the request plus ONE short tool description. The AI "
-          "replies: 'find_hotels(Istanbul, 15 Aug, 19 Aug, 80).' (one AI call)"],
-         ["2",
-          "The tool runs, through the MCP server over JSON-RPC, and returns the ID "
-          "code.",
-          "The tool runs, calling the function directly, and returns the full "
-          "reply — which is then TRIMMED to the best three hotels."],
-         ["3",
-          "The AI has forgotten everything, so all eight descriptions are sent "
-          "AGAIN, plus the conversation so far. The AI replies: 'now search "
-          "hotels.' (another AI call)",
-          "Sent: the request, the one description, and three short lines. The AI "
-          "replies: 'Theodora Pension. Done.' (another AI call)"],
-         ["4",
-          "The tool runs again and returns about 12,000 characters of hotel data.",
-          "FINISHED — two AI calls."],
-         ["5",
-          "All eight descriptions are sent a THIRD time, plus the whole "
-          "conversation, plus all 12,000 characters for the AI to read. This can "
-          "keep looping, up to ten steps.",
-          "—"]],
-        widths=[0.45, 2.95, 2.95], font_pt=8.5)
+    doc.p("""
+        Each step is one full AI call. And because the AI has no memory, each step
+        re-sends every tool description. So the setting matters twice over.
+    """)
+    doc.code(ITERATIONS_B)
+    doc.code(ITERATIONS_C)
+    doc.p("""
+        Same job. Same hotel chosen. Six AI calls against two — because B could
+        wander, and C had nowhere to wander to.
+    """)
 
     doc.h2("And they run in a different order")
     doc.code(
@@ -770,14 +789,14 @@ def build() -> str:
     )
     doc.p(f"""
         The first three cut token use by about {_tuning_reduction_pct():.0f}%. The
-        fourth is why it finished roughly ten times faster. Nothing about the
-        architecture changed — no agent added, no agent removed, no API swapped.
+        fourth made it roughly ten times faster. No agent was added or removed and
+        no API was swapped.
     """)
     doc.p("""
-        And that is what raised the question approach D answers. In step 1 above,
-        approach B spent an entire AI call deciding "look up Istanbul's ID code" —
-        but there was exactly one correct thing to do there. No judgement at all.
-        So why is the AI in the lookup step? It is not, in approach D.
+        Which raised the question approach D answers. In step 1 above, B spent a
+        whole AI call deciding "look up Istanbul's ID code" — but there was exactly
+        one correct thing to do. No judgement at all. So why is the AI in the lookup
+        step? In approach D it is not.
     """)
 
     # ------------------------------------------------------------------
