@@ -268,3 +268,43 @@ class TestAskingForAPriceCostsQuotaAndIsRationed:
             "the orchestrator no longer gates live price checks on the "
             "destination being unlisted")
         assert "is_known_destination" in source
+
+
+def test_reading_recordings_never_calls_out(monkeypatch):
+    """
+    A regression, and an expensive one.
+
+    _as_code originally resolved city names through the flight tool's
+    _resolve_sky_id, which is right for making a request because it falls back to
+    ASKING Booking.com when a city is not in its table. That fallback is a live
+    call — so resolving "Toronto" to check a fare spent one of fifty monthly hotel
+    searches, from the function whose entire purpose is to read prices without
+    spending anything. It cost a real request before this test existed.
+    """
+    import trip_planner.tools.travel_apis as travel_apis
+    from trip_planner.core.real_prices import recorded_flight_price
+
+    calls = []
+    monkeypatch.setattr(travel_apis, "_search_flight_destination_booking",
+                        lambda *a, **k: calls.append(a) or {})
+    monkeypatch.setattr(travel_apis, "_resolve_sky_id",
+                        lambda *a, **k: pytest.fail(
+                            "the free probe called the request-time resolver"))
+
+    for origin, destination in [("Lahore", "Istanbul"), ("Lahore", "Toronto"),
+                                ("Karachi", "Nairobi"), ("LHE", "IST")]:
+        recorded_flight_price(origin, destination)
+
+    assert not calls, "reading the recordings made a live API call"
+
+
+def test_an_unresolvable_city_returns_no_code_rather_than_asking():
+    """
+    No data is a valid answer. Buying some to find out is not, for a lookup whose
+    contract is that it is free.
+    """
+    from trip_planner.core.real_prices import _as_code
+
+    assert _as_code("Ulaanbaatar") == ""
+    assert _as_code("") == ""
+    assert _as_code("Istanbul") == "IST"

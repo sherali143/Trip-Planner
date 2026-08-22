@@ -79,21 +79,36 @@ def _as_code(place: str) -> str:
 
     The app passes city names — the traveller typed "Istanbul", not "IST" — while
     the recordings are keyed by the code the request carried. Without this the
-    probe found nothing on the live path, because "Istanbul" holds no code and the
-    route could never be identified.
+    probe finds nothing, because a city name holds no airport code.
 
-    Reuses the resolver the flight tool itself uses, so the probe looks for
-    exactly what the request would have sent. A second copy of that table here
-    would give two answers to the same question.
+    LOOKS UP THE TABLE ONLY, and never calls _resolve_sky_id. That function is the
+    right one for making a request, because it falls back to asking Booking.com
+    when a city is not in its table — and that fallback is a live call. Using it
+    here made a supposedly free lookup spend a hotel request: resolving "Toronto"
+    to check a fare cost one of fifty monthly searches, and it did so from the
+    function whose entire purpose is to read prices without spending anything.
+
+    An unresolvable name returns "" and the caller falls back to the price table,
+    which is the correct outcome: no data, so say so rather than buy some.
     """
     text = (place or "").strip()
     if not text:
         return ""
+    upper = text.upper()
+    # Already a code.
+    if 3 <= len(text) <= 4 and text.isalpha() and text.isupper():
+        return upper
     try:
-        from trip_planner.tools.travel_apis import _resolve_sky_id
-        return (_resolve_sky_id(text) or text).strip().upper()
-    except Exception:                      # noqa: BLE001 - best effort only
-        return text.strip().upper()
+        from trip_planner.tools.travel_apis import CITY_TO_SKYID
+    except Exception:                      # noqa: BLE001
+        return ""
+    lowered = text.lower()
+    if lowered in CITY_TO_SKYID:
+        return CITY_TO_SKYID[lowered].upper()
+    for city, code in CITY_TO_SKYID.items():
+        if city in lowered or lowered in city:
+            return code.upper()
+    return ""
 
 
 def _fares_in(body: str) -> List[float]:
