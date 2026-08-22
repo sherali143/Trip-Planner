@@ -1,0 +1,23 @@
+# Streamlit's default palette is what makes every Streamlit app recognisable as
+# one — the red primary, the pure-white surface, the default sans stack. Setting a
+# theme here is the supported way to change it, and it applies to the widgets this
+# project does not draw itself (inputs, sliders, the sidebar), which CSS injected
+# into the page cannot reach reliably across versions.
+#
+# Slate and indigo: readable on a projector, and quiet enough that the itinerary
+# is the thing being looked at.
+
+[theme]
+base = "light"
+primaryColor = "#4338CA"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F5F6FA"
+textColor = "#1F2430"
+font = "sans serif"
+
+[server]
+# A demonstration on a laptop does not need usage statistics leaving the machine.
+headless = true
+
+[browser]
+gatherUsageStats = false
