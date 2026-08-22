@@ -38,6 +38,11 @@ env/
 .DS_Store
 Thumbs.db
 
+# Word's owner/lock files. It creates ~$name.docx beside any open document, and
+# one got committed by a `git add -A` while PROJECT_OVERVIEW.docx was open. It is
+# a lock file for a session that ended; it means nothing to anyone else.
+~$*
+
 # ========================
 # Testing & Coverage
 # ========================
