@@ -119,3 +119,69 @@ class TestARealResultIsStillSummarisedByContent:
         summary = _summarise("hotel", payload)
         assert "3 hotels" in summary, summary
         assert "NO DATA" not in summary
+
+
+# ---------------------------------------------------------------------------
+# The narration reaches the console as well as the page
+# ---------------------------------------------------------------------------
+#
+# The web interface captures the run's output so it can be shown on the page.
+# Pointed at a plain StringIO that is ALL it did: every step, the route, the
+# budget and each search result went into the page, and the terminal running
+# `streamlit run` stayed silent for the whole plan — which is where a
+# demonstration is usually watched from.
+
+class TestTheConsoleStillSeesTheRun:
+    def test_what_is_captured_is_also_forwarded(self):
+        import io
+        from contextlib import redirect_stdout
+
+        from trip_planner.core.log_setup import TeeStream
+
+        console = io.StringIO()
+        tee = TeeStream(console)
+        with redirect_stdout(tee):
+            print("STEP 2 of 4  PREFERENCES EXTRACTOR")
+            print("      flight   5 options, cheapest $937")
+
+        assert "PREFERENCES EXTRACTOR" in console.getvalue()
+        assert "cheapest $937" in console.getvalue()
+        assert tee.getvalue() == console.getvalue(), (
+            "the page and the console disagree about what happened")
+
+    def test_a_console_that_cannot_encode_does_not_stop_the_run(self):
+        """
+        A Windows console on a legacy code page raises UnicodeEncodeError on the
+        arrows and symbols in the A2A summary. Losing a line of narration is not
+        a reason to lose a plan — and that exact failure has already cost one run
+        in this project, when a arrow was printed from inside the flight call.
+        """
+        from contextlib import redirect_stdout
+
+        from trip_planner.core.log_setup import TeeStream
+
+        class CannotEncode:
+            def write(self, text):
+                raise UnicodeEncodeError("cp1252", text, 0, 1, "not encodable")
+
+            def flush(self):
+                pass
+
+        tee = TeeStream(CannotEncode())
+        with redirect_stdout(tee):
+            print("A2A: preferences_extractor -> itinerary_coordinator")
+
+        assert "preferences_extractor" in tee.getvalue(), (
+            "the page lost the line as well")
+
+    def test_the_page_reads_the_run_through_this_and_not_a_bare_buffer(self):
+        """
+        Read from the source. If the interface goes back to a plain StringIO the
+        console falls silent again, and nothing else would notice.
+        """
+        import pathlib
+
+        source = (pathlib.Path(__file__).parent.parent / "trip_planner" / "ui"
+                  / "app.py").read_text(encoding="utf-8")
+        assert "TeeStream(sys.stdout)" in source
+        assert "redirect_stdout(io.StringIO())" not in source

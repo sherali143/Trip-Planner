@@ -19,6 +19,7 @@ does not call basicConfig or touch this project's own loggers, so application
 logging is unaffected.
 """
 
+import io
 import logging
 import os
 
@@ -66,3 +67,40 @@ def configure_logging(level: int = logging.WARNING) -> None:
         logging.getLogger("LiteLLM").setLevel(level)
     except Exception:  # pragma: no cover - litellm always present in practice
         pass
+
+
+class TeeStream(io.StringIO):
+    """
+    Collect what a run prints, and let it reach the real console as well.
+
+    The web interface captures the run's narration so it can be shown on the
+    page, and `redirect_stdout` at a plain StringIO does exactly that and nothing
+    more: the four steps, the route, the budget and what each search returned all
+    went into the page, and the terminal running `streamlit run` stayed silent for
+    the whole plan. A demonstration is usually watched from that console.
+
+    So this is a StringIO that also forwards. `getvalue()` still returns
+    everything for the page.
+
+    Mirroring is deliberately unable to break the run. A Windows console on a
+    legacy code page raises UnicodeEncodeError on the arrows and symbols in the
+    A2A summary — losing a line of narration is not a reason to lose a plan, and
+    that exact failure has already cost one run in this project when a `→` was
+    printed from inside the flight call.
+
+    Lives here rather than in the interface because a Streamlit script runs on
+    import: anything importing it from there would draw a whole page as a side
+    effect, which is how six page tests were once broken by an import.
+    """
+
+    def __init__(self, mirror):
+        super().__init__()
+        self._mirror = mirror
+
+    def write(self, text):
+        try:
+            self._mirror.write(text)
+            self._mirror.flush()
+        except Exception:                      # noqa: BLE001 - narration only
+            pass
+        return super().write(text)
