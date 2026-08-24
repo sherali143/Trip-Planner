@@ -247,7 +247,6 @@ class AgentExecutor:
         self.agent_id = agent_id
         self.agent_function = agent_function
         self.protocol = protocol
-        self.agent_card = get_agent_card(agent_id)
     
     def execute(self, input_data: Dict[str, Any], conversation_id: str) -> Dict[str, Any]:
         """Execute agent with input data"""

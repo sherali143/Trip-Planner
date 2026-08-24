@@ -24,7 +24,6 @@ from trip_planner.core.trip_cost import (
     classify_haul,
     classify_price_tier,
     estimate_trip_cost,
-    suggest_budget,
 )
 
 
@@ -186,7 +185,3 @@ class TestExplanations:
     def test_explain_states_the_floor_in_words(self):
         text = estimate_trip_cost("Dubai", 5, 3).explain()
         assert "not bookable" in text
-
-    def test_suggest_budget_gives_three_numbers(self):
-        text = suggest_budget("Dubai", 5, 3)
-        assert "Minimum" in text and "Comfortable" in text and "Luxury" in text

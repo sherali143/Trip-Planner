@@ -187,22 +187,31 @@ def _summarise(label: str, data: str) -> str:
 
 class TripPlannerCrew:
     """
-    Main Trip Planner Crew orchestrating A2A communication and MCP tool usage
-    
-    Workflow:
-    1. Conversational Agent gathers user requirements
-    2. Preferences Extractor structures the data (A2A message)
-    3. Search Agents (Flight, Hotel, Attraction) work in parallel with MCP tools
-    4. Itinerary Coordinator synthesizes everything into final plan
+    The shipped workflow: two model steps with plain-Python retrieval between them.
+
+      1. Conversational agent gathers the request        (uses the model)
+      2. Preferences extractor structures it, and the budget is checked
+                                                         (uses the model)
+      3. Flights, hotels, attractions and restaurants are fetched in order,
+         each call decided by an if statement            (no model, no agent)
+      4. Itinerary coordinator assembles the day-by-day plan
+                                                         (uses the model)
+
+    Every exchange is recorded over the A2A protocol.
+
+    This docstring described three search agents working in parallel with MCP
+    tools. That was the six-agent design, and it has not been what this class does
+    since the pivot: retrieval is a sequential loop over four calls, and appendix
+    E records the parallel search agents as removed. A comment describing a
+    previous version of the code is worse than none, because it is read as current.
     """
-    
-    def __init__(self, parallel_mode: bool = True):
+
+    def __init__(self):
         self.agents_class = TripPlannerAgents()
         self.tasks_class = TripPlannerTasks()
         self.a2a_protocol = A2AProtocol()
-        self.parallel_mode = parallel_mode  # Enable parallel API searches
         self._extraction_output = None  # Store for validation
-        
+
         # Initialize agents (only conversation, extraction, and coordination need LLM)
         self.conversational_agent = self.agents_class.conversational_agent()
         self.preferences_extractor = self.agents_class.preferences_extractor_agent()

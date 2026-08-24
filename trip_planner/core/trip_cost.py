@@ -478,15 +478,3 @@ def _max_affordable_nights(budget: float, destination: str, travelers: int) -> i
         if estimate_trip_cost(destination, nights, travelers).minimum <= budget:
             return nights
     return 0
-
-
-def suggest_budget(destination: str, nights: int = 5, travelers: int = 1,
-                   origin: str = "") -> str:
-    """A short answer to 'what budget do I need for this trip?'"""
-    e = estimate_trip_cost(destination, nights, travelers, origin)
-    return (
-        f"For {nights} nights in {destination} with {travelers} traveller(s):\n"
-        f"  Minimum (bare-bones):  ${e.minimum:,.0f}   <- below this, not bookable\n"
-        f"  Comfortable:           ${e.comfortable:,.0f}   <- recommended\n"
-        f"  Luxury:                ${e.luxury:,.0f}"
-    )
