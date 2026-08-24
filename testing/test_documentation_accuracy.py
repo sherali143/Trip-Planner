@@ -376,3 +376,179 @@ def test_conformance_defect_counts_in_docs_match_the_audit():
            f"{total_checks} checks" in ALL_TEXT, \
         (f"the conformance result ({passed} of {total_checks} passing, {failed} "
          f"failing) is not stated in any document")
+
+
+# ---------------------------------------------------------------------------
+# Repository hygiene: no code that nothing uses
+# ---------------------------------------------------------------------------
+#
+# These were hand-run scans, repeated every time the question "is there dead code
+# left?" came up. A scan you have to remember to run is a scan that stops being
+# run, so they are tests.
+#
+# What they caught between them: a test function defined twice in the same file,
+# so the first had never executed once; a `parallel_mode` constructor argument
+# that nothing passed and nothing read, advertising parallel searching this class
+# has not done since the pivot; an `agent_card` attribute assigned and never used;
+# and `suggest_budget`, a formatter duplicating CostEstimate.explain that no
+# caller, demo, experiment or document referred to.
+
+def _production_files():
+    """Everything that ships or is run, excluding the test suite itself."""
+    files = [ROOT / "run_cli.py", ROOT / "run_web.py"]
+    for package in ("trip_planner", "evaluation", "demos", "report"):
+        files += [p for p in (ROOT / package).rglob("*.py")
+                  if "__pycache__" not in p.parts]
+    return files
+
+
+def _test_files():
+    return [p for p in (ROOT / "testing").rglob("*.py")
+            if "__pycache__" not in p.parts]
+
+
+def _read_all(paths):
+    return "\n".join(p.read_text(encoding="utf-8", errors="ignore")
+                     for p in paths)
+
+
+def _searchable_text():
+    """Every place a name could legitimately be referred to from."""
+    parts = []
+    for pattern in ("*.py", "*.md", "*.bat", "*.toml"):
+        for path in ROOT.rglob(pattern):
+            if any(x in path.parts for x in (".venv", ".git", "__pycache__")):
+                continue
+            parts.append(path.read_text(encoding="utf-8", errors="ignore"))
+    return "\n".join(parts)
+
+
+def _defined_names(path):
+    """(name, lineno) for every function and class defined in one file."""
+    import ast
+
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+    except SyntaxError:
+        return []
+    return [(n.name, n.lineno) for n in ast.walk(tree)
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef,
+                              ast.ClassDef))
+            and not n.name.startswith("__")]
+
+
+# Kept deliberately, and each is argued in the dissertation rather than quietly
+# left behind. Section 7.2 states that the shipped path records A2A messages and
+# never dequeues, so "the delivery machinery, the executor class and the
+# message-processing loop are all unreachable in production". Deleting these would
+# make that sentence false, and would remove the surface the conformance audit
+# measures. They are unused by the product on purpose, and that is the finding.
+UNUSED_ON_PURPOSE = {
+    "from_json",        # the deserialising half of the A2A wire format
+    "to_dict",          # an agent card rendered as primitives
+    "send_to_agent",    # AgentExecutor's convenience wrapper
+}
+
+
+def test_no_function_or_class_is_referenced_nowhere():
+    """
+    Anything defined and never named again is either dead or misspelt.
+
+    Documents and run.bat count as references: a script's only caller may be a
+    documented command rather than other code.
+    """
+    text = _searchable_text()
+    orphans = []
+    for path in _production_files():
+        for name, line in _defined_names(path):
+            if len(re.findall(r"\b" + re.escape(name) + r"\b", text)) <= 1:
+                orphans.append(f"{path.relative_to(ROOT)}:{line} {name}")
+    assert not orphans, "defined and never referenced: " + ", ".join(orphans)
+
+
+def test_nothing_new_is_used_only_by_its_own_tests():
+    """
+    A function whose only caller is its test is not covered — it is unused, with
+    a test for company. The three exceptions are listed above with their reason.
+    """
+    prod_text = _read_all(_production_files())
+    test_text = _read_all(_test_files())
+
+    unexpected = []
+    for path in _production_files():
+        for name, line in _defined_names(path):
+            if name in UNUSED_ON_PURPOSE:
+                continue
+            word = r"\b" + re.escape(name) + r"\b"
+            if (len(re.findall(word, prod_text)) <= 1
+                    and re.search(word, test_text)):
+                unexpected.append(f"{path.relative_to(ROOT)}:{line} {name}")
+    assert not unexpected, (
+        "used only by tests — delete it, or add it to UNUSED_ON_PURPOSE with a "
+        "reason: " + ", ".join(unexpected))
+
+
+def test_no_function_body_is_duplicated():
+    """
+    Copies drift. test_run_bat_menu_is_internally_consistent_and_matches_the_docs
+    was pasted twice into this very file, and Python bound the second, so the
+    first had never run.
+
+    Compares normalised syntax trees with docstrings stripped, so two functions
+    doing the same thing under different names are caught too.
+    """
+    import ast
+    import hashlib
+    from collections import defaultdict
+
+    bodies = defaultdict(list)
+    for path in list(_production_files()) + _test_files():
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            body = list(node.body)
+            if (body and isinstance(body[0], ast.Expr)
+                    and isinstance(getattr(body[0], "value", None), ast.Constant)
+                    and isinstance(body[0].value.value, str)):
+                body = body[1:]
+            if len(body) < 4:            # too short to be a meaningful clone
+                continue
+            key = hashlib.sha1(
+                "".join(ast.dump(n) for n in body).encode()).hexdigest()
+            bodies[key].append(f"{path.relative_to(ROOT)}:{node.lineno} "
+                               f"{node.name}")
+    clones = [group for group in bodies.values() if len(group) > 1]
+    assert not clones, "identical function bodies: " + "; ".join(
+        " == ".join(group) for group in clones)
+
+
+def test_no_attribute_is_assigned_and_never_read():
+    """
+    `self.parallel_mode = parallel_mode` was the whole of that field's life. It
+    read as a supported option — parallel API searches — that no caller could
+    switch on and no code consulted.
+    """
+    import ast
+
+    text = _read_all(list(_production_files()) + _test_files())
+    orphans = set()
+    for path in _production_files():
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except SyntaxError:
+            continue
+        for cls in [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]:
+            for node in ast.walk(cls):
+                if (isinstance(node, ast.Attribute)
+                        and isinstance(node.value, ast.Name)
+                        and node.value.id == "self"
+                        and isinstance(node.ctx, ast.Store)):
+                    if len(re.findall(r"\.\b" + re.escape(node.attr) + r"\b",
+                                      text)) <= 1:
+                        orphans.add(f"{path.relative_to(ROOT)}:"
+                                    f"{cls.name}.{node.attr}")
+    assert not orphans, "assigned but never read: " + ", ".join(sorted(orphans))
