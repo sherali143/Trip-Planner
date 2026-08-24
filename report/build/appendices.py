@@ -570,6 +570,138 @@ def appendices(report: Report) -> None:
     )
 
     # ---------------------------------------------------------------- I
+    # ---------------------------------------------------------------- N
+    _appendix(report, "N", "Risk analysis and the risk register")
+
+    quota = measured.api_quota()["apis"]
+    cache = measured.api_cache_stats()
+    # The quota reading stores its counters as strings, because that is how
+    # RapidAPI sends the headers they came from. val() formats numbers.
+    def _counts(entry):
+        return {k: int(v) for k, v in entry.items()
+                if k in ("remaining", "limit") and str(v).strip().isdigit()}
+
+    flights = _counts(next(v for v in quota.values() if "flight" in v["name"]))
+    hotels = _counts(next(v for v in quota.values() if "hotel" in v["name"]))
+    calls_d = measured.api_calls_per_arm()["arms"]["D"]
+
+    report.p("""
+        Signposted from Section 3.6. Risks are recorded here with what was done about
+        them and what then happened, because a register listing only intentions is
+        untestable. Likelihood and impact are the values assigned at the start of the
+        project; the final column is the outcome, and three of these risks occurred.
+    """)
+
+    report.p(f"""
+        The binding risk was never technical difficulty. It was the monthly request
+        allowance on the travel APIs: {val(flights['limit'])} flight searches and
+        {val(hotels['limit'])} hotel searches, on free tiers that cannot be topped up
+        and reset only at the end of a billing cycle. One flight search costs two
+        requests, because the provider's endpoint is asynchronous and has to be
+        polled for the fares. A single evaluated scenario therefore consumes about
+        {val(calls_d['total_http'] + 1)} requests through the shipped arm, and far
+        more through the agent-driven arms, where a reasoning loop decides how many
+        calls to make and made {val(measured.api_calls_per_arm()['arms']['B']['model_calls'])}
+        model requests on the run recorded here.
+    """)
+
+    report.p(f"""
+        The consequence is that quota exhaustion is not a delay but a hard stop of up
+        to a month, arriving without warning in the middle of a measurement. Two
+        controls were built before the arms were: every HTTP call passes through a
+        record-and-replay layer, so a response is bought once and reused for ever, and
+        a hard ceiling on live calls per process fails the run loudly rather than
+        spending an allowance it cannot recover. {val(cache['entries'])} responses are
+        committed, which is why the whole evaluation replays from disk with no
+        credentials, and why the figures in this dissertation can be reproduced by a
+        marker who has no API keys at all.
+    """)
+
+    report.p(f"""
+        The controls worked and the risk still bit. At the last reading the flight
+        allowance stood at {val(flights['remaining'])} of {val(flights['limit'])} and
+        the hotel allowance at {val(hotels['remaining'])} of {val(hotels['limit'])},
+        and recording all {val(coverage['scenarios_designed'])} designed scenarios
+        needs more than one monthly cycle. Coverage of the cost comparison is
+        therefore {val(coverage['scenarios_measured'])} scenario, stated as such in
+        the abstract, in Section 6.1 and on every chart rather than smoothed over.
+        That is the honest residual: the mitigation protected reproducibility, not
+        breadth, and no amount of caching creates requests that were never made.
+    """)
+
+    report.table(
+        ["Risk", "Likelihood", "Impact", "Mitigation built", "What actually happened"],
+        [
+            ["Travel API monthly allowance exhausted mid-measurement",
+             "High", "High",
+             "Record-and-replay of every HTTP call; hard per-process ceiling on live "
+             "calls; quota read from response headers and committed to a file",
+             "OCCURRED. Both allowances were fully spent during development. The cache "
+             f"({val(cache['entries'])} responses) kept every result reproducible, but "
+             f"coverage of the cost comparison is {val(coverage['scenarios_measured'])} "
+             f"of {val(coverage['scenarios_designed'])} scenarios"],
+
+            ["A single accidental run drains a month's allowance",
+             "Medium", "High",
+             "TRIP_PLANNER_MAX_LIVE_CALLS refuses the call rather than spending it; "
+             "replay is the default mode for every demonstration",
+             "Prevented, then nearly caused anyway by a free price lookup that "
+             "resolved a city name through a live endpoint. One hotel request was "
+             "spent before a test was added to forbid it (Section 5.6)"],
+
+            ["Model provider withdraws or changes the model mid-project",
+             "Medium", "High",
+             "One module holds the model string and the request-shape compatibility "
+             "layer, so a change is edited in a single place",
+             "OCCURRED. The model named in the proposal was withdrawn. The arms were "
+             "restored by editing one constant; the affected requests are counted and "
+             "reported rather than silently repaired"],
+
+            ["Tool calls fail silently and the model answers from memory",
+             "Medium", "High",
+             "Groundedness measured as recall of retrieved entities, so a plan built "
+             "without data scores low even when it reads well",
+             "OCCURRED on the first end-to-end run: every tool call was failing and "
+             "the itinerary looked complete. This is why the metric exists "
+             "(Section 5.2)"],
+
+            ["Reported numbers drift away from the measured data",
+             "Medium", "High",
+             "Every figure interpolated from the results files at build time, and a "
+             "perturbation test that corrupts the data and fails if any printed "
+             "number does not move",
+             "Controlled. The proof runs on every build and is reported in "
+             "Appendix K"],
+
+            ["Credentials committed to version control or printed in logs",
+             "Medium", "High",
+             "Keys confined to an ignored .env; request headers excluded from the "
+             "response cache; third-party loggers raised above INFO because the model "
+             "key travels in the URL",
+             "Controlled. No credential appears in any tracked file or committed "
+             "response"],
+
+            ["Scope too large for one part-time project",
+             "High", "Medium",
+             "Four architectures reduced to the minimum that still isolates the "
+             "variable; questions answerable without quota answered in full",
+             "Managed. Protocol conformance and the feasibility gate were evaluated "
+             f"across all {val(coverage['scenarios_designed'])} scenarios because "
+             "neither needs the network, and both produced negative findings"],
+
+            ["Single point of failure: one laptop, one author",
+             "Medium", "Medium",
+             "Everything in version control; the evaluation reproducible from the "
+             "committed cache with no credentials",
+             "Controlled, with a residual: the repository is the only copy until it "
+             "is pushed to a remote"],
+        ],
+        "Risk register: the assessment made at the start, the control built for it, "
+        "and the outcome. Three of the eight risks occurred.",
+        widths=[1.35, 0.62, 0.55, 1.9, 1.9],
+        font_pt=7.5,
+    )
+
     _appendix(report, "K", "Provenance of the reported results")
 
     provenance = measured.provenance()

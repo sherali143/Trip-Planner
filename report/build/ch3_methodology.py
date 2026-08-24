@@ -197,7 +197,9 @@ def build(report: Report) -> None:
         and answer those completely: protocol conformance needs no network, and the
         feasibility gate needs neither network nor model. Both are evaluated across
         the full scenario set, and both produced negative findings that the
-        quota-limited comparison could not have produced.
+        quota-limited comparison could not have produced. Quota was also this
+        project's largest risk: Appendix N holds the register, the controls built
+        before the arms were, and which risks occurred regardless.
     """)
 
     # ------------------------------------------------------------------ 3.7
