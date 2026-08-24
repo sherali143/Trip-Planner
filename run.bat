@@ -192,14 +192,15 @@ echo      7. Run the evaluation experiments    ^(protocol + budget gate^)
 echo      8. Rebuild the figures               ^(8 diagrams, 6 charts^)
 echo      9. Rebuild the dissertation          ^(report/*.docx^)
 echo     10. Rebuild the project overview      ^(PROJECT_OVERVIEW.docx^)
+echo     11. Rebuild the viva presentation     ^(CMP7200_Viva_Presentation.pptx^)
 echo.
 echo    PLAN A REAL TRIP - needs API keys in .env
-echo     11. In the browser                    ^(web app^)
-echo     12. In this window                    ^(command line^)
+echo     12. In the browser                    ^(web app^)
+echo     13. In this window                    ^(command line^)
 echo.
-echo     13. Exit
+echo     14. Exit
 echo.
-set /p choice="   Enter a number (1-13): "
+set /p choice="   Enter a number (1-14): "
 echo.
 
 if "%choice%"=="1"  goto demo_all
@@ -212,9 +213,10 @@ if "%choice%"=="7"  goto experiments
 if "%choice%"=="8"  goto figures
 if "%choice%"=="9"  goto report
 if "%choice%"=="10" goto overview
-if "%choice%"=="11" goto web
-if "%choice%"=="12" goto cli
-if "%choice%"=="13" goto end
+if "%choice%"=="11" goto deck
+if "%choice%"=="12" goto web
+if "%choice%"=="13" goto cli
+if "%choice%"=="14" goto end
 echo  Please enter a number from 1 to 12.
 echo.
 goto menu
@@ -308,6 +310,16 @@ echo  project. Every number in it is read from the measured results, so it
 echo  stays correct after the experiments are re-run.
 echo.
 "%PY%" report/build/make_handover.py
+echo.
+pause
+goto menu
+
+:deck
+echo  Rebuilding CMP7200_Viva_Presentation.pptx - the viva slides. Every
+echo  number on a slide is read from the measured results, and the detail
+echo  for each one is in that slide's speaker notes.
+echo.
+"%PY%" report/build/make_viva_deck.py
 echo.
 pause
 goto menu

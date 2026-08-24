@@ -8,6 +8,7 @@ python -m report.build.build_report --figures      # regenerate figures, then bu
 python -m report.build.build_report                # build (still runs the test suite)
 python -m report.build.build_report --no-tests     # build only, faster
 python -m report.build.verify_no_hardcoded_numbers # prove no number is typed by hand
+python -m report.build.make_viva_deck               # the viva slides
 ```
 
 ## Why it is generated
@@ -27,11 +28,12 @@ actually instrumented.
 | `build/references.py` | The bibliography as data, in BCU Harvard |
 | `build/frontmatter.py` | Title page, abstract, contents, figure and table lists |
 | `build/ch1_introduction.py` … `ch8_conclusion.py` | One module per chapter |
-| `build/appendices.py` | Reference list and appendices A–K |
+| `build/appendices.py` | Reference list and the appendices, including the risk register |
 | `build/build_report.py` | Assembles the document and enforces every check below |
 | `build/verify_no_hardcoded_numbers.py` | The perturbation proof |
-| `REPORT_OUTLINE.md` | The original planning outline, kept for reference |
-| `Dissertation_TEMPLATE.docx` | A formatted empty template, superseded by the generator |
+| `build/make_viva_deck.py` | The viva slides, built from the same measured data |
+| `build/make_charts.py`, `build/make_diagrams.py`, `build/figlib.py` | The figures |
+| `build/make_handover.py` | `PROJECT_OVERVIEW.docx`, the plain-English guide |
 
 ## What the build refuses to produce
 

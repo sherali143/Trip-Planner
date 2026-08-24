@@ -35,13 +35,14 @@ THE PROJECT         free
   8. Rebuild the figures
   9. Rebuild the dissertation
  10. Rebuild the project overview
+ 11. Rebuild the viva presentation
 
 PLAN A REAL TRIP    needs API keys
- 11. In the browser
- 12. In this window
+ 12. In the browser
+ 13. In this window
 ```
 
-**Options 1 to 10 need no API keys and no internet.** The demos replay real
+**Options 1 to 11 need no API keys and no internet.** The demos replay real
 recorded runs, so they work even when every quota is exhausted.
 
 ### API keys (only for options 11 and 12)
@@ -175,6 +176,7 @@ and the stored file, so no key material reaches disk.
 | `python report/build/make_charts.py` | 6 charts from measured data | free |
 | `python -m report.build.build_report --figures` | Rebuild the dissertation | free |
 | `python report/build/make_handover.py` | Rebuild `PROJECT_OVERVIEW.docx` | free |
+| `python -m report.build.make_viva_deck` | Rebuild `CMP7200_Viva_Presentation.pptx` | free |
 | `python -m report.build.verify_no_hardcoded_numbers` | Prove no number is typed by hand | free |
 | `python -m evaluation.run_comparison SC-01` | The four-approach comparison | model quota |
 | `python run_cli.py` | Plan a trip in the terminal | API keys |

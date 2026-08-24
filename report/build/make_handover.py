@@ -489,6 +489,32 @@ FILE_GROUPS = [
 ]
 
 
+def _figure_count() -> int:
+    """
+    How many figures exist, counted rather than typed.
+
+    The folder listing said "all 14 pictures". It was right when written, and a
+    number in prose next to the folder it describes is exactly the kind of claim
+    that goes quietly wrong when a chart is added.
+    """
+    figures = os.path.join(ROOT, "report", "figures")
+    return sum(1 for _, _, files in os.walk(figures)
+               for f in files if f.endswith(".png"))
+
+
+def _test_count() -> int:
+    """
+    How many tests pytest collects.
+
+    Through measured.test_count() rather than by counting `def test_` in the
+    files: a first attempt did that and reported 300 against pytest's 393,
+    because a parametrised test is one definition and many cases. The
+    dissertation already reads this accessor, so both documents now quote the
+    same number from the same place.
+    """
+    return measured.test_count()["collected"]
+
+
 def _file_rows(folder: str):
     """Every Python file in one folder, paired with its plain-English purpose."""
     directory = os.path.join(ROOT, folder) if folder else ROOT
@@ -1120,7 +1146,8 @@ def build() -> str:
         "    server\\               the MCP tool server (12 tools)\n"
         "    tools\\                three files: MCP client, travel APIs, agent tools\n"
         "    core\\                 caching, measuring, budget, cost, safe maths\n"
-        "    ui\\app.py             the web page\n"
+        "    ui\\                   the web page, and the code that splits a\n"
+        "                           finished plan into its sections\n"
         "\n"
         "  evaluation\\             THE EXPERIMENT\n"
         "    arm_a ... arm_d        the four approaches\n"
@@ -1138,10 +1165,12 @@ def build() -> str:
         "  report\\                 THE DISSERTATION\n"
         "    CMP7200_Dissertation.docx     the report itself\n"
         "    build\\                       one file per chapter, and the figures\n"
-        "    figures\\                     all 14 pictures, generated\n"
+        f"    figures\\                     all {_figure_count()} pictures, generated\n"
         "\n"
-        "  testing\\                the test suite\n"
+        f"  testing\\                the test suite ({_test_count()} tests), plus two\n"
+        "                           real finished plans used as fixtures\n"
         "  proposal\\               the original proposal and the assignment brief\n"
+        "  .streamlit\\             the web page's colour theme\n"
         "  .api_cache\\             recorded website replies, so results replay free"
     )
 
