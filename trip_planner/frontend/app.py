@@ -186,10 +186,6 @@ st.markdown("""
     margin: 0 0 0.5rem 0; padding-bottom: 0.38rem;
     border-bottom: 2px solid var(--line);
   }
-  .wf-plan { font-size: 0.945rem; line-height: 1.68; }
-  .wf-plan h1 { font-size: 1.3rem; }
-  .wf-plan h2 { font-size: 1.12rem; }
-
   .wf-empty {
     border: 1px dashed var(--line); border-radius: 8px;
     padding: 2.4rem 1.5rem; text-align: center; color: var(--ink-faint);
@@ -292,9 +288,12 @@ def _render_section(body: str) -> None:
     """
     blocks = split_blocks(body)
     if len(blocks) < 2:
-        st.markdown(f'<div class="wf-plan">', unsafe_allow_html=True)
+        # No card: one border around a whole section is a border for no reason.
+        # This used to open a styling <div> here and close it in a second
+        # st.markdown call, which does nothing — Streamlit renders each call as
+        # its own element, so the div never wrapped anything and the rules that
+        # depended on it never applied.
         st.markdown(blocks[0][1] if blocks else body)
-        st.markdown("</div>", unsafe_allow_html=True)
         return
     for heading, text in blocks:
         with st.container(border=True):
