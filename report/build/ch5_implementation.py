@@ -261,8 +261,8 @@ def build(report: Report) -> None:
     tests = measured.test_count()
     report.p(f"""
         The suite contains {val(tests['collected'])} tests and they pass. What they
-        cover is narrower than that number suggests, and the gap is worth stating
-        because it bears on how much weight the suite can carry as evidence.
+        cover is narrower than that number suggests, which bears on how much weight
+        it can carry as evidence.
     """)
 
     report.p("""

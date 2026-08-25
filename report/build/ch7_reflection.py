@@ -69,9 +69,8 @@ def build(report: Report) -> None:
     report.h2("7.2  Where the protocols ended up in the shipped path")
 
     report.p("""
-        An uncomfortable observation belongs here. The two protocols this project is
-        named for are less load-bearing in the shipped configuration than the proposal
-        implied. The message layer records the exchange and never dispatches it: the
+        The two protocols this project is named for are less load-bearing in the
+        shipped configuration than the proposal implied. The message layer records the exchange and never dispatches it: the
         orchestrator sends messages and reads the conversation history but never
         dequeues, so the delivery machinery, the executor class and the
         message-processing loop are all unreachable in production. The tool server is

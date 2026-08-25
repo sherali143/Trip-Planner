@@ -154,7 +154,7 @@ def build(report: Report) -> None:
     )
 
     report.p("""
-        One exclusion limits what can be claimed and is therefore worth stating
+        One exclusion limits what can be claimed and is stated
         twice. The system is a planning aid. It books nothing, and it is not
         evaluated on whether a traveller would choose its plans — only on whether
         what it names was actually retrieved. Groundedness is necessary for a usable

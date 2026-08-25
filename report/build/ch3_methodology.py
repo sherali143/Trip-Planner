@@ -84,8 +84,7 @@ def build(report: Report) -> None:
     """)
 
     report.p("""
-        One control is imperfect and is declared here rather than in a footnote. The
-        six-agent arms instantiate five agents: the conversational agent is omitted so
+        One control is imperfect. The six-agent arms instantiate five agents: the conversational agent is omitted so
         every arm receives one identical request string, since a multi-turn dialogue
         cannot be held identical across four architectures. The comparison is therefore
         between three agents and a five-agent ablation of the six-agent design. The
@@ -136,8 +135,8 @@ def build(report: Report) -> None:
     """)
 
     report.p("""
-        The groundedness measure's asymmetry needs stating plainly, because reporting
-        its two halves as equals would overstate the result. Matching a name is weak
+        The groundedness measure is asymmetric, and reporting its two halves as
+        equals would overstate the result. Matching a name is weak
         evidence: on the recorded scenario the arm with no tool access named a real
         airline for the route, having called nothing. Matching a price is strong,
         because landing within 2% of a fare quoted minutes earlier is not something

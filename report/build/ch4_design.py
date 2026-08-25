@@ -29,9 +29,8 @@ def build(report: Report) -> None:
         "ordinary Python; the JSON-RPC transport is exercised by the six-agent arms.")
 
     report.p("""
-        One property of the diagram was misdrawn in an earlier version of this
-        project's documentation, so it is worth stating explicitly: the tool server is
-        not the only route to an external API. The shipped path imports the tool
+        The tool server is not the only route to an external API. The shipped path
+        imports the tool
         functions and calls them in process, and the flight tool reaches its upstream
         endpoint without passing through the server at all. The JSON-RPC transport is
         genuinely exercised, but only by the naive six-agent arm, whose agents hold
