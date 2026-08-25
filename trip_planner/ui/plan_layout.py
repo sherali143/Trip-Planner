@@ -1,29 +1,11 @@
 """
-Reading a finished plan's own structure, so the page can show it in sections.
+Finds the sections and the days inside a finished plan.
 
-Why this is not in app.py
-------------------------
-It was, and that made it untestable in company. A Streamlit script executes top
-to bottom on import, so `from trip_planner.ui.app import split_days` ran the
-entire page — sidebar, form and all — outside any script-run context, and left
-Streamlit's global delta-generator state holding an open form. Every later page
-test in the same process then died on `st.button() can't be used in an
-st.form()`. The functions were pure; the module they lived in was not.
+A plan is about 24,000 characters, so the page shows it in parts rather than
+as one long column. The structure is read from the plan, not assumed, because
+the heading style varies between runs.
 
-Nothing here imports streamlit, so importing this costs nothing and changes
-nothing.
-
-What it does
-------------
-A finished itinerary is around 24,000 characters: eight top-level sections and a
-block per day. Rendered as one markdown string it is 380 lines of vertical
-scroll, and reaching the third day means dragging past the first two. These
-functions find the sections and the days so the page can put them behind tabs.
-
-The structure is READ, not assumed. A model asked for a plan usually produces the
-headings the coordinator's prompt requests, but not always — so an unrecognised
-heading keeps its own tab, and text with no headings at all is returned whole. A
-tab that silently hid part of the plan would be worse than a long page.
+Imports no Streamlit, so importing this does not draw a page.
 """
 
 from __future__ import annotations

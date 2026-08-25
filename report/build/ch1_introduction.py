@@ -1,11 +1,4 @@
-"""
-Chapter 1 — Introduction. Target ~1,000 words.
-
-Establishes why the problem is live now, states the aim in one sentence, gives
-numbered objectives as they ended up rather than as proposed, and fixes the
-scope including what is deliberately excluded. Deviations from the proposal are
-flagged here and argued in Chapter 7 rather than left for the marker to notice.
-"""
+"""Chapter 1: introduction."""
 
 from __future__ import annotations
 

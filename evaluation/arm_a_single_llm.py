@@ -1,21 +1,7 @@
 """
-Arm A: single-LLM baseline — no agents, no tools, no protocols.
+Approach A: one model call, no tools.
 
-Why this arm exists
--------------------
-Proposal Objectives 6 and 7 promise ablations "with respect to the single-LLM
-baseline" and a target of ">=25% improvement over a single-LLM model". No such
-baseline existed in the codebase, so neither objective could be evidenced.
-
-It also anchors the other direction of the comparison. Arms B/C/D all differ in
-*how* they retrieve data; this arm retrieves nothing. It is the control that
-shows what the MCP tool layer buys in the first place — which is the point the
-literature makes about hallucinated venues and fabricated prices (Xie et al.,
-2024). Expect it to be the cheapest and fastest arm by a wide margin and the
-least trustworthy, and report it as such: cost is only meaningful next to
-whether the itinerary refers to anything real.
-
-One LiteLLM completion, one prompt, no tool access.
+The control. Shows what fluency alone produces when nothing is retrieved.
 """
 
 import time

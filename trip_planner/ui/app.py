@@ -1,48 +1,8 @@
 """
-WHAT THIS FILE DOES
-===================
-The web interface. Collects the trip details, runs the planner, and shows the
-finished plan section by section.
+The web page.
 
-The page has two states, and they want different shapes
--------------------------------------------------------
-Asking and showing are different jobs. Asking wants a narrow column — a form
-spread across a wide screen is harder to read, not easier. Showing wants the
-whole page: a finished plan is around 24,000 characters across eight sections
-with a block per day, and it was once poured into a 55%-wide column as a single
-markdown string. That is 380 lines of vertical scroll, and reaching the third day
-meant dragging past the first two.
-
-So the form is centred and grouped while it is being filled in, and the results
-take the full width, split into tabs, with each part of a section rendered as its
-own card rather than run together into a column of text.
-
-The structure is READ from the plan, not assumed — see `plan_layout.py`, which
-also explains why those functions do not live here.
-
-WHAT IT SHOWS WHILE IT WORKS
-----------------------------
-Seven named steps, in the order they happen: the conversation, the preferences,
-then flights, hotels, attractions and restaurants, then the itinerary. The
-orchestrator reports four phases and, inside the third, one line per search — so
-this maps those reports onto the seven rows rather than inventing progress. A
-spinner reading "Planning your amazing trip..." used to cover the whole run,
-which is several minutes, so a frozen page and a working page looked identical.
-
-The first row is marked done as the run starts, because on this page the form IS
-the conversation: the questions were asked and answered before the button was
-pressed.
-
-TWO THINGS THAT WERE WRONG, BEYOND PRESENTATION
------------------------------------------------
-It never asked how many people were travelling, so the extractor supplied the
-number from context — and it multiplies airfare and meals inside the feasibility
-check. A budget was being called possible or impossible partly on a figure nobody
-had entered.
-
-Both date fields opened on today, so the first press of the button always failed
-with "the return date is not after the departure date". A default that cannot be
-submitted is not a default.
+Collects the trip details in one form, runs the planner while showing which
+step is working, and shows the finished plan in tabs with a block per day.
 """
 
 import datetime

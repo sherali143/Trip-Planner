@@ -1,15 +1,8 @@
 """
-Retry policy for LLM calls.
+Decides whether a provider's refusal is worth retrying.
 
-The one decision this module exists to make: when a provider refuses a request,
-is it worth trying again?
-
-Providers report transient throttling and permanent exhaustion with the same
-HTTP 429 / RESOURCE_EXHAUSTED shape. Treating them alike is expensive in both
-directions — retrying a spending cap wastes minutes of backoff per scenario on
-something that cannot succeed, while giving up on a per-minute rate limit
-records an infrastructure hiccup as an architecture failure and biases the
-comparison. So the two are separated explicitly and handled differently.
+A spending cap and a per-minute limit look identical in the response, and
+retrying the first one is expensive.
 """
 
 import logging

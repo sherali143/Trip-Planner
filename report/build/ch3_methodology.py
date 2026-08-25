@@ -1,11 +1,4 @@
-"""
-Chapter 3 — Methodology. Target ~1,300 words.
-
-Serves LO3 (35%): "Design an artefact/data-gathering strategy using appropriate
-techniques and tools." The grading criteria reward "clear analysis highlighting
-the strength and weaknesses of the applied techniques and tools", so every choice
-here carries both, and the alternatives that were rejected carry their reasons.
-"""
+"""Chapter 3: methodology."""
 
 from __future__ import annotations
 

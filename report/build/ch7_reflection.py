@@ -1,14 +1,4 @@
-"""
-Chapter 7 — Critical reflection. Target ~1,200 words.
-
-Achievement against each objective with the evidence, deviations from the
-proposal with reasoning, limitations stated plainly, legal and professional
-reflection, and a personal reflection on what would be done differently.
-
-In practice this is the chapter that distinguishes a competent project from a
-strong one, because it is where the author demonstrates they can assess their own
-work. Nothing here is softened.
-"""
+"""Chapter 7: reflection."""
 
 from __future__ import annotations
 

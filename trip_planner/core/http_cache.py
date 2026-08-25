@@ -1,37 +1,9 @@
 """
-HTTP record/replay cache for the live travel APIs.
+Records every API reply to disk, and replays it afterwards.
 
-Why this exists
----------------
-The project's data APIs run on RapidAPI free tiers with hard MONTHLY caps
-(fly-scraper: 30 requests/month, booking-com15: 50 requests/month). A single
-evaluation pass over the 20 comparison scenarios x 2 architectures needs far
-more calls than that, so the dissertation evaluation cannot be run — let alone
-re-run reproducibly — against live endpoints.
-
-This module wraps every outbound HTTP call in a keyed, on-disk cache so that:
-  * the first pass records raw API responses,
-  * every later pass replays them for free and deterministically,
-  * a marker (or the next maintainer) can reproduce every reported number
-    with no API keys at all.
-
-This also delivers the offline-replay commitment made in the proposal (S3.13)
-and the caching mitigation for risk R1.
-
-Modes (env var TRIP_PLANNER_API_MODE)
--------------------------------------
-  record  (default) Cache-first. On a miss, call the live API and store the
-                    result. Minimises quota burn during development.
-  replay            Cache-only. Never touches the network; a miss is surfaced
-                    as an explicit error. Use this for reproducible runs.
-  live              Always call the network, refreshing the cache. Use this for
-                    the one deliberate recording pass.
-
-Only successful (2xx) responses are cached, so transient failures and
-quota-exhaustion 429s are never baked in permanently.
-
-API keys are NEVER written to disk: request headers are excluded from both the
-cache key and the stored payload.
+This is what lets the whole evaluation run with no API keys. It also enforces
+a hard ceiling on live calls, so one careless run cannot spend a month's
+allowance. Request headers are never written, so no key reaches disk.
 """
 
 import hashlib

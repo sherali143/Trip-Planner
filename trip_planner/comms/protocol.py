@@ -1,8 +1,8 @@
 """
-A2A (Agent-to-Agent) Communication Protocol
+The message envelope, its six types, and the queue that carries them.
 
-This module implements the A2A protocol for structured communication between agents,
-including message formatting, routing, validation, and agent execution management.
+Every message names its sender, receiver, purpose and conversation, so an
+exchange can be checked rather than assumed.
 """
 
 import json

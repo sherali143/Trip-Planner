@@ -1,10 +1,9 @@
 """
-Trip Planner with A2A Protocol and MCP Integration
+The workflow, and the only place it is written down.
 
-This is the main orchestration file that brings together:
-- Agent-to-Agent (A2A) communication protocol
-- Model Context Protocol (MCP) tool integration
-- Multi-agent workflow for trip planning
+Reads the request with a model, fetches flights, hotels and venues in plain
+Python, then writes the itinerary with a model. Both entry points -- the
+command line and the web page -- run through this file.
 """
 
 import logging

@@ -1,19 +1,7 @@
 """
-WHAT THIS FILE DOES
-===================
-Demonstrates APPROACH D: three agents, with data retrieval done in plain Python.
+Demonstrates approach D: three agents with the lookups in plain Python.
 
-This is the approach the system actually ships. `run_cli.py` and `run_web.py`
-both use it, and it is the claim the dissertation tests: that a language model
-earns its cost where judgement is required, and adds cost without adding
-judgement where it is not.
-
-    python demos/approach_d_three_agent_direct.py              # playback, always works
-    python demos/approach_d_three_agent_direct.py --live       # run it for real
-    python demos/approach_d_three_agent_direct.py --no-pause   # no "press Enter" stops
-
-Playback replays the recorded measurement with no API calls and no model
-requests, so it works when every quota is exhausted.
+This is what the system ships, so this is the one to show first.
 """
 
 import os

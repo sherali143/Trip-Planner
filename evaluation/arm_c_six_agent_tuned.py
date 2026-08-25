@@ -1,41 +1,9 @@
 """
-Arm C: 6-agent architecture, OPTIMISED — the proposal as actually designed.
+Approach C: the same six agents, configured properly.
 
-Why this arm exists
--------------------
-The naive 6-agent arm (arm_b_six_agent_naive.py) is not the architecture the
-proposal specifies. Three commitments were never implemented:
-
-  * S3.4  specialists return "the top three choices ... not the 12 kB API
-          response" — no distillation existed; raw payloads went to the model.
-  * S3.7  the three search agents run concurrently via a thread pool — they ran
-          strictly sequentially.
-  * S3.5  distillation is a stage of the MCP lifecycle — absent.
-
-Comparing the 3-agent design against that under-built baseline would invite the
-obvious objection: the multi-agent arm lost because it was badly configured,
-not because the architecture is worse. This arm removes that objection by
-optimising the multi-agent design first, then letting the comparison run.
-
-What is optimised, and why these levers
----------------------------------------
-Measured on SC-01 the naive arm spent 94,959 tokens, **79,097 of them (83%)
-prompt tokens**. Raw tool output totals only ~2,250 tokens, so the payload is
-not the problem — re-sending context and tool schemas on every ReAct iteration
-is. Hence, in order of expected impact:
-
-  1. one narrow tool per specialist (naive hotel agent carried eight, so eight
-     JSON schemas were re-serialised on every iteration of its loop),
-  2. max_iter 3 instead of 8-15 (fewer iterations, less re-sent transcript),
-  3. distilled tool results (85% smaller — see distilled_tools.py),
-  4. terse backstories (the backstory is in every prompt),
-  5. coordinator carries no tools; it synthesises what the specialists found.
-
-The three specialists run concurrently, delivering the S3.7 commitment. That
-cuts wall-clock only — token cost is unaffected by concurrency.
-
-The underlying data path is identical to the naive arm, so the comparison
-isolates prompt economics rather than data quality.
+One or two tools each, short prompts, results trimmed before being passed on,
+and a hard cap on steps. Exists so the comparison separates tuning from
+architecture.
 """
 
 import time

@@ -1,14 +1,4 @@
-"""
-Chapter 6 — Evaluation. Target ~2,000 words.
-
-Experimental design table, one section per experiment with its figure and its
-statistics, a worked example carried end to end, then discussion and threats to
-validity. Every value is read from a results file.
-
-The chapter states its own sample size in its first substantive paragraph rather
-than in a limitations section at the end, because a reader who meets the numbers
-first will calibrate on them.
-"""
+"""Chapter 6: evaluation and results."""
 
 from __future__ import annotations
 

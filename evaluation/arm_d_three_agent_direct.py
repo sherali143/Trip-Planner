@@ -1,21 +1,7 @@
 """
-Arm D: three agents, direct API retrieval — the design that ships.
+Approach D: three agents, with the lookups in plain Python.
 
-Why this arm exists
---------------------
-The model is used only where judgement is required: understanding the free-text
-request (extraction) and assembling the plan (coordination). Retrieval in
-between is plain Python calling the travel APIs directly — no agent decides
-which tool to use or reasons over the response, so there is no ReAct loop to pay
-for. This is the arm `trip_planner.orchestrator` runs in production; every other
-arm exists to justify this one against alternatives, not to be shipped itself.
-
-What it gives up, measurably: it cannot widen the search and try again when a
-result disappoints, because there is no agent in the retrieval step to decide
-that adaptively. Arms B and C can.
-
-Skips the interactive conversation phase — a scenario string goes straight to
-extraction — since the evaluation runs unattended over twenty fixed requests.
+What the system ships. This is the claim being tested.
 """
 
 import json, re, sys, time

@@ -1,22 +1,7 @@
 """
-The bibliography, in BCU Harvard, as data.
+The bibliography, as data, in BCU Harvard.
 
-Every entry carries the surname/year pair used to build in-text citations, so a
-citation and its reference entry cannot disagree — the alternative is typing
-"(Xie et al., 2024)" in eight chapters and hoping the year is the same in all
-of them.
-
-`build_report.py` fails if a key is cited but not defined here, or defined here
-and never cited. An uncited reference in a submitted dissertation reads as
-padding; a cited work missing from the list reads as carelessness. Both are
-mechanically preventable, so both are mechanically prevented.
-
-Each entry supplies:
-    short     the in-text form, e.g. "Xie et al."
-    year      the year, as a string
-    entry     the full reference, formatted for the reference list
-    locator   a DOI, arXiv id or URL — the brief requires every reference to be
-              traceable, so an entry without one is rejected by the build
+The build fails if a citation has no entry here, or an entry is never cited.
 """
 
 from __future__ import annotations

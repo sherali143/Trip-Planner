@@ -1,12 +1,4 @@
-"""
-Chapter 4 — Design. Target ~2,000 words.
-
-Serves LO3 (35%) and feeds LO4 (40%). Architecture with diagrams, module
-decomposition, interface contracts, the key design decisions with their
-reasoning, and a technology table that states what every choice cost as well as
-what it bought — the grading criteria ask for strengths *and* weaknesses of the
-applied techniques and tools.
-"""
+"""Chapter 4: design."""
 
 from __future__ import annotations
 

@@ -1,38 +1,9 @@
 """
-WHAT THIS FILE DOES
-===================
-Shows the agent-to-agent protocol actually working, message by message.
+Shows the message protocol working, one message at a time.
 
-    python demos/show_agent_messages.py
-
-Why this exists separately
---------------------------
-The four approach demos measure ARCHITECTURES — how many model calls each one
-costs and how grounded its output is. They deliberately do not use the A2A layer,
-because adding it would change the code the published measurements were taken
-from.
-
-The A2A layer is used by the shipped path (trip_planner/orchestrator.py), which
-prints its message flow while it plans a real trip. But that needs a model key and
-takes half a minute, and a supervisor asking "how do the agents talk to each
-other?" deserves an answer that is instant and specific.
-
-So this walks the protocol directly: it registers real agents, sends real
-messages, shows each one being permitted or refused, and prints the conversation
-at the end. There is no model and no network anywhere in it — it runs in under a
-second and cannot fail for want of quota.
-
-What it demonstrates
---------------------
-  * every message names its sender, receiver, purpose and conversation
-  * the registry's declarations are enforced, not decorative: a pair that was
-    never declared is refused
-  * a message is routed to the agent it was addressed to, and to no other
-  * the whole exchange can be replayed from its conversation history
-
-It also shows the two defects the conformance audit reports, rather than hiding
-them: priority is declared and not honoured, and an inbound permission is not
-checked. They are findings of this project, and Chapter 6 argues them.
+Sends real messages, shows one being refused because the pair was never
+declared, and prints the conversation at the end. No model, no network, under
+a second.
 """
 
 from __future__ import annotations

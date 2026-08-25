@@ -1,8 +1,8 @@
 """
-Baseline: 6-Agent Architecture (per proposal)
-- Conversational + Extractor + Flight Search + Hotel + Attraction + Coordinator
-- Sequential CrewAI execution with context chaining between all agents
-- Takes scenario input directly (no interactive conversation)
+Approach B: six agents, each deciding for itself.
+
+The proposal as first built, untuned: long tool lists, generous step budgets,
+and full API replies passed straight to the model.
 """
 
 import time, uuid

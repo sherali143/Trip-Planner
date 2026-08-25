@@ -1,52 +1,9 @@
 """
-What a trip actually costs — estimation, suggestion, and a hard floor.
+Works out what a trip costs, and whether a budget can cover it.
 
-Why this exists
----------------
-Budget validation was a fixed formula that ignored where you were going:
-
-    min_flight_cost = 300 * num_travelers      # Dubai or Tokyo, same number
-    min_hotel_cost  = 50 * trip_duration       # Bangkok or London, same number
-    min_daily_cost  = 30 * trip_duration * num_travelers
-    if total_budget < min_total * 0.6: reject  # 0.6 with no justification
-
-So a $700 Karachi-Bangkok trip and a $700 Lahore-New York trip were judged
-against the same threshold, when one is comfortable and the other is impossible.
-It could also only ever say "no" — it never told the user what the trip *would*
-cost, which is the thing they actually need to know.
-
-What this replaces it with
---------------------------
-Costs are built from the trip's own facts: how far (flight, per person), how
-many nights (hotel, shared), how many people (meals and activities, per person
-per day), and at what standard. Every destination sits in a price tier, so
-Bangkok and London are not costed alike.
-
-Three tiers are produced:
-
-  minimum      the cheapest way this trip could be done at all — hostel beds,
-               cheapest fare, street food. Below this the trip is not bookable
-               and the system refuses rather than producing a fictional plan.
-  comfortable  a normal mid-range trip. This is what gets suggested.
-  luxury       four-star and up.
-
-The floor is a genuine floor. Above it the user may spend whatever they like,
-and a tight-but-possible budget is accepted with a warning rather than blocked —
-the system's job is to be honest about what is achievable, not to impose taste.
-
-Calibration
------------
-Anchors below are deliberately conservative for the minimum tier (they must be
-achievable, not typical) and mid-range for the comfortable tier. Reference
-points: published daily spends of roughly $121 budget / $325 mid-range / $925
-luxury for US travel, scaled to regional price levels; and fares measured by
-this project from Pakistan — Lahore-Istanbul returned $937 for a mid-range
-economy return (see .api_cache), Lahore-Dubai sits far lower.
-
-Sources:
-  Motley Fool, Average Cost of a Vacation 2025 — https://www.fool.com/money/research/average-cost-of-a-vacation/
-  Pacaso, Average Vacation Cost 2026 — https://www.pacaso.com/blog/average-vacation-cost
-  NerdWallet Travel Price Index — https://www.nerdwallet.com/travel/learn/travel-price-tracker
+Gives a minimum, a comfortable and a luxury figure, refuses a budget below the
+cheapest the trip could be done for, and says what would work instead. Where a
+real fare is available it uses that, and marks the line as measured.
 """
 
 from dataclasses import dataclass, field

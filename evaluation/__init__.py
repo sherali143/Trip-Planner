@@ -1,1 +1,3 @@
-"""Evaluation harness: the four competing architectures and the metrics that compare them."""
+"""
+The experiment: the four architectures, the scenarios, and the measurements.
+"""

@@ -1,1 +1,1 @@
-"""Report generator: one module per chapter, shared helpers in common.py."""
+"""The generators for the dissertation, the overview and the slides."""

@@ -1,31 +1,9 @@
 """
-Prove that no number in the dissertation is typed by hand.
+Proves no number in the dissertation was typed by hand.
 
-The claim "every figure is interpolated from measured data" is unfalsifiable by
-inspection: a hardcoded value looks exactly like an interpolated one in the
-finished document. So the claim is tested by perturbation.
-
-    1. build the document from the real measured results, and record both the
-       set of interpolated values and the full text of the document,
-    2. corrupt every number in every results file with an obviously wrong
-       transform,
-    3. rebuild,
-    4. assert that every distinctive value from step 1 has DISAPPEARED from the
-       document, and every value from the corrupted build has APPEARED,
-    5. compare the two builds CALL SITE BY CALL SITE — `val()` records the file
-       and line that produced each value, so a site rendering the same value in
-       both builds is the real signal, immune to a coincidental match elsewhere,
-    6. restore the real results and rebuild,
-    7. assert the restored document is byte-identical in text to step 1.
-
-If step 4 finds an original value surviving into the corrupted document, or step 5
-finds a call site whose value did not move, that value was hardcoded. The check
-fails and names it with its location.
-
-    python -m report.build.verify_no_hardcoded_numbers
-
-Nothing here touches the network, spends API quota or issues a model request. It
-only rebuilds a Word document from JSON three times.
+Corrupts the results files, rebuilds, and checks that every printed figure
+moved. Anything that did not move is either hardcoded or measured from the
+repository itself, and each of those is checked against its live source.
 """
 
 from __future__ import annotations

@@ -1,56 +1,11 @@
 """
-WHAT THIS FILE DOES
-===================
-Finds what a trip's parts REALLY cost, so the budget check can stop guessing.
+Finds what a flight really costs, by reading the recorded API replies.
 
-The problem it solves
----------------------
-The feasibility check estimates from a table of about forty cities. Anything
-unlisted falls to the middle row — medium distance, moderate prices — and that is
-optimistic for anywhere expensive or far: "Kyoto" was costed at $614 for five
-nights where the truth is nearer $987. The table also carries a measured error
-where it can be checked at all: for Lahore-Istanbul it says a medium-haul flight
-starts at $350, and the cheapest fare the API actually returned was $734.
-
-So the estimate is only as good as constants somebody typed.
-
-Where the real numbers come from
---------------------------------
-Two places, cheapest first:
-
-  1. THE RECORDED CACHE. Every API response this project has ever received is
-     saved under .api_cache/ and committed. Reading a fare out of it costs
-     nothing, needs no key, and is a price a real API really quoted. For any
-     route already recorded, this is strictly better than the table.
-
-  2. A LIVE CALL, and only when explicitly asked for. This costs quota from an
-     allowance of thirty flight searches a month, so it is never the default:
-     spending a month's quota to discover a budget was impossible would be a poor
-     trade, and the point of the free check is that a refusal costs nothing.
-
-What this deliberately does NOT do
-----------------------------------
-It does not replace the table. `assess_budget` still estimates exactly as before
-unless a caller passes a probe, because the twenty-scenario budget-gate
-evaluation and its Cohen's kappa of 0.643 are published against the table, and
-changing the default would mean those figures no longer describe the code. The
-live product path passes a probe; the experiment does not.
-
-Every figure this returns carries where it came from, so a verdict can say
-"measured" or "estimated" rather than presenting both as the same kind of answer.
-
-FLIGHTS ONLY
-------------
-There was a hotel equivalent here and it is gone. It read for keys the recorded
-Booking.com replies do not contain, so it returned None for every destination
-ever asked about — a function that quietly always fails is worse than no function,
-because the calling code reads as though the capability exists.
-
-Reinstating it is real work rather than a regex fix: the replies carry `grossPrice`
-for the whole stay, so a per-night figure needs the stay length from the request
-that produced each recording. Worth doing, and honest to leave undone in the
-meantime, because the flight constant is the one shown to be wrong — 52% below a
-real fare — and the hotel constant has not been contradicted by anything measured.
+The price table is a set of typed constants and it is wrong where it can be
+checked: it says a medium-haul flight starts at $350, and the cheapest fare
+the API actually returned for that route was $734. Reading a recording costs
+nothing and needs no key. An unrecorded route returns nothing, so the caller
+falls back to the table and says so.
 """
 
 from __future__ import annotations

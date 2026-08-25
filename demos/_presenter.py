@@ -1,35 +1,7 @@
 """
-WHAT THIS FILE DOES
-===================
-Shared presentation for every approach demo. It knows how to narrate one
-architecture running — and, crucially, how to narrate one that has ALREADY run,
-from the recorded measurements, without touching any API.
+The shared narration for the approach demos.
 
-Why the playback mode exists
-----------------------------
-The free tiers this project runs on are exhaustible: thirty flight requests a
-month, fifty hotel requests, and a rate-limited model. A demonstration that
-needs a working API is a demonstration that cannot be given on the day the quota
-runs out — which is exactly the day it will be needed.
-
-So there are two modes:
-
-    PLAYBACK (default)  Reads the recorded run from evaluation/results/ and
-                        narrates it step by step: the same measured timings, the
-                        same measured cost, the same itinerary text that run
-                        actually produced. No network, no model, no keys, no
-                        quota. It always works.
-
-    LIVE (--live)       Executes the architecture for real. Identical code path
-                        to the evaluation harness; needs a working model key.
-
-Both modes narrate the same steps in the same order, because both describe the
-same architecture. The only difference is whether the numbers are being produced
-now or were produced earlier and recorded.
-
-Playback is labelled as playback everywhere it appears. Presenting a recorded
-run as a live one would be dishonest, and a supervisor asking "is this running
-now?" deserves a straight answer from the screen rather than from the presenter.
+Written once here so each demo file only has to describe its own approach.
 """
 
 from __future__ import annotations

@@ -1,55 +1,9 @@
 """
-Scenario-aware budget allocation.
+Splits a budget between flights, the hotel, food and activities.
 
-Why this exists
----------------
-The system previously hardcoded one split for every trip — flights 35%,
-accommodation 35%, activities 20%, meals 10% — written into seven places. That
-is wrong for most trips, and it was an unstated assumption with no source
-behind it.
-
-It is wrong because the two largest categories scale on *different* axes:
-
-  * flight cost is roughly **per person** and set by **distance**. It does not
-    care how many nights you stay.
-  * accommodation cost is **per night** and largely **shared** between
-    travellers in a room. It does not care how far you flew.
-
-So a 3-night trip to a nearby city and a 14-night long-haul family trip cannot
-sensibly use the same percentages. On a short long-haul trip the flight
-dominates; on a long regional trip accommodation does.
-
-Evidence base
--------------
-Published breakdowns cluster in these ranges rather than on single values:
-
-  accommodation  30-40%   flights  20-30%   food  15-25%   activities  10-20%
-
-NerdWallet's Travel Price Index weights flights at 36% and lodging at 30% of
-travel spending. A widely used planning heuristic splits 50% essentials
-(flights + accommodation), 30% experiences (food + activities), 20% buffer.
-Daily spend separates sharply by style — roughly $121/day budget, $325/day
-mid-range, $925/day luxury — with accommodation the largest single category for
-luxury travellers.
-
-Sources:
-  NerdWallet Travel Price Index — https://www.nerdwallet.com/travel/learn/travel-price-tracker
-  Motley Fool, Average Cost of a Vacation 2025 — https://www.fool.com/money/research/average-cost-of-a-vacation/
-  YouGov, Vacation budget breakdown — https://yougov.com/articles/49764-vacation-budget-breakdown-what-will-consumers-spend-more-or-less-money-on
-  Pacaso, Average Vacation Cost 2026 — https://www.pacaso.com/blog/average-vacation-cost
-
-The user always has the final word. This module SUGGESTS and EXPLAINS; it never
-overrides an explicit choice. It does warn when a choice looks unlikely to work,
-because silently accepting an impossible split produces an itinerary that cannot
-be booked.
-
-Note on the evaluation arms
----------------------------
-comparison/ deliberately keeps the legacy fixed split (see LEGACY_ALLOCATION).
-Changing the split changes budget_per_night, which changes the hotel query, which
-would invalidate every recorded API response and force live calls against a
-30/50-per-month quota. The architecture comparison is about where the LLM sits,
-not about budget policy, so holding allocation constant keeps the arms comparable.
+The split is worked out from what this particular trip's parts actually cost,
+and shifts when the traveller says what matters to them. A split they state
+themselves is used as given.
 """
 
 from dataclasses import dataclass, field

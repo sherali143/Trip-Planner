@@ -1,30 +1,8 @@
 """
-WHAT THIS FILE DOES
-===================
-The tools an agent can hold and decide to call.
+The twelve tools an agent can hold and choose to call.
 
-Each function here is wrapped in CrewAI's @tool decorator, which turns it into a
-Tool object with a name, a description and a JSON schema. An agent is given some
-of these and works out for itself which to call and when.
-
-Two things to know before using them
-------------------------------------
-@tool produces Tool OBJECTS, not plain functions. Call `.run(...)`, never
-`f(...)`. Code that just wants the behaviour — the shipped three-agent path, the
-evaluation harness — imports the plain functions from
-trip_planner/server/mcp_server.py or from travel_apis.py instead.
-
-Most of these route through the MCP server over JSON-RPC (see mcp_client.py).
-The flight tools call travel_apis.py directly, because their responses are too
-large to round-trip comfortably over a subprocess pipe.
-
-Why this matters to the dissertation
-------------------------------------
-Every tool bound to an agent contributes its full JSON schema to that agent's
-prompt, and that prompt is re-sent on every iteration of the agent's reasoning
-loop. The naive six-agent arm gives its hotel agent eight of these; the tuned arm
-gives each specialist one. That single difference accounts for most of the token
-gap between them.
+Each one wraps a server tool and returns a short readable result rather than
+the raw reply, because the raw replies run to thousands of characters.
 """
 
 import json

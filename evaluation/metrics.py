@@ -1,47 +1,9 @@
 """
-Groundedness scoring — the proposal's "bookability" pillar (S3.10).
+Scores how much of an itinerary came from real data.
 
-Why
----
-Cost and latency alone cannot decide between these architectures. The
-single-LLM arm is cheap precisely BECAUSE it never calls an API: it invents
-airlines, hotels and prices. That is the failure the literature centres on —
-the best single-LLM agent scores 0.6% final-pass on TravelPlanner largely
-through hallucinated venues and fabricated prices (Xie et al., 2024). An
-evaluation that reports "arm A costs $0.018" without reporting that arm A's
-itinerary refers to nothing real would be actively misleading.
-
-What is measured
-----------------
-For each scenario the data actually retrieved from the live APIs is the ground
-truth. An itinerary is scored on how much of what it names can be traced back
-to that data:
-
-  hotels_grounded    hotels named in the itinerary that appear in the API results
-  airlines_grounded  airlines named that appear in the flight results
-  prices_grounded    quoted prices that match a real quoted fare or nightly rate
-
-This is deliberately a *recall of real entities*, not a hallucination detector:
-it answers "is this itinerary built from retrieved data?" A tool-less arm
-scores near zero, which is the point.
-
-Prices are matched with a tolerance because an itinerary legitimately rounds
-($947 -> "about $950") and legitimately sums nightly rates into totals.
-
-Interpreting the two signals (important — they are not equally strong)
-----------------------------------------------------------------------
-Name matching is WEAK evidence on its own. A model with no tool access can
-still name a real airline by guessing the obvious one for the route: measured
-on SC-01, the tool-less arm "matched" Turkish Airlines for Istanbul purely by
-prior knowledge, having called no API at all.
-
-Price matching is the robust signal. Guessing a fare that lands within 2% of a
-real quoted price is not something prior knowledge delivers. On the same
-scenario the tool-less arm quoted 57 prices and matched 0 of them, while the
-tool-using arms matched 57-59%.
-
-So report prices_grounded_pct as the bookability headline and treat the name
-counts as supporting colour, not proof.
+Counts the hotels, airlines and prices in a plan that can be traced back to
+something the APIs actually returned. A plan invented from model knowledge
+reads fluently and scores near zero.
 """
 
 import json

@@ -1,11 +1,9 @@
 """
-Unified MCP Server for Trip Planning
-Integrates all APIs as MCP tools:
-- Flights (fly-scraper)
-- Hotels/Accommodations (Booking.com)
-- Car Rentals (Booking.com)
-- Web Search (Serper API)
-- Calculator (Math operations)
+The tool server.
+
+Twelve tools for flights, hotels, venues and arithmetic, each with a declared
+input schema, served over JSON-RPC on standard input and output. Runs as its
+own process.
 """
 import os
 import sys

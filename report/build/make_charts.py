@@ -1,28 +1,4 @@
-"""
-Generate every results chart from measured data.
-
-Nothing here is hardcoded: all values arrive through evaluation.measured, the
-single accessor for measured results, so a chart cannot drift from the number it
-claims to show. Re-run after any measurement run to refresh every figure.
-
-Design notes (why the charts look the way they do):
-  * Horizontal bars: the arm names are long, and horizontal bars give them room
-    without rotated tick labels.
-  * ONE hue per panel unless a contrast IS the finding. Colouring each bar
-    darker-where-bigger double-encodes length as hue, spending the only free
-    channel on information the length already carries.
-  * Identity comes from the axis label, not colour, so no legend is needed and
-    the figures survive greyscale print.
-  * Every panel states its direction, because "lower is better" for cost and
-    "higher is better" for groundedness sit in the same report.
-  * Values are labelled directly; a marker should not have to measure a bar
-    against a gridline.
-  * Every chart carries its scope — how many scenarios, how many repeats, which
-    model, which API mode — so a single-scenario result can never be read as a
-    complete evaluation.
-
-Run:  python report/build/make_charts.py
-"""
+"""Draws the results charts from the measured data."""
 
 from __future__ import annotations
 

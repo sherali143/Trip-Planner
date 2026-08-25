@@ -1,1 +1,1 @@
-"""Streamlit web interface."""
+"""The web page."""

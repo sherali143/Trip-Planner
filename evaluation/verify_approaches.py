@@ -1,33 +1,8 @@
 """
-WHAT THIS FILE DOES
-===================
-Shows, on one screen, that every part of this project really exists and really
-responds: the agents in all four approaches, the MCP tool server, and the A2A
-protocol layer.
+Shows on one screen that all four approaches really exist.
 
-    python -m evaluation.verify_approaches
-
-Why this exists
----------------
-"The six-agent design works" is a claim. A demonstration that runs one approach
-end to end proves that one approach. This walks all four and prints what each is
-actually made of — how many agents, how many tools each agent holds, how many
-loop steps it is allowed — so the difference between the naive and tuned versions
-of the proposal's design is a number on the screen rather than an assertion.
-
-It also makes a real JSON-RPC round trip to the tool server, including a request
-the server is supposed to refuse, so "the MCP server works" is demonstrated
-rather than asserted.
-
-WHAT THIS COSTS: nothing. Constructing a CrewAI agent does not call the model —
-only kickoff() does, and this never calls it. The one network-shaped action is a
-tool call to our own local server, which does arithmetic. No API key is spent, so
-this is safe to run repeatedly, including in front of someone.
-
-Note on agent counts: approaches B and C build FIVE agents, not six. The
-conversational agent of the six-agent design is deliberately left out so every
-approach receives the identical request string. They are a five-agent ablation of
-a six-agent design, and Section 3.4 of the dissertation says so.
+Prints how many agents and tools each one holds, and checks the tool server
+answers and the message layer is registered. Costs nothing to run.
 """
 import os
 import sys

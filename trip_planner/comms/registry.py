@@ -1,8 +1,8 @@
 """
-Agent Cards for A2A Protocol Communication
+The eight agent cards.
 
-This module defines the agent cards that describe each agent's capabilities,
-interfaces, and communication protocols following the A2A standard.
+Each card declares what its agent may send and receive. That is what makes an
+undeclared message a detectable error instead of a silent one.
 """
 
 from typing import Dict, List, Any

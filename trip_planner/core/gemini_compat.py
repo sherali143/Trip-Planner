@@ -1,45 +1,9 @@
 """
-WHAT THIS FILE DOES
-===================
-Makes the agent architectures runnable on current Gemini models.
+Keeps the agents runnable on the current Gemini models.
 
-The problem
------------
-Google withdrew gemini-2.5-flash — the model every published measurement in this
-project was produced on — from new API keys. Its replacements reject any request
-whose message list ends with an assistant turn:
-
-    400 INVALID_ARGUMENT
-    "Requests ending with a model turn are not supported."
-
-That is exactly the shape the agent framework's reasoning loop produces: the
-agent writes a thought, the transcript is re-sent to decide the next step, and
-the last entry is therefore the agent's own words. The three-agent architecture
-never produces it, because it makes one request per step with no loop. So without
-this shim the shipped path runs and the two six-agent architectures cannot run at
-all — which means the comparison the dissertation rests on cannot be repeated.
-
-What this does
---------------
-Wraps the model client so that a request ending with an assistant turn gains a
-short user turn before it is sent. Every other request passes through untouched.
-
-Why this is honest
-------------------
-It changes the prompt, so it must be declared rather than hidden:
-
-  * Only requests that would otherwise be REJECTED are altered. A request the
-    provider accepts is passed through byte-for-byte.
-  * The added turn is a minimal continuation cue. Providers that accept a
-    trailing assistant turn treat it as an instruction to continue, so this
-    makes the new model behave as the old one did rather than inventing new
-    behaviour.
-  * It is counted. The shim records how many requests it altered, so a run can
-    report whether it was needed at all and how often.
-
-Results produced with this shim active are NOT comparable to the recorded
-gemini-2.5-flash results, and not because of the shim — the model is different.
-Any re-measurement must re-run all four arms together.
+Holds the model name in one place, so no module can fall back to a withdrawn
+one, and adds a short user turn to the requests those models reject -- a
+reasoning loop ends its conversation with a model turn, which they refuse.
 """
 
 from __future__ import annotations

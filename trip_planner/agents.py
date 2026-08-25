@@ -1,12 +1,8 @@
 """
-Agent definitions for the production pipeline.
+The three agents that need a language model.
 
-Three agents, each of which exists because the step genuinely needs judgement:
-understanding a free-text request, and assembling a coherent day-by-day plan
-from retrieved data. Everything between those two — the actual data retrieval —
-is deterministic and is done in plain Python rather than by an agent.
-
-The six-agent variants used for the evaluation live in `comparison/`.
+One reads the traveller's request, one turns it into structured fields, and
+one writes the day-by-day plan. Nothing else here needs a model.
 """
 
 from crewai import Agent

@@ -1,38 +1,9 @@
 """
-Arithmetic evaluation for the calculator tool, without `eval`.
+Arithmetic for the calculator tool, without eval.
 
-Why this exists
----------------
-The calculator tool is the one place in this system where text produced by a
-language model is evaluated as code. The original implementation filtered the
-input against a permitted character set and then called the interpreter's own
-expression evaluator:
-
-    allowed = set('0123456789+-*/().% ')
-    if not all(c in allowed for c in operation):
-        return "Error: Only mathematical expressions are allowed"
-    result = eval(operation)
-
-The character filter does block name lookups, so `__import__` and friends are
-unreachable, and that is genuinely the hard part. What it does not block is
-resource exhaustion: `9**9**9` is eight characters, passes the filter, and
-occupies the interpreter indefinitely while allocating memory until the process
-dies. A model that emits that string — by accident or because a user asked it
-to — takes the server down.
-
-The project's test suite appeared to cover this. It did not: it defined its own
-syntax-tree evaluator inside the test file and exercised that, while the shipped
-tool kept the character filter and the bare `eval`. A test that does not import
-the code it claims to test provides assurance about nothing, and the two
-implementations had already drifted apart. This module is the single
-implementation, and `testing/test_calculator.py` imports it.
-
-What is allowed
----------------
-Numeric literals and the binary and unary arithmetic operators. Names, calls,
-attributes, subscripts, comparisons and everything else raise. Exponentiation is
-additionally bounded, because it is the one operator whose cost is not
-proportional to the length of the expression.
+Parses the expression and walks it, so only numbers and operators can run. It
+also caps the size of a power, because 9**9**9 is valid arithmetic that never
+finishes.
 """
 
 from __future__ import annotations

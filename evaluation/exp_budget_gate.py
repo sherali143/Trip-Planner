@@ -1,43 +1,9 @@
 """
-Experiment: does the budget feasibility gate decide correctly?
+Checks the budget feasibility rules against all twenty scenarios.
 
-Why this experiment exists
---------------------------
-trip_planner/core/trip_cost.py makes a falsifiable claim: a budget below what the trip
-actually costs is refused, and everything above it is accepted with an honest
-warning. That claim carries real weight in the argument, because the failure it
-prevents — confidently planning a trip nobody could afford — is the one the
-literature reports for single-LLM planners (Xie et al., 2024). It had never been
-evaluated beyond unit tests written against the module's own thresholds.
-
-The gate needs no LLM and no API call, so it can be evaluated on all twenty
-scenarios rather than the one whose API responses are recorded. That matters:
-the cost/latency comparison is stuck at n=1 by quota, and this is the one part
-of the evaluation that is not.
-
-Design
-------
-Three tests, each able to fail:
-
-  T1  DECISION AGREEMENT. Two scenarios were written to be unaffordable
-      (SC-05, SC-19) and eighteen to be affordable. Compare the gate's verdict
-      with that design intent and report a confusion matrix, not an accuracy
-      figure — with 2 positives out of 20, accuracy is uninformative and Cohen's
-      kappa is the honest statistic.
-
-  T2  EXTERNAL PRICE VALIDITY. The gate's estimate is only as good as its
-      anchors. For the one route with recorded live fares (SC-01) compare the
-      estimated flight cost against the fares the API actually returned. This
-      can show the estimate is wrong, and on the first run it did.
-
-  T3  MONOTONICITY. Whatever the anchors are, cost must rise with nights and
-      with travellers, and a budget accepted at n nights must not be refused at
-      fewer nights. These are properties of any correct cost model, so a
-      violation is a defect regardless of calibration.
-
-Results are written to evaluation/results/budget_gate.json.
-
-    python -m evaluation.exp_budget_gate
+Compares what the system decides with a hand-labelled answer for each
+scenario, and reports the agreement as Cohen's kappa. Needs no network and no
+model.
 """
 
 from __future__ import annotations

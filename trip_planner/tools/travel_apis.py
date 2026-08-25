@@ -1,33 +1,8 @@
 """
-WHAT THIS FILE DOES
-===================
-Calls the travel APIs over HTTPS, directly.
+Calls the flight and hotel APIs directly over HTTPS.
 
-These are the functions that actually fetch data: flights from fly-scraper,
-airport identifiers and a fallback flight search from Booking.com. They do not
-go through the MCP server, because a flight response is large enough that
-round-tripping it through a subprocess pipe is wasteful, and because the shipped
-path has no agent that needs to choose between them.
-
-Every request goes through trip_planner/core/http_cache.py, so it is recorded on
-the way out and replayed on the way back in. That is what lets the whole
-evaluation re-run with no API keys.
-
-Three things about fly-scraper that are not obvious
----------------------------------------------------
-1. It is a TWO-PHASE API. The search endpoint only STARTS a search and returns a
-   sessionId with status "incomplete"; the results come from a second endpoint.
-   Reading the first response as final returns zero flights, every time.
-
-2. Its date parameters are camelCase (departureDate, returnDate). The snake_case
-   forms are accepted, return HTTP 200, and are then ignored — so the search runs
-   against a default date window and nothing reports an error.
-
-3. The paths are plural (/flights/...). The provider's own console lists them in
-   the singular, which 404s.
-
-All three are preserved in the recorded responses in .api_cache/, which is why
-the dissertation can show the evidence rather than describe it.
+The flight search happens in two steps: the first call opens a session and
+returns no fares, and the fares arrive from a second call that polls it.
 """
 
 import json

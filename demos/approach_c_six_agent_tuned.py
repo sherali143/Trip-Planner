@@ -1,24 +1,4 @@
-"""
-WHAT THIS FILE DOES
-===================
-Demonstrates APPROACH C: the same six agents as approach B, tuned.
-
-This is the most important approach to be able to show, because it is what makes
-the whole comparison fair. Without it, approach D could be accused of beating a
-badly configured baseline rather than a well configured one — and the honest
-answer, which this demo makes visible, is that tuning alone removes most of the
-multi-agent penalty.
-
-Nothing about the architecture changes here. Same six roles, same data, same
-model. Only the prompt economics differ.
-
-    python demos/approach_c_six_agent_tuned.py              # playback, always works
-    python demos/approach_c_six_agent_tuned.py --live       # run it for real
-    python demos/approach_c_six_agent_tuned.py --no-pause   # no "press Enter" stops
-
-Playback replays the recorded measurement with no API calls and no model
-requests, so it works when every quota is exhausted.
-"""
+"""Demonstrates approach C: the same six agents, tuned."""
 
 import os
 import sys

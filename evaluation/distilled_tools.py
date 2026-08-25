@@ -1,42 +1,9 @@
 """
-Distilled MCP tools for the optimised 6-agent arm.
+The trimmed tool wrappers approach C uses.
 
-Why
----
-Measured on SC-01, the naive 6-agent arm spent 94,959 tokens, of which
-**79,097 (83%) were prompt tokens**. Raw tool output is only ~2,250 tokens in
-total, so the cost is not the payload itself — it is that every ReAct iteration
-re-sends the accumulated transcript plus the full JSON schema and docstring of
-every tool bound to that agent. The naive hotel agent carries eight tools, so
-eight tool schemas are re-serialised on every one of its iterations.
-
-This module attacks that directly:
-  * one narrow tool per specialist instead of four to eight,
-  * short docstrings (the docstring IS the prompt payload),
-  * results distilled to the top few options as compact lines rather than the
-    full API response.
-
-This is the distillation stage the proposal describes as part of the MCP
-lifecycle (S3.5) and the "returns the top three choices, not the 12 kB API
-response" behaviour promised for the specialist agents (S3.4) — neither of
-which existed in the implementation.
-
-The DATA is unchanged from the naive arm: these wrappers call the same server
-functions, hitting the same APIs through the same recording layer, so the
-comparison isolates prompt economics rather than data quality.
-
-One difference worth stating, because "unchanged data path" would otherwise
-overstate it: the naive arm reaches those functions through the MCP client over
-JSON-RPC, which spawns the server as a subprocess, while these wrappers import and
-call them in-process. The responses are identical — same functions, same cache —
-but the transport is not. That adds a small, real amount to the naive arm's
-wall-clock time, on the order of a second or two per tool call against a total
-dominated by twenty-odd sequential model requests at roughly fifteen seconds each.
-
-It does not touch the token comparison, which is what the B-versus-C finding
-rests on: transport cannot change how many tokens a prompt contains. It is a minor
-confound in the latency comparison between those two arms, and the headline
-latency claim in Chapter 6 is C against D, both of which call in-process.
+Same underlying functions as the tool server, but each returns the best few
+results as short lines instead of a full reply. That trimming is most of the
+difference between approach B and approach C.
 """
 
 import json

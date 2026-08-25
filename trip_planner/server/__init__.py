@@ -1,1 +1,1 @@
-"""The MCP server process: schema-validated tools exposed over JSON-RPC/stdio."""
+"""The tool server: twelve tools, offered over JSON-RPC."""

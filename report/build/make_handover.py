@@ -1,18 +1,9 @@
 """
-WHAT THIS FILE DOES
-===================
-Generates PROJECT_OVERVIEW.docx — a short, plain-English guide to the whole
-project for someone who has never seen it.
+Builds PROJECT_OVERVIEW.docx.
 
-This is not the dissertation. The dissertation argues a research case in academic
-language; this explains what the project is, how to run it, and how to show it to
-a supervisor, in the simplest words that are still accurate. It is deliberately a
-few pages, not thirty.
-
-Numbers come from the measured results through evaluation/measured.py, the same
-accessor the dissertation uses, so this document cannot drift away from it.
-
-    python report/build/make_handover.py
+A plain-English guide to the whole project for someone who has never seen it:
+what it is, how to run it, and how to show it to a supervisor. Numbers come
+from the same accessor the dissertation uses.
 """
 
 from __future__ import annotations

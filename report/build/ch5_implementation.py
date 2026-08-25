@@ -1,14 +1,4 @@
-"""
-Chapter 5 — Implementation. Target ~2,200 words.
-
-Serves LO4 (40%), the heaviest single criterion. Weighted towards the failures,
-because a description of code that works demonstrates less than an account of a
-defect diagnosed: symptom, cause, fix, and what it changed about the design.
-
-Every failure recorded here left evidence in the repository — a recorded API
-response, a commit, a comment written at the time — and the values are read from
-that evidence rather than recalled.
-"""
+"""Chapter 5: implementation."""
 
 from __future__ import annotations
 

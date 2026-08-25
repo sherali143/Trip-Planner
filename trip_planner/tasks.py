@@ -1,11 +1,8 @@
 """
-Trip Planner Tasks - CrewAI Task Definitions
+What each agent is told to do.
 
-Defines the workflow tasks for the multi-agent trip planning system.
-Each task is assigned to a specific agent and includes context chaining
-for A2A communication between agents.
-
-Reference: https://docs.crewai.com/concepts/tasks
+One task definition per agent, holding the instructions and the shape of the
+answer expected back.
 """
 
 from crewai import Task

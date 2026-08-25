@@ -1,10 +1,8 @@
 """
-Output validation for generated itineraries.
+Checks the finished itinerary contains every day it should.
 
-Language models drop days from long itineraries — asked for fourteen, they
-produce nine and stop. Prompt instructions ("write ALL days") do not reliably
-prevent it, so the day count is checked programmatically after generation and
-the shortfall is reported rather than hidden.
+Models drop days from long plans: asked for fourteen they write nine and stop.
+Prompt wording does not reliably prevent it, so the count is checked in code.
 """
 
 import re

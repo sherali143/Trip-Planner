@@ -1,28 +1,9 @@
 """
-Shared machinery for the report build. The only place document plumbing lives.
+Document plumbing: styles, headings, tables, citations and word counting.
 
-Responsibilities
-----------------
-* Document styling to the brief: 11 pt body, 1.5 line spacing, page numbers,
-  student number only (the brief states the submission is marked anonymously).
-* Automatic numbering of chapters, figures and tables, so a cross-reference
-  cannot point at the wrong figure after a section is moved.
-* Citation expansion from keys, with verification against report/build/
-  references.py. `[@xie2024]` becomes "(Xie et al., 2024)"; `[@xie2024|n]`
-  becomes the narrative form "Xie et al. (2024)".
-* Word counting that excludes exactly what the brief excludes — abstract, front
-  matter, references, appendices — so the reported figure is the one that
-  counts against the limit.
-* A `val()` helper that formats a measured value and RECORDS it, so the build
-  can prove afterwards that every number in the document came from a data file.
-
-Why numbers go through val()
-----------------------------
-The perturbation check in build_report.py corrupts the measured results, rebuilds
-and confirms every old value disappeared and every new one appeared. That check
-is only meaningful if the build knows which strings are supposed to be measured.
-val() is how it knows. Anything not passed through it and not part of a fixed
-phrase is, by definition, typed by hand.
+Also holds val(), which every number in the dissertation passes through. It
+records where each figure was printed, which is what the perturbation proof
+checks.
 """
 
 from __future__ import annotations

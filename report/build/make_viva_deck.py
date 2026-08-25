@@ -1,32 +1,9 @@
 """
-WHAT THIS FILE DOES
-===================
-Generates CMP7200_Viva_Presentation.pptx — the deck for the viva voce, which is
-20% of the module.
+Builds the viva slides.
 
-    python -m report.build.make_viva_deck
-
-Why it is generated rather than written by hand
------------------------------------------------
-Every number on a slide is read from evaluation/measured.py, the same accessor the
-dissertation and the project overview use. A deck typed by hand is a third place
-for the same figure to be wrong in, and the one place nobody re-checks before
-presenting.
-
-Why there is so little text on each slide
-----------------------------------------
-The viva marking criteria penalise it directly. The 30-39% band for the visual
-criterion reads "Slides lack information on key aspects of project, too
-text-heavy", and the bands above reward "encapsulation of key points". So each
-slide carries one idea: a headline, a figure or a small number of short lines, and
-nothing that the presenter would end up reading aloud.
-
-The speaker notes carry the detail instead. They are not projected, so they cost
-nothing on the slide and give the presenter the argument, the caveat and the
-figure's provenance in the place where those are actually needed.
-
-Figures are the generated ones under report/figures/, so the deck and the
-dissertation show the reader the same charts.
+Every number on a slide is read from the measured results. Slides are kept
+deliberately sparse because the marking criteria penalise text-heavy ones; the
+detail is in the speaker notes.
 """
 
 from __future__ import annotations

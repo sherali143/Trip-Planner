@@ -1,14 +1,4 @@
-"""
-Front matter: title page, abstract, contents, and the lists of figures and tables.
-
-None of it counts towards the 12,000 words — the brief excludes "everything
-before (i.e. abstract, acknowledgements, contents, executive summaries etc.)".
-
-The abstract is written last in composition order even though it appears first,
-because it has to state what was found, and what was found is not knowable until
-the evaluation chapter is built. It is assembled here from measured values for
-exactly that reason.
-"""
+"""Title page, abstract, contents, and the lists of figures and tables."""
 
 from __future__ import annotations
 

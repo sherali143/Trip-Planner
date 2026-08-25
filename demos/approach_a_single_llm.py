@@ -1,21 +1,4 @@
-"""
-WHAT THIS FILE DOES
-===================
-Demonstrates APPROACH A: one language model, on its own, with no tools, no
-agents and no protocols.
-
-This is the control in the experiment. It exists to answer a question the other
-three approaches cannot: what does the tool layer actually buy? Approach A is
-the cheapest and the fastest to write, and every price it prints is invented,
-because it never calls anything.
-
-    python demos/approach_a_single_llm.py              # playback, always works
-    python demos/approach_a_single_llm.py --live       # run it for real
-    python demos/approach_a_single_llm.py --no-pause   # no "press Enter" stops
-
-Playback replays the recorded measurement with no API calls and no model
-requests, so it works when every quota is exhausted.
-"""
+"""Demonstrates approach A: one model call, no tools."""
 
 import os
 import sys

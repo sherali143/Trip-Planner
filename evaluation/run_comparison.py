@@ -1,24 +1,7 @@
 """
-The evaluation runner.
+Runs the four approaches, repeats them, and writes the measured numbers.
 
-Puts the same request through all four architectures, measures what each one
-costs and whether what it produced was real, and writes the result to
-`results/comparison_results.json`.
-
-    python -m evaluation.run_comparison             # every scenario
-    python -m evaluation.run_comparison SC-01       # one scenario
-    python -m evaluation.run_comparison SC-01 --force   # redo a recorded one
-
-Two properties matter more than they look:
-
-  Runs are RESUMABLE. Results are checkpointed after each scenario and a re-run
-  reuses what is already recorded. A full four-arm pass costs roughly 620 LLM
-  requests, so a run stopped at scenario 15 must not discard the fifteen it has
-  already paid for.
-
-  Runs are BOUNDED. TRIP_PLANNER_MAX_LLM_CALLS and TRIP_PLANNER_MAX_LIVE_CALLS
-  stop the run between whole scenarios rather than part way through one, since
-  a half-finished scenario spends quota without producing a usable row.
+Output goes to evaluation/results/, which is what every document reads.
 """
 
 import os, sys, json, time, traceback

@@ -1,26 +1,9 @@
 """
-WHAT THIS FILE DOES
-===================
-Reports how much monthly API quota is left on each travel API.
+Reports how much monthly API allowance is left.
 
-Why this exists
----------------
-The free tiers are small — 30 flight searches and 50 hotel searches a month — and
-nothing in this project tracked the remaining balance. The recording layer
-deliberately strips response HEADERS before caching, so no key material reaches
-disk, and the quota counters RapidAPI returns live in those headers. So the number
-was simply unknown, and "how many calls do I have left" is the first question
-anyone asks before running a live demonstration.
-
-    python -m evaluation.check_quota
-
-IMPORTANT: this makes ONE live request per API, because the quota is only
-reported in the response to a real call. That means running this costs 1 flight
-call and 1 hotel call out of the monthly allowance. It is the cheapest possible
-way to ask, but it is not free. Nothing here goes through the recording cache —
-a cached reply would carry no fresh quota headers, which is the whole point.
-
-Run it once before a demonstration, not in a loop.
+COSTS ONE CALL PER API. The allowance is only reported in the headers of a
+real response, and the recording layer strips headers, so there is no free way
+to ask. Run it once before a demonstration, never in a loop.
 """
 
 from __future__ import annotations

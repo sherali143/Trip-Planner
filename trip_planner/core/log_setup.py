@@ -1,22 +1,9 @@
 """
-Logging defaults — primarily to keep API keys out of the console.
+Keeps the model API key out of the console.
 
-Why this exists
----------------
-Gemini is called over a URL that carries the key as a query parameter, and
-httpx logs every request line at INFO. With INFO enabled (CrewAI/LiteLLM turn
-it on), a normal run prints:
-
-    INFO:httpx:HTTP Request: POST
-    https://generativelanguage.googleapis.com/v1beta/models/...:generateContent?key=AIzaSy... "HTTP/1.1 200 OK"
-
-— the live API key, in plaintext, in output that gets pasted into terminals,
-screenshots, CI logs and handover notes. RapidAPI keys travel in headers rather
-than URLs so they do not leak this way, but the Gemini one does.
-
-This raises the level of the third-party loggers responsible. It deliberately
-does not call basicConfig or touch this project's own loggers, so application
-logging is unaffected.
+Gemini sends its key as a URL parameter and the HTTP client logs request URLs,
+so those third-party loggers are quietened. Also holds TeeStream, which lets a
+run's output reach the terminal and the web page at the same time.
 """
 
 import io

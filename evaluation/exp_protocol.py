@@ -1,44 +1,8 @@
 """
-Experiment: protocol conformance (A2A and MCP).
+Checks the message protocol and the tool server against their own declarations.
 
-Why this experiment exists
---------------------------
-The proposal set two protocol targets (S3.10): an MCP schema pass rate of 100%
-and an A2A error rate below 1%. Neither had ever been measured. Both are
-measurable without a network call, an API key or an LLM request, so there is no
-excuse for asserting them.
-
-The experiment is designed to be able to FAIL. It checks the protocol layer
-against what the proposal and the code's own documentation claim about it,
-rather than checking that the code does what it does. Three of the five checks
-did in fact fail on first run, and those failures are reported rather than
-removed.
-
-What is checked
----------------
-A2A
-  A1  every declared can_send_to edge is mirrored by can_receive_from
-      (asymmetry proves one direction is decorative)
-  A2  priority ordering is honoured: a HIGH message enqueued after a LOW one
-      is delivered first
-  A3  the message sequence the production orchestrator actually emits is
-      permitted by the registry
-  A4  an undeclared edge and an empty payload are both rejected
-  A5  a message polled by the wrong recipient is not destroyed
-
-MCP
-  M1  every tool named in list_tools() can be dispatched by call_tool()
-  M2  every parameter the implementation accepts is declared in inputSchema
-      (an undeclared parameter cannot be set by an agent, so it silently
-      takes its default)
-  M3  what the implementation treats as mandatory matches schema.required
-  M4  the API provider named in a tool's description is the provider the
-      dispatcher actually calls
-
-Results are written to evaluation/results/protocol_conformance.json so the
-report and its figures regenerate from measured data with no re-run.
-
-    python -m evaluation.exp_protocol
+Needs no network and no model. It currently fails several of its checks, and
+those failures are reported in the dissertation rather than hidden.
 """
 
 from __future__ import annotations

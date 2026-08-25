@@ -1,25 +1,4 @@
-"""
-Generate every conceptual and architectural diagram in the report.
-
-Drawn with matplotlib rather than Graphviz because the `dot` binary is not
-installed on this machine, and a figure that only renders on one developer's
-setup is not much use in a submitted document.
-
-All layout goes through report/build/figlib.py, which measures text with the real
-renderer, grows boxes to fit, reserves a header band, routes connectors
-orthogonally and raises LayoutError on any overlap or clipping. If this script
-exits non-zero, a figure is geometrically wrong and the build stops.
-
-Two claims in the previous generation of these diagrams were wrong, and are
-corrected here because the code does not support them:
-
-  * "the MCP server is the only route to an external API" — it is not. The
-    production path imports the tool functions in-process and the flight tool
-    calls its upstream API directly. Only arm B drives the JSON-RPC transport.
-  * "priority-ordered delivery" — the queue is FIFO. See exp_protocol check A2.
-
-Run:  python report/build/make_diagrams.py
-"""
+"""Draws the architecture and sequence diagrams."""
 
 from __future__ import annotations
 

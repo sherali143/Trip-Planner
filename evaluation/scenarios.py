@@ -1,30 +1,8 @@
 """
-The twenty evaluation scenarios.
+The twenty test trips.
 
-Chosen to span the axes that change an itinerary's difficulty rather than to be
-a uniform sample: trip length (3 to 14 nights), distance (short-haul Dubai to
-long-haul Tokyo), party size (solo to a family of four), destination price tier,
-multi-city routes, and budgets from comfortable down to deliberately impossible.
-
-The impossible ones (SC-05, SC-19) matter: an architecture that confidently
-plans a trip nobody could afford is failing, and only these scenarios expose it.
-
-Every architecture receives the identical `input` string, so nothing in the
-comparison depends on how a request was phrased.
-
-`params` — declared ground truth
---------------------------------
-Each scenario also records the facts a human reads out of the request. Nothing
-in any arm reads this field: the arms see only `input`. It exists so that two
-things can be measured without an LLM in the loop:
-
-  * the budget feasibility gate can be evaluated on all twenty scenarios with
-    exact parameters rather than regex guesses (evaluation/exp_budget_gate.py),
-  * an arm's extraction step can be scored against what the request actually
-    said, instead of against another model's opinion of it.
-
-`legs` is a list because three scenarios are multi-city; `nights` is the total
-across legs, which is what a budget has to cover.
+Each one names an origin, a destination, dates, a budget and interests, and
+says which measurement it is used for.
 """
 
 SCENARIOS = [

@@ -1,27 +1,9 @@
 """
-Build the dissertation, and refuse to produce it if anything is wrong.
+Builds the dissertation.
 
-    python -m report.build.build_report              # build and check
-    python -m report.build.build_report --figures    # regenerate figures first
-    python -m report.build.build_report --no-tests   # skip the suite (faster)
-
-What this enforces
-------------------
-The document is assembled from one module per chapter, all reading measured
-values through evaluation.measured. Nothing is typed by hand. That claim is only
-worth making if it is checked, so the build:
-
-  1. runs the test suite and reports the REAL pass count,
-  2. fails if any figure referenced by a chapter does not exist,
-  3. fails if a citation has no reference entry, or a reference is never cited,
-     or a reference has no DOI, arXiv identifier or URL,
-  4. fails if a banned filler word appears in the prose,
-  5. fails if two paragraphs share more than 35% of their eight-word sequences,
-     which is how a repeated argument is caught,
-  6. reports the word count of the main body against the limit and the margin.
-
-`verify_no_hardcoded_numbers.py` closes the loop by perturbing the measured data,
-rebuilding, and confirming every old value disappeared and every new one appeared.
+Assembles the chapters, then refuses to save the document if anything is
+wrong: a missing figure, an uncited reference, a repeated argument, a body
+over the word ceiling, or a failing test.
 """
 
 from __future__ import annotations

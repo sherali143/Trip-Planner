@@ -1,15 +1,4 @@
-"""
-Chapter 2 — Literature review. Target ~2,000 words.
-
-Serves LO2 (25%): "Assess the value of theoretical concepts and, where
-appropriate, consider how they may be applied to the solution of real problems."
-
-The grading criteria distinguish work that "compares different sources
-critically" from work that additionally "constructs [a] conceptual model derived
-from these sources". The chapter is organised for the second: five streams, each
-argued rather than summarised, closing with a framework that maps each documented
-failure mode onto a design decision and the measurement that tested it.
-"""
+"""Chapter 2: literature review."""
 
 from __future__ import annotations
 

@@ -1,11 +1,4 @@
-"""
-Chapter 8 — Conclusion and future work. Target ~700 words.
-
-Future work is ordered by how much each item would strengthen the claims made
-here, not by how interesting it would be to build. That ordering is the point:
-the first three items exist because Chapter 6 identified specific weaknesses in
-specific claims.
-"""
+"""Chapter 8: conclusion."""
 
 from __future__ import annotations
 

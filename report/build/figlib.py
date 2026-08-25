@@ -1,36 +1,5 @@
 """
-Figure layout engine shared by every diagram and chart in the report.
-
-Why this exists
----------------
-The first generation of these diagrams estimated text width from character
-count. On a proportional font that is wrong in both directions: "Illinois" and
-"WWWWWWWW" have the same length and very different widths. The result was
-labels overflowing their boxes, connectors drawn straight through text, and a
-title colliding with the first row of content whenever a canvas got shorter.
-Every one of those was found by looking at the exported PNG, which is a slow and
-unreliable way to find a layout bug.
-
-So layout here is mechanical, not estimated:
-
-  * text is MEASURED with the actual renderer at the actual font size, and
-    wrapped to a width in data units (`measure`, `wrap`),
-  * boxes GROW to fit their measured contents rather than clipping them
-    (`Box.fit`),
-  * a header band is RESERVED at the top of every canvas and content is
-    rejected if it intrudes (`Canvas.HEADER_FLOOR`),
-  * connectors route ORTHOGONALLY, so a line never cuts diagonally across a
-    box it does not belong to (`connect`),
-  * every label carries an OPAQUE background, so a connector passing behind it
-    cannot strike through the text (`label`),
-  * and `Canvas.validate()` raises `LayoutError` on any overlap, any content
-    outside the frame, and any text wider or taller than the box holding it.
-
-`LayoutError` fails the build. A figure that is wrong is therefore impossible to
-ship silently — which is the only way this stays true as figures change.
-
-Export is 300 dpi (`DPI`), the floor for print-quality figures in a submitted
-document.
+Shared drawing helpers for the figures: colours, boxes, arrows and labels.
 """
 
 from __future__ import annotations

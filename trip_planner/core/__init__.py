@@ -1,1 +1,1 @@
-"""Cross-cutting infrastructure: caching, measurement, retry policy, budgeting, logging."""
+"""Infrastructure: caching, measuring, budgets, costs and safe arithmetic."""

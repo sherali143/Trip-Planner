@@ -1,28 +1,9 @@
 """
-WHAT THIS FILE DOES
-===================
-Speaks to the MCP server over JSON-RPC.
+Talks to the tool server over JSON-RPC.
 
-The server (trip_planner/server/mcp_server.py) is launched as a SUBPROCESS and
-talked to over its standard input and output. This file is the client side of
-that conversation: it starts the process, performs the protocol handshake, sends
-one tool call, and reads the reply.
-
-Who uses this
--------------
-The agent tool wrappers in agent_tools.py. The shipped three-agent path does not
-use it: that path imports the tool functions from the server module and calls
-them in process, because there is no agent in the loop deciding which to call.
-The JSON-RPC transport is therefore exercised by the six-agent architectures,
-which is stated plainly in the dissertation rather than implied otherwise.
-
-The subprocess detail that cost the most time
----------------------------------------------
-The server is started by path, so the project root is not on its module search
-path and its first `trip_planner.*` import used to raise. The process died
-during startup, this client saw a closed pipe, and every tool call came back as
-"Connection lost" — while the agents carried on and wrote itineraries from model
-knowledge instead. The server now fixes its own path before importing anything.
+Starts the server as a separate process, sends a request down a pipe, and
+reads the reply back. Spawning takes about six seconds, which is why the
+timeout is generous.
 """
 
 import asyncio

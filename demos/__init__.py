@@ -1,1 +1,3 @@
-"""Demonstration scripts. See README.md in this folder."""
+"""
+Demonstrations. All of them replay recorded runs, so none spends any quota.
+"""

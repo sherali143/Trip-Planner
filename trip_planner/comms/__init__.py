@@ -1,13 +1,8 @@
 """
-Agent-to-Agent (A2A) protocol.
+The message protocol between components.
 
-Typed, permission-validated messages between agents, so no component passes
-free text to another. Every architecture in this project uses this layer
-unchanged — which is what lets the evaluation attribute differences to the
-data-retrieval strategy rather than to how components talk.
-
-`protocol` carries the envelope and priority queue; `registry` holds the agent
-cards that declare who may send what to whom.
+`protocol` holds the message envelope and its queue; `registry` holds the
+agent cards that declare who is allowed to send what to whom.
 """
 
 from trip_planner.comms.protocol import A2AProtocol, A2AMessage, MessageType, MessagePriority, MessageQueue, AgentExecutor, create_message

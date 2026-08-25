@@ -1,21 +1,4 @@
-"""
-WHAT THIS FILE DOES
-===================
-Demonstrates APPROACH B: six agents in the naive configuration, which is the
-architecture the proposal specified and the way it was first implemented.
-
-Each specialist agent is given a set of tools and left to work out for itself
-how to use them, inside a reasoning loop that may iterate many times. It
-retrieves real data and it is expensive, and this demo exists to show exactly
-where that expense comes from.
-
-    python demos/approach_b_six_agent_naive.py              # playback, always works
-    python demos/approach_b_six_agent_naive.py --live       # run it for real
-    python demos/approach_b_six_agent_naive.py --no-pause   # no "press Enter" stops
-
-Playback replays the recorded measurement with no API calls and no model
-requests, so it works when every quota is exhausted.
-"""
+"""Demonstrates approach B: six agents, as first built."""
 
 import os
 import sys

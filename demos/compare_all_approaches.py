@@ -1,21 +1,5 @@
 """
-WHAT THIS FILE DOES
-===================
-Runs all four approaches on the same request and prints one comparison table.
-
-This is the demonstration to show first. Its value is the contrast: the approach
-that costs least produces an itinerary in which nothing is real, and the
-approach that costs most is not the one that produces the best plan. That
-contrast is the project's central finding, and it is more convincing seen than
-described.
-
-    python demos/compare_all_approaches.py              # playback, always works
-    python demos/compare_all_approaches.py --live       # run all four for real
-    python demos/compare_all_approaches.py --no-pause   # no "press Enter" stops
-
-Playback replays the four recorded measurements with no API calls and no model
-requests, so it works when every quota is exhausted. A live run executes all
-four architectures and takes several minutes.
+All four approaches side by side, with the table and what to say about it.
 """
 
 import os

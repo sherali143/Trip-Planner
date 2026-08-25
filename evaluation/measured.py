@@ -1,24 +1,10 @@
 """
-The single place anything reads a measured result from.
+The one place measured results are read from.
 
-Why this exists
----------------
-Every number in the report, in every figure, and in the project document has to
-come from a file written by a measurement run. Nothing may be typed by hand,
-because hand-typed figures rot silently: an earlier version of the project
-document claimed "5 LLM calls", "~230 seconds" and "85% faster", and all three
-were wrong once the calls were actually instrumented.
-
-Having exactly one loader matters as much as having none hardcoded. When three
-scripts each parse the results JSON their own way, they drift, and then a figure
-disagrees with the table beside it. So: figures, the report chapters, the
-project document and the appendices all come through here.
-
-Accessors raise `MissingMeasurement` rather than returning a plausible default.
-A missing measurement must stop the build, not quietly become a zero that reads
-like a real result.
-
-    from evaluation.measured import results, arm, protocol, budget_gate
+Every number in the dissertation, the overview and the slides comes through
+here. Nothing else reads the results files directly, so the three documents
+cannot disagree with each other. A missing measurement raises rather than
+returning a default.
 """
 
 from __future__ import annotations

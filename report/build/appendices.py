@@ -1,11 +1,4 @@
-"""
-Reference list and appendices. Neither counts towards the 12,000 words.
-
-The appendices exist to keep the body tight without discarding evidence, which is
-what the brief's exclusion permits: detailed tables, the full conformance and
-gate results, the code map, the test summary, and the commands needed to
-reproduce every figure in the document.
-"""
+"""The reference list and the appendices, including the risk register."""
 
 from __future__ import annotations
 

@@ -1,27 +1,8 @@
 """
-Real LLM call instrumentation.
+Counts model requests, tokens and cost.
 
-Why this exists
----------------
-The comparison harness previously derived its headline metric from hardcoded
-constants (`llm_calls += 4`, and in run_6agent.py literally
-`llm_calls += 8  # simulated`). That counts *tasks*, not LLM requests: a CrewAI
-ReAct agent with max_iter=8 can issue eight requests for a single task, which is
-precisely the cost the 6-agent architecture is being criticised for. Reporting
-an assumed number as a measurement would not survive scrutiny.
-
-CrewAI routes every completion through LiteLLM, so registering LiteLLM
-success/failure callbacks captures every real request — including the ones made
-inside ReAct loops and internal retries — together with token counts, cost and
-wall-clock latency.
-
-Usage
------
-    from trip_planner.core.llm_metrics import recorder
-
-    with recorder.session("6agent/SC-01") as sess:
-        crew.kickoff()
-    print(sess.summary())        # real call count, tokens, cost, latency
+Read from the provider's own callbacks rather than counted by hand, because a
+reasoning loop issues far more requests than there are tasks.
 """
 
 import logging
