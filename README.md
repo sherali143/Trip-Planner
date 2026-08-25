@@ -57,18 +57,43 @@ Paste into `.env`:
 
 ---
 
-## The five folders
+## The layout
 
-| Folder | What is in it |
-|---|---|
-| **`trip_planner/`** | The system itself. All the application code. |
-| **`trip_planner/evaluation/`** | The four approaches, the scenarios, the metrics and the measured results the dissertation is built from. |
-| **`trip_planner/demos/`** | One runnable demonstration per approach, plus a side-by-side comparison. Works with no keys. |
-| **`report/`** | The dissertation, the code that generates it, and every figure. |
-| **`submission/`** | The original proposal and the assignment brief. |
-| **`trip_planner/tests/`** | The test suite. |
+Two folders: the code, and what gets handed in.
 
-Every source file opens with a comment saying what that file does and why.
+```
+trip_planner/          all the code
+  orchestrator.py        the workflow: read the request, fetch, assemble
+  agents.py  tasks.py    the three agents that use a model, and their instructions
+  core/                  budgets, costs, caching, measuring, safe arithmetic
+  frontend/              the web page
+  comms/                 the message protocol between components
+  server/                the tool server (12 tools over JSON-RPC)
+  tools/                 anything that calls an external service
+  evaluation/            the four approaches, the scenarios, the measured results
+  demos/                 one runnable demonstration per approach
+  tests/                 the test suite
+
+submission/            everything handed in
+  CMP7200_Dissertation.docx        the main deliverable
+  CMP7200_Viva_Presentation.pptx   the slides
+  PROJECT_OVERVIEW.docx            plain-English guide — read this first
+  AI_Trip_Planner_Proposal.pdf     the original proposal
+  CMP7200_Assignment_Brief.pdf     the brief
+  build/                           the scripts that generate the three above
+
+run.bat                one click: sets up everything, then a menu
+run_cli.py             plan a trip in the terminal
+run_web.py             plan a trip in the browser
+requirements.txt       pinned dependencies
+.env.example           key template (.env itself is never committed)
+.api_cache/            recorded API replies, so every result replays for free
+```
+
+Finished documents sit at `submission/`, the scripts that build them one level
+down in `build/`, so what is being submitted is obvious without reading anything.
+
+Every source file opens with one or two plain sentences saying what it is for.
 
 ---
 
