@@ -18,7 +18,7 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Inches, Pt, RGBColor
 
-from evaluation import measured
+from trip_planner.evaluation import measured
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUTPUT = os.path.join(ROOT, "submission", "PROJECT_OVERVIEW.docx")
@@ -115,7 +115,7 @@ DIAGRAM_C_TOOLCALL = """\
   [ hotel agent ]
         |  "call find_hotels"
         v
-  [ distilled tool ]  evaluation/distilled_tools.py
+  [ distilled tool ]  trip_planner/evaluation/distilled_tools.py
         |
         |  imports the server's own function and calls it here.
         |  No separate program. No JSON-RPC.
@@ -293,7 +293,7 @@ class Doc:
 # omitted — the same reason the test suite checks that every module is named in its
 # package README.
 # Every tool each agent holds, and what it does in one line. Taken from the agent
-# definitions in evaluation/arm_b_six_agent_naive.py and arm_c_six_agent_tuned.py.
+# definitions in trip_planner/evaluation/arm_b_six_agent_naive.py and arm_c_six_agent_tuned.py.
 # The point of listing them is not completeness for its own sake — it is that the
 # duplication becomes visible. search_internet and calculate appear on all four of
 # the naive arm's agents, which is 8 of its 20 slots spent on two tools.
@@ -419,49 +419,49 @@ FILE_PURPOSE = {
     "trip_planner/server/mcp_server.py":
         "The tool server: 12 tools, each with a declared input format, offered over a "
         "standard protocol so any client could use them.",
-    "trip_planner/ui/app.py": "The web page itself.",
+    "trip_planner/frontend/app.py": "The web page itself.",
     # evaluation
-    "evaluation/arm_a_single_llm.py": "Approach A: one AI call, no tools.",
-    "evaluation/arm_b_six_agent_naive.py": "Approach B: six agents, as first built.",
-    "evaluation/arm_c_six_agent_tuned.py": "Approach C: the same six agents, tuned.",
-    "evaluation/arm_d_three_agent_direct.py":
+    "trip_planner/evaluation/arm_a_single_llm.py": "Approach A: one AI call, no tools.",
+    "trip_planner/evaluation/arm_b_six_agent_naive.py": "Approach B: six agents, as first built.",
+    "trip_planner/evaluation/arm_c_six_agent_tuned.py": "Approach C: the same six agents, tuned.",
+    "trip_planner/evaluation/arm_d_three_agent_direct.py":
         "Approach D: three agents with the lookups in plain Python. What ships.",
-    "evaluation/run_comparison.py":
+    "trip_planner/evaluation/run_comparison.py":
         "Runs the approaches, repeats them, and writes the measured numbers to files.",
-    "evaluation/measured.py":
+    "trip_planner/evaluation/measured.py":
         "The ONE place any measured number is read from. This is why the report "
         "cannot disagree with its own charts.",
-    "evaluation/metrics.py":
+    "trip_planner/evaluation/metrics.py":
         "Scores how much of a plan is real: do its prices match fares the websites "
         "actually returned?",
-    "evaluation/scenarios.py":
+    "trip_planner/evaluation/scenarios.py":
         "The 20 test trips, from short and cheap to long and impossible.",
-    "evaluation/distilled_tools.py": "Trimmed-down tool wrappers used by approach C.",
-    "evaluation/exp_protocol.py":
+    "trip_planner/evaluation/distilled_tools.py": "Trimmed-down tool wrappers used by approach C.",
+    "trip_planner/evaluation/exp_protocol.py":
         "Audits our own two protocols against what we declared they do. Needs no "
         "internet. Currently fails 6 of 9 checks, all reported in the dissertation.",
-    "evaluation/exp_budget_gate.py":
+    "trip_planner/evaluation/exp_budget_gate.py":
         "Tests the budget rules across all 20 trips. Needs no internet.",
-    "evaluation/verify_approaches.py":
+    "trip_planner/evaluation/verify_approaches.py":
         "Shows on one screen that every approach really exists: how many agents "
         "each has, how many tools each agent holds, and how many thinking steps it "
         "is allowed. Also calls the tool server for real. Costs nothing, so it is "
         "safe to run in front of someone.",
-    "evaluation/check_quota.py":
+    "trip_planner/evaluation/check_quota.py":
         "Reports how much monthly travel-API allowance is left. Costs 1 flight and 1 "
         "hotel call, because the balance only comes back inside a real reply.",
     # demos
-    "demos/compare_all_approaches.py":
+    "trip_planner/demos/compare_all_approaches.py":
         "All four approaches side by side, with the table and what to say about it.",
-    "demos/approach_a_single_llm.py": "Approach A on its own, explained step by step.",
-    "demos/approach_b_six_agent_naive.py": "Approach B on its own, explained.",
-    "demos/approach_c_six_agent_tuned.py": "Approach C on its own, explained.",
-    "demos/approach_d_three_agent_direct.py": "Approach D on its own, explained.",
-    "demos/show_agent_messages.py":
+    "trip_planner/demos/approach_a_single_llm.py": "Approach A on its own, explained step by step.",
+    "trip_planner/demos/approach_b_six_agent_naive.py": "Approach B on its own, explained.",
+    "trip_planner/demos/approach_c_six_agent_tuned.py": "Approach C on its own, explained.",
+    "trip_planner/demos/approach_d_three_agent_direct.py": "Approach D on its own, explained.",
+    "trip_planner/demos/show_agent_messages.py":
         "Shows the agents talking to each other: who is allowed to message whom, a "
         "real exchange being sent, an undeclared pair being refused, and the whole "
         "conversation replayed. Costs nothing and takes a second.",
-    "demos/_presenter.py":
+    "trip_planner/demos/_presenter.py":
         "The narration, written once and shared, so each approach file only has to "
         "describe its own approach.",
 }
@@ -474,9 +474,9 @@ FILE_GROUPS = [
     ("trip_planner/tools", "trip_planner/tools/ — anything that calls outside"),
     ("trip_planner/comms", "trip_planner/comms/ — the message protocol"),
     ("trip_planner/server", "trip_planner/server/ — the tool server"),
-    ("trip_planner/ui", "trip_planner/ui/ — the web page"),
-    ("evaluation", "evaluation/ — the experiment"),
-    ("demos", "demos/ — the demonstrations"),
+    ("trip_planner/frontend", "trip_planner/frontend/ — the web page"),
+    ("trip_planner/evaluation", "trip_planner/evaluation/ — the experiment"),
+    ("trip_planner/demos", "trip_planner/demos/ — the demonstrations"),
 ]
 
 
@@ -1195,7 +1195,7 @@ def build() -> str:
              "these numbers and the guesses were wrong."],
             ["trip_planner/core/trip_cost.py",
              "The budget validation the supervisor asked for."],
-            ["evaluation/measured.py",
+            ["trip_planner/evaluation/measured.py",
              "The single place any measured number is read from. This is why the "
              "report cannot disagree with the charts."],
             ["submission/build/verify_no_hardcoded_numbers.py",
@@ -1252,7 +1252,7 @@ def build() -> str:
         Taken at {quota['checked_at'].replace('T', ' ')}. This is a snapshot, not a
         live figure — it falls every time anyone plans a real trip. To refresh it:
     """)
-    doc.code("python -m evaluation.check_quota")
+    doc.code("python -m trip_planner.evaluation.check_quota")
     doc.p("""
         Be aware that checking costs 1 flight call and 1 hotel call, because the
         remaining balance is only reported inside the reply to a real request. There

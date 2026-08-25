@@ -1,29 +1,4 @@
-"""
-WHAT THIS FILE DOES
-===================
-Plans a trip from the command line. Entry point:
-
-    python run_cli.py
-
-It does three things and delegates everything else:
-
-  1. checks the API keys are present and says which are missing,
-  2. asks the traveller to approve the budget split before any money-shaped
-     search is made,
-  3. hands the request to trip_planner/orchestrator.py.
-
-Why it is this short
---------------------
-It used to be 395 lines that re-implemented the whole workflow: its own
-extraction crew, its own four retrieval calls, its own coordination crew. Two
-copies of the shipped path existed, and they had already drifted apart — the
-command line never sent a single A2A message and never ran the itinerary day-count
-validation, so a marker running this file saw a different system from the one the
-dissertation describes.
-
-The interactive budget split is the one thing that genuinely belongs here, because
-a web form cannot hold a conversation. The orchestrator takes it as a callback.
-"""
+"""Plans a trip in the terminal. Run: python run_cli.py"""
 
 import os
 import sys

@@ -14,8 +14,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter, MaxNLocator
 
-from evaluation import measured
-from evaluation.measured import ARM_ORDER
+from trip_planner.evaluation import measured
+from trip_planner.evaluation.measured import ARM_ORDER
 from submission.build.figlib import (AQUA, BLUE, DPI, GREY, INK, INK_2, ORANGE, RED,
                             ROOT, save_chart)
 

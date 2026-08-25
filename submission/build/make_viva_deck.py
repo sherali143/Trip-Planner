@@ -19,7 +19,7 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
 from pptx.util import Emu, Inches, Pt
 
-from evaluation import measured
+from trip_planner.evaluation import measured
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FIGURES = os.path.join(ROOT, "submission", "build", "figures")

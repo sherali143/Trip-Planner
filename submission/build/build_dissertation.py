@@ -17,7 +17,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))))
 
-from evaluation import measured
+from trip_planner.evaluation import measured
 from submission.build import (appendices, ch1_introduction, ch2_literature,
                          ch3_methodology, ch4_design, ch5_implementation,
                          ch6_evaluation, ch7_reflection, ch8_conclusion,

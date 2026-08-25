@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from evaluation import measured
+from trip_planner.evaluation import measured
 from submission.build.common import Report, val
 
 

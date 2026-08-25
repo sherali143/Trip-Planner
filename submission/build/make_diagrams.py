@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.abspath(__file__)))))
 
-from evaluation import measured
+from trip_planner.evaluation import measured
 from submission.build.figlib import (AQUA, AQUA_FILL, BLUE, BLUE_FILL, GREY, GREY_FILL,
                             INK, INK_2, ORANGE, ORANGE_FILL, PURPLE,
                             PURPLE_FILL, RED, RED_FILL, ROOT, Canvas, stack)
@@ -37,7 +37,7 @@ def fig_architecture() -> str:
         c.label(0, y + 4.5, name, ha="left", fontsize=8.5, weight="bold",
                 colour=INK_2, opaque=False)
 
-    ui_web = c.box(G, 72.5, W, 9.0, "Streamlit web app\ntrip_planner/ui/app.py",
+    ui_web = c.box(G, 72.5, W, 9.0, "Streamlit web app\ntrip_planner/frontend/app.py",
                    edge=GREY, fill=GREY_FILL, fontsize=8.5, name="web")
     ui_cli = c.box(G + 29, 72.5, W, 9.0, "Command line\nrun_cli.py",
                    edge=GREY, fill=GREY_FILL, fontsize=8.5, name="cli")

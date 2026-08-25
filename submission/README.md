@@ -13,7 +13,7 @@ Everything a marker reads. Each document is generated except the two PDFs.
 ## Do not edit the generated three by hand
 
 The next build overwrites them. Every number in all three is read from
-`evaluation/results/` through `evaluation/measured.py`, so they cannot disagree
+`trip_planner/evaluation/results/` through `trip_planner/evaluation/measured.py`, so they cannot disagree
 with each other or with the measured data. Edit the generators in `submission/build/`
 instead.
 

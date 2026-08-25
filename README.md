@@ -62,11 +62,11 @@ Paste into `.env`:
 | Folder | What is in it |
 |---|---|
 | **`trip_planner/`** | The system itself. All the application code. |
-| **`evaluation/`** | The four approaches, the scenarios, the metrics and the measured results the dissertation is built from. |
-| **`demos/`** | One runnable demonstration per approach, plus a side-by-side comparison. Works with no keys. |
+| **`trip_planner/evaluation/`** | The four approaches, the scenarios, the metrics and the measured results the dissertation is built from. |
+| **`trip_planner/demos/`** | One runnable demonstration per approach, plus a side-by-side comparison. Works with no keys. |
 | **`report/`** | The dissertation, the code that generates it, and every figure. |
 | **`submission/`** | The original proposal and the assignment brief. |
-| **`testing/`** | The test suite. |
+| **`trip_planner/tests/`** | The test suite. |
 
 Every source file opens with a comment saying what that file does and why.
 
@@ -82,10 +82,10 @@ fair baseline rather than a straw man.
 
 | Approach | Architecture | Code |
 |---|---|---|
-| **A** | Single model — no agents, no tools | `evaluation/arm_a_single_llm.py` |
-| **B** | 6 agents, naive (as first built) | `evaluation/arm_b_six_agent_naive.py` |
-| **C** | 6 agents, tuned — the proposal as designed | `evaluation/arm_c_six_agent_tuned.py` |
-| **D** | 3 agents + direct API calls — **what ships** | `evaluation/arm_d_three_agent_direct.py` |
+| **A** | Single model — no agents, no tools | `trip_planner/evaluation/arm_a_single_llm.py` |
+| **B** | 6 agents, naive (as first built) | `trip_planner/evaluation/arm_b_six_agent_naive.py` |
+| **C** | 6 agents, tuned — the proposal as designed | `trip_planner/evaluation/arm_c_six_agent_tuned.py` |
+| **D** | 3 agents + direct API calls — **what ships** | `trip_planner/evaluation/arm_d_three_agent_direct.py` |
 
 `run_cli.py` and `run_web.py` both run **approach D**. A, B and C exist for the
 evaluation and are kept runnable because the dissertation rests on them.
@@ -122,8 +122,8 @@ Four findings:
 ### Experiments that need no quota
 
 ```bash
-python -m evaluation.exp_protocol      # A2A + MCP conformance, 9 checks
-python -m evaluation.exp_budget_gate   # budget gate across all 20 scenarios
+python -m trip_planner.evaluation.exp_protocol      # A2A + MCP conformance, 9 checks
+python -m trip_planner.evaluation.exp_budget_gate   # budget gate across all 20 scenarios
 ```
 
 Both found real defects, and both are reported in the dissertation rather than
@@ -165,20 +165,20 @@ and the stored file, so no key material reaches disk.
 | Command | What it does | Costs |
 |---|---|---|
 | `run.bat` | Setup, then everything below via a menu | — |
-| `python demos/compare_all_approaches.py` | All four side by side | free |
-| `python demos/approach_d_three_agent_direct.py` | One approach in detail (also `_a_`, `_b_`, `_c_`) | free |
+| `python trip_planner/demos/compare_all_approaches.py` | All four side by side | free |
+| `python trip_planner/demos/approach_d_three_agent_direct.py` | One approach in detail (also `_a_`, `_b_`, `_c_`) | free |
 | `python -m pytest` | The test suite | free |
-| `python demos/show_agent_messages.py` | Watch the A2A protocol pass real messages, and refuse an undeclared one | free |
-| `python -m evaluation.verify_approaches` | Prove every approach, the MCP server and the A2A layer are wired up | free |
-| `python -m evaluation.exp_protocol` | Protocol conformance audit | free |
-| `python -m evaluation.exp_budget_gate` | Budget gate, 20 scenarios | free |
+| `python trip_planner/demos/show_agent_messages.py` | Watch the A2A protocol pass real messages, and refuse an undeclared one | free |
+| `python -m trip_planner.evaluation.verify_approaches` | Prove every approach, the MCP server and the A2A layer are wired up | free |
+| `python -m trip_planner.evaluation.exp_protocol` | Protocol conformance audit | free |
+| `python -m trip_planner.evaluation.exp_budget_gate` | Budget gate, 20 scenarios | free |
 | `python submission/build/make_diagrams.py` | 8 diagrams at 300 dpi, validated | free |
 | `python submission/build/make_charts.py` | 6 charts from measured data | free |
 | `python -m submission.build.build_dissertation --figures` | Rebuild the dissertation | free |
 | `python submission/build/make_handover.py` | Rebuild `submission/PROJECT_OVERVIEW.docx` | free |
 | `python -m submission.build.make_viva_deck` | Rebuild `submission/CMP7200_Viva_Presentation.pptx` | free |
 | `python -m submission.build.verify_no_hardcoded_numbers` | Prove no number is typed by hand | free |
-| `python -m evaluation.run_comparison SC-01` | The four-approach comparison | model quota |
+| `python -m trip_planner.evaluation.run_comparison SC-01` | The four-approach comparison | model quota |
 | `python run_cli.py` | Plan a trip in the terminal | API keys |
 | `python run_web.py` | Plan a trip in the browser | API keys |
 

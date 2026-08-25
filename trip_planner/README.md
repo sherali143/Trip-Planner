@@ -4,7 +4,7 @@ Takes a plain-English travel request and returns a day-by-day itinerary built
 from real flight, hotel and venue data.
 
 This is the application. The four architectures it was compared against live in
-`../evaluation/`, and nothing in this folder imports from there.
+`../trip_planner/evaluation/`, and nothing in this folder imports from there.
 
 ## The shape of a request
 
@@ -30,8 +30,8 @@ fare for a known route on a known date does not.
 | `server/` | The MCP server: 12 schema-validated tools over JSON-RPC and stdio. |
 | `tools/` | Everything that calls an external service — see below. |
 | `core/` | Infrastructure — see below. |
-| `ui/app.py` | The Streamlit web interface: one grouped form, live per-step progress, and the finished plan split into tabs. |
-| `ui/plan_layout.py` | Reads a finished plan's own section and day structure, so the page can show it in parts. No Streamlit import — it lived in `app.py`, where importing it ran the whole page. |
+| `frontend/app.py` | The Streamlit web interface: one grouped form, live per-step progress, and the finished plan split into tabs. |
+| `frontend/plan_layout.py` | Reads a finished plan's own section and day structure, so the page can show it in parts. No Streamlit import — it lived in `app.py`, where importing it ran the whole page. |
 
 ### `tools/` — three files, three jobs
 
@@ -52,7 +52,7 @@ through either `mcp_client` or `travel_apis`.
 | `protocol.py` | The typed message envelope and its six message types. A message carries its sender, recipient, intent and payload, so an exchange can be checked rather than assumed. |
 | `registry.py` | The eight agent cards. Each declares what its agent can send and receive, which is what makes an undeclared message a detectable error instead of a silent one. |
 
-The conformance audit (`python -m evaluation.exp_protocol`) tests this layer
+The conformance audit (`python -m trip_planner.evaluation.exp_protocol`) tests this layer
 against its own declarations and currently fails 3 of its 5 A2A checks — priority
 is declared but never honoured, and inbound permissions are never enforced. Those
 are reported in the dissertation rather than quietly fixed.

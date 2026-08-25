@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Set
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))))
 
-from evaluation.measured import (BUDGET_GATE_PATH, COMPARISON_PATH,
+from trip_planner.evaluation.measured import (BUDGET_GATE_PATH, COMPARISON_PATH,
                                 PROTOCOL_PATH, ROOT)
 
 RESULT_FILES = [COMPARISON_PATH, PROTOCOL_PATH, BUDGET_GATE_PATH]
@@ -91,7 +91,7 @@ def _repository_measured_values() -> Dict[str, str]:
     these, and this function computes them from their live sources so that claim
     is checked rather than asserted.
     """
-    from evaluation import measured
+    from trip_planner.evaluation import measured
 
     out: Dict[str, str] = {}
 

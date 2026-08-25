@@ -7,7 +7,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Pt
 
-from evaluation import measured
+from trip_planner.evaluation import measured
 from submission.build.common import (ACCENT, AWARD, FACULTY, MODULE_CODE,
                                 MODULE_TITLE, MUTED, STUDENT_NUMBER,
                                 SUBMISSION_DATE, TITLE, UNIVERSITY, Report, val)

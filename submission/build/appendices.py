@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from evaluation import measured
+from trip_planner.evaluation import measured
 from submission.build.common import Report, val
 from submission.build.references import REFERENCES
 
@@ -52,10 +52,10 @@ def appendices(report: Report) -> None:
         "run.bat                                 # sets up everything, then a menu\n"
         "\n"
         "python -m pytest -q                     # the test suite\n"
-        "python -m evaluation.exp_protocol       # protocol conformance      (free)\n"
-        "python -m evaluation.exp_budget_gate    # budget gate, 20 scenarios (free)\n"
+        "python -m trip_planner.evaluation.exp_protocol       # protocol conformance      (free)\n"
+        "python -m trip_planner.evaluation.exp_budget_gate    # budget gate, 20 scenarios (free)\n"
         "\n"
-        "python demos/compare_all_approaches.py  # all four, from the recordings\n"
+        "python trip_planner/demos/compare_all_approaches.py  # all four, from the recordings\n"
         "\n"
         "python submission/build/make_diagrams.py    # 8 diagrams, 300 dpi, validated\n"
         "python submission/build/make_charts.py      # 6 charts from measured data\n"
@@ -66,7 +66,7 @@ def appendices(report: Report) -> None:
         "# See Section 6.7: the model these results came from has been withdrawn.\n"
         "set TRIP_PLANNER_API_MODE=replay\n"
         "set TRIP_PLANNER_MAX_LIVE_CALLS=0\n"
-        "python -m evaluation.run_comparison SC-01 --force --repeats 5\n"
+        "python -m trip_planner.evaluation.run_comparison SC-01 --force --repeats 5\n"
     )
 
     report.p("""
@@ -230,7 +230,7 @@ def appendices(report: Report) -> None:
             ["trip_planner/core/validators.py, resilience.py, log_setup.py",
              "Output validation, retry classification, credential-safe logging",
              "Cross-cutting concerns that no single caller owns"],
-            ["evaluation/", "The four arms, the scenarios, the metrics, the runner",
+            ["trip_planner/evaluation/", "The four arms, the scenarios, the metrics, the runner",
              "Evaluation code must not be reachable from the shipped path"],
             ["submission/build/make_*.py", "Figure generation with mechanical layout "
              "validation",

@@ -160,10 +160,10 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-"%PY%" -c "import sys; sys.path.insert(0,'.'); import evaluation.measured as m; m.results()" 2>nul
+"%PY%" -c "import sys; sys.path.insert(0,'.'); import trip_planner.evaluation.measured as m; m.results()" 2>nul
 if errorlevel 1 (
     echo        WARNING: measured results are missing. Demos and the report
-    echo        need evaluation/results/ - check the folder was copied.
+    echo        need trip_planner/evaluation/results/ - check the folder was copied.
 ) else (
     echo        Everything present.
 )
@@ -222,31 +222,31 @@ echo.
 goto menu
 
 :demo_all
-"%PY%" demos/compare_all_approaches.py
+"%PY%" trip_planner/demos/compare_all_approaches.py
 echo.
 pause
 goto menu
 
 :demo_a
-"%PY%" demos/approach_a_single_llm.py
+"%PY%" trip_planner/demos/approach_a_single_llm.py
 echo.
 pause
 goto menu
 
 :demo_b
-"%PY%" demos/approach_b_six_agent_naive.py
+"%PY%" trip_planner/demos/approach_b_six_agent_naive.py
 echo.
 pause
 goto menu
 
 :demo_c
-"%PY%" demos/approach_c_six_agent_tuned.py
+"%PY%" trip_planner/demos/approach_c_six_agent_tuned.py
 echo.
 pause
 goto menu
 
 :demo_d
-"%PY%" demos/approach_d_three_agent_direct.py
+"%PY%" trip_planner/demos/approach_d_three_agent_direct.py
 echo.
 pause
 goto menu
@@ -279,9 +279,9 @@ goto menu
 echo  Running the quota-free experiments. These touch no network and
 echo  cost nothing, so they can be run as often as you like.
 echo.
-"%PY%" -m evaluation.exp_protocol
+"%PY%" -m trip_planner.evaluation.exp_protocol
 echo.
-"%PY%" -m evaluation.exp_budget_gate
+"%PY%" -m trip_planner.evaluation.exp_budget_gate
 echo.
 pause
 goto menu

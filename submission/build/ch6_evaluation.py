@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from evaluation import measured
+from trip_planner.evaluation import measured
 from submission.build.common import BuildError, Report, val
 
 # The two arms this chapter's headline comparison is between.

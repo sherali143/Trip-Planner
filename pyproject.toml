@@ -10,7 +10,7 @@
 # neither is in requirements.txt, so it was settings for linters nobody runs.
 
 [tool.pytest.ini_options]
-# Collect only from testing/. Every file there is a real test with real
+# Collect only from trip_planner/tests/. Every file there is a real test with real
 # assertions — ad-hoc API probe scripts were removed rather than left beside
 # them, because named test_*.py they were collected by pytest, asserted
 # nothing, and called live endpoints.

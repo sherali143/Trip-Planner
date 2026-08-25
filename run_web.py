@@ -1,11 +1,8 @@
-"""
-Web UI Entry Point for AI Trip Planner
-Usage: python run_web.py
-Opens Streamlit web interface at http://localhost:8501
-"""
+"""Starts the web page. Run: python run_web.py"""
 
 import subprocess
 import sys
 
 if __name__ == "__main__":
-    subprocess.run([sys.executable, "-m", "streamlit", "run", "trip_planner/ui/app.py"])
+    subprocess.run([sys.executable, "-m", "streamlit", "run",
+                    "trip_planner/frontend/app.py"])

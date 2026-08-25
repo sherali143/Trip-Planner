@@ -307,7 +307,7 @@ class TripPlannerCrew:
         # The reply is recorded, so asking once calibrates that route permanently
         # and every later check for it is free.
         #
-        # Deliberately NOT passed by evaluation/exp_budget_gate.py: that
+        # Deliberately NOT passed by trip_planner/evaluation/exp_budget_gate.py: that
         # experiment's twenty scenarios and its Cohen's kappa are published against
         # the table, and a different input would mean those figures no longer
         # describe the code.
