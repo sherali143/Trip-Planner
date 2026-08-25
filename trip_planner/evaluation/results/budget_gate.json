@@ -384,13 +384,13 @@
   "external_validity": {
     "comparable": true,
     "route": "Lahore to Istanbul",
-    "fares_recorded": 18,
+    "fares_recorded": 129,
     "cheapest_real_fare": 734.0,
-    "median_real_fare": 1053.0,
+    "median_real_fare": 1435.0,
     "estimated_minimum": 350,
     "estimated_typical": 700,
     "minimum_anchor_error_pct": -52.3,
-    "typical_anchor_error_pct": -33.5,
+    "typical_anchor_error_pct": -51.2,
     "anchor_below_cheapest_real_fare": true
   },
   "monotonicity": {

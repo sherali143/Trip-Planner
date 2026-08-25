@@ -111,9 +111,9 @@ def _fares_in(body: str) -> List[float]:
     return fares
 
 
-def recorded_flight_price(origin: str, destination: str) -> Optional[RealPrice]:
+def recorded_flight_fares(origin: str, destination: str) -> List[float]:
     """
-    The cheapest recorded fare for this route, PER PERSON, or None if unrecorded.
+    Every recorded fare for this route, PER PERSON, cheapest first.
 
     Per person matters. The provider quotes a total for however many passengers
     the search asked about, and the cost model multiplies its flight figure by the
@@ -134,16 +134,20 @@ def recorded_flight_price(origin: str, destination: str) -> Optional[RealPrice]:
     everything, because a 2.3 MB reply listing connections mentions dozens of
     airports — ISB-DOH was reported as $734, which is the Lahore-Istanbul fare.
 
-    A route with no recording returns None. Using another route's fare would be
-    worse than admitting there is no data, which is the whole point of this module.
+    A route with no recording returns an empty list. Using another route's fares
+    would be worse than admitting there is no data, and that is not hypothetical:
+    the budget-gate experiment had its own copy of this reading, which pooled every
+    recorded fare and then labelled the result with one route's name. It was
+    accidentally right while the cache held one route, and wrong the day a second
+    was recorded. There is one implementation now, and this is it.
     """
     if not os.path.isdir(CACHE_DIR):
-        return None
+        return []
 
     wanted = {code for code in (_as_code(origin), _as_code(destination))
               if code and code.isalpha() and 3 <= len(code) <= 4}
     if len(wanted) < 2:
-        return None
+        return []
 
     entries = []
     for name in sorted(os.listdir(CACHE_DIR)):
@@ -189,14 +193,23 @@ def recorded_flight_price(origin: str, destination: str) -> Optional[RealPrice]:
             continue
         per_person.extend(fare / heads for fare in _fares_in(entry.get("body") or ""))
 
-    if not per_person:
+    return sorted(per_person)
+
+
+def recorded_flight_price(origin: str, destination: str) -> Optional[RealPrice]:
+    """
+    The cheapest recorded fare for this route, per person, or None if unrecorded.
+
+    See `recorded_flight_fares` for how a fare is tied to a route and why it is
+    divided by the passenger count.
+    """
+    fares = recorded_flight_fares(origin, destination)
+    if not fares:
         return None
-    heads_seen = sorted(set(session_adults.values())) or [1]
     return RealPrice(
-        amount=min(per_person), source="recorded", samples=len(per_person),
-        detail=f"cheapest of {len(per_person)} fares the flight API really "
-               f"returned for this route, per person, from the recorded responses"
-               f" (searched for {'/'.join(str(h) for h in heads_seen)} passenger(s))")
+        amount=fares[0], source="recorded", samples=len(fares),
+        detail=f"cheapest of {len(fares)} fares the flight API really returned "
+               f"for this route, per person, from the recorded responses")
 
 
 def live_flight_price(origin: str, destination: str, departure_date: str,

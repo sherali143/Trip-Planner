@@ -15,7 +15,8 @@ if hasattr(sys.stdout, "reconfigure"):
 os.environ["CREWAI_TRACING_ENABLED"] = "false"
 
 from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"), override=True)
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"),
+            override=True)
 
 from trip_planner.evaluation.scenarios import SCENARIOS
 from trip_planner.evaluation.arm_b_six_agent_naive import run_six_agent_naive

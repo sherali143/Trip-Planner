@@ -21,7 +21,7 @@ from trip_planner.core.trip_cost import (assess_budget, estimate_trip_cost,
                                 is_known_destination)
 
 RESULTS_PATH = os.path.join(os.path.dirname(__file__), "results", "budget_gate.json")
-CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", ".api_cache")
+CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", ".api_cache")
 
 
 # --------------------------------------------------------------- T1
@@ -92,39 +92,29 @@ def _kappa(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 # --------------------------------------------------------------- T2
-def _recorded_fares() -> List[float]:
-    """Return-fare prices from the recorded fly-scraper response, if present."""
-    path = os.path.join(CACHE_DIR)
-    if not os.path.isdir(path):
-        return []
-    fares: List[float] = []
-    for name in os.listdir(path):
-        if not name.startswith("fly-scraper"):
-            continue
-        try:
-            with open(os.path.join(path, name), encoding="utf-8") as fh:
-                entry = json.load(fh)
-        except (OSError, json.JSONDecodeError):
-            continue
-        body = entry.get("body") or ""
-        if "itineraries" not in body:
-            continue
-        try:
-            payload = json.loads(body).get("data") or {}
-        except json.JSONDecodeError:
-            continue
-        for itinerary in (payload.get("itineraries") or [])[:20]:
-            raw = ((itinerary.get("price") or {}).get("formatted") or "").replace(",", "")
-            match = re.search(r"([\d.]+)", raw)
-            if match:
-                fares.append(float(match.group(1)))
-    return sorted(set(fares))
+def _recorded_fares(origin: str, destination: str) -> List[float]:
+    """
+    Per-person fares the API really returned FOR THIS ROUTE, cheapest first.
+
+    This function used to read every fly-scraper recording and pool the fares out
+    of all of them, then external_validity() labelled the result with SC-01's
+    route. That was right only while the cache held one route. It holds three, and
+    the day the London recordings were committed the median jumped from $1,053 to
+    $1,285 and the reported anchor error with it — a published figure moving
+    because unrelated data had been added.
+
+    It now calls the same route-matching reader the product uses, so the two
+    cannot disagree about what the recordings say.
+    """
+    from trip_planner.core.real_prices import recorded_flight_fares
+
+    return sorted(set(recorded_flight_fares(origin, destination)))
 
 
 def external_validity() -> Dict[str, Any]:
     """Compare the gate's flight anchor against fares actually quoted by the API."""
-    fares = _recorded_fares()
     sc01 = next(s for s in SCENARIOS if s["id"] == "SC-01")["params"]
+    fares = _recorded_fares(sc01["origin"], sc01["legs"][0][0])
     estimate = estimate_trip_cost(sc01["legs"][0][0], sc01["nights"], sc01["adults"])
     est_min = estimate.breakdown["flights"]["minimum"]
     est_typical = estimate.breakdown["flights"]["comfortable"]
