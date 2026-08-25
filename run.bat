@@ -139,8 +139,8 @@ if not exist ".env" (
     echo  [4/4] Created .env from the template.
     echo.
     echo        NOTE: .env has no API keys in it yet.
-    echo        Options 1 to 9 below work fine without them.
-    echo        Only options 10 and 11 need keys - open .env in Notepad and
+    echo        Options 1 to 11 below work fine without them.
+    echo        Only options 12 and 13 need keys - open .env in Notepad and
     echo        paste them in. See README.md for where to get each one.
     echo.
 ) else (
@@ -217,7 +217,7 @@ if "%choice%"=="11" goto deck
 if "%choice%"=="12" goto web
 if "%choice%"=="13" goto cli
 if "%choice%"=="14" goto end
-echo  Please enter a number from 1 to 12.
+echo  Please enter a number from 1 to 14.
 echo.
 goto menu
 

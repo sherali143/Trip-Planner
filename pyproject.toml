@@ -1,21 +1,14 @@
-# Test configuration.
+# pytest configuration. Nothing else.
 #
-# Dependencies are NOT here. They live in requirements.txt, pinned to the exact
-# versions the published evaluation results were produced with. This file used
-# to carry a parallel dependency list with every version as "*", so installing
-# via poetry produced a different and untested dependency set than installing
-# via pip. One source of truth avoids that drift.
-#
-# Configuration for ruff and pyright was removed: neither tool is installed and
-# neither is in requirements.txt, so it was settings for linters nobody runs.
+# Dependencies live in requirements.txt, pinned to the exact versions the
+# published results were produced with. This file used to carry a second
+# dependency list with every version as "*", so installing with poetry gave a
+# different and untested set than installing with pip.
 
 [tool.pytest.ini_options]
-# Collect only from trip_planner/tests/. Every file there is a real test with real
-# assertions — ad-hoc API probe scripts were removed rather than left beside
-# them, because named test_*.py they were collected by pytest, asserted
-# nothing, and called live endpoints.
-testpaths = ["testing"]
+# Where the tests are. Without this, pytest searches the whole tree from the
+# working directory, which works but walks the 2 MB response cache on the way.
+testpaths = ["trip_planner/tests"]
 
-# Never descend into these. .api_cache in particular holds a 2 MB recorded
-# response that pytest has no reason to walk.
+# Never descend into these.
 norecursedirs = [".venv", "__pycache__", ".api_cache", ".git", ".pytest_cache"]
