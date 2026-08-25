@@ -121,7 +121,18 @@ if not exist ".venv\.installed" (
     "%PY%" -m pip install --quiet --upgrade pip
     "%PY%" -m pip install --quiet -r requirements.txt
     if errorlevel 1 (
-        echo  [X] Installation failed. Scroll up for the reason.
+        echo.
+        echo  [X] Installation failed. The two usual causes, in order:
+        echo.
+        echo      1. LONG PATHS. If the error above says "No such file or
+        echo         directory" for a file deep inside .venv, Windows hit its
+        echo         260-character limit. Move this folder somewhere short,
+        echo         such as C:\trip_planner, delete .venv, and run this again.
+        echo.
+        echo      2. NO INTERNET. The first install downloads about 400 MB.
+        echo.
+        echo      Anything else: scroll up, the real reason is in pip's output.
+        echo.
         pause
         exit /b 1
     )
