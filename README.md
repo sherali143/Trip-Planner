@@ -45,7 +45,37 @@ PLAN A REAL TRIP    needs API keys
 **Options 1 to 11 need no API keys and no internet.** The demos replay real
 recorded runs, so they work even when every quota is exhausted.
 
-### API keys (only for options 11 and 12)
+### Without `run.bat`
+
+`run.bat` is Windows only, and it does nothing you cannot do in three commands.
+Verified from a clean clone:
+
+```bash
+python -m venv .venv                          # needs Python 3.10 or newer
+.venv/Scripts/python -m pip install -r requirements.txt    # ~400 MB, 2-5 min
+cp .env.example .env                          # only needed for a live trip
+```
+
+Then any of these, with `.venv/Scripts/python` as `python`:
+
+```bash
+python -m pytest -q                                     # the test suite
+python trip_planner/demos/compare_all_approaches.py     # all four approaches
+python -m trip_planner.evaluation.exp_protocol          # conformance audit
+python -m trip_planner.evaluation.exp_budget_gate       # the feasibility gate
+python -m submission.build.build_dissertation           # rebuild the report
+python run_web.py                                       # the web page
+```
+
+On macOS or Linux the interpreter is `.venv/bin/python` instead.
+
+**Keep the folder path short.** The install writes deeply nested files inside
+`.venv`, and Windows caps paths at 260 characters. From a long path the install
+fails with a confusing "No such file or directory" on a file you have never heard
+of. `run.bat` warns above 90 characters; if you are installing by hand, put the
+project somewhere like `C:	rip_planner`.
+
+### API keys (only for options 12 and 13)
 
 Paste into `.env`:
 

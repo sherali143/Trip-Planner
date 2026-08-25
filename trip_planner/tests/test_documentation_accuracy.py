@@ -89,7 +89,8 @@ def test_documented_commands_point_at_real_targets():
     broken = []
     for doc, text in DOCS.items():
         for cmd in set(re.findall(r"python (?:-m )?([a-zA-Z0-9_./]+)", text)):
-            if cmd in ("pytest", "venv"):
+            # Not project files: standard tooling invoked with -m.
+            if cmd in ("pytest", "venv", "pip", "streamlit"):
                 continue
             candidates = [
                 ROOT / cmd,
