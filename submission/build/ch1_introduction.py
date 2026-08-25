@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from evaluation import measured
-from report.build.common import Report, val
+from submission.build.common import Report, val
 
 
 def build(report: Report) -> None:

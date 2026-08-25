@@ -488,7 +488,7 @@ def _figure_count() -> int:
     number in prose next to the folder it describes is exactly the kind of claim
     that goes quietly wrong when a chart is added.
     """
-    figures = os.path.join(ROOT, "report", "figures")
+    figures = os.path.join(ROOT, "submission", "build", "figures")
     return sum(1 for _, _, files in os.walk(figures)
                for f in files if f.endswith(".png"))
 
@@ -1198,7 +1198,7 @@ def build() -> str:
             ["evaluation/measured.py",
              "The single place any measured number is read from. This is why the "
              "report cannot disagree with the charts."],
-            ["report/build/verify_no_hardcoded_numbers.py",
+            ["submission/build/verify_no_hardcoded_numbers.py",
              "Proves no number in the report is typed by hand: it corrupts the "
              "data, rebuilds, and checks every value changed."],
         ],

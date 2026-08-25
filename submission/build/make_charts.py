@@ -16,7 +16,7 @@ from matplotlib.ticker import FuncFormatter, MaxNLocator
 
 from evaluation import measured
 from evaluation.measured import ARM_ORDER
-from report.build.figlib import (AQUA, BLUE, DPI, GREY, INK, INK_2, ORANGE, RED,
+from submission.build.figlib import (AQUA, BLUE, DPI, GREY, INK, INK_2, ORANGE, RED,
                             ROOT, save_chart)
 
 GRID = "#e3e2dd"

@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.abspath(__file__)))))
 
 from evaluation import measured
-from report.build.figlib import (AQUA, AQUA_FILL, BLUE, BLUE_FILL, GREY, GREY_FILL,
+from submission.build.figlib import (AQUA, AQUA_FILL, BLUE, BLUE_FILL, GREY, GREY_FILL,
                             INK, INK_2, ORANGE, ORANGE_FILL, PURPLE,
                             PURPLE_FILL, RED, RED_FILL, ROOT, Canvas, stack)
 

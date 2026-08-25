@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-# report/build/ -> report/ -> repository root
+# submission/build/ -> report/ -> repository root
 ROOT = os.path.dirname(os.path.dirname(HERE))
 
 DPI = 300
@@ -426,7 +426,7 @@ class Canvas:
     # ----------------------------------------------------------------- output
     def save(self, name: str, subdir: str = "diagrams") -> str:
         self.validate()
-        out_dir = os.path.join(ROOT, "report", "figures", subdir)
+        out_dir = os.path.join(ROOT, "submission", "build", "figures", subdir)
         os.makedirs(out_dir, exist_ok=True)
         path = os.path.join(out_dir, name)
         self.fig.savefig(path, dpi=DPI, bbox_inches="tight", pad_inches=0.28)
@@ -472,7 +472,7 @@ def stack(canvas: Canvas, x: float, top: float, bottom: float, w: float,
 
 
 def save_chart(fig, name: str) -> str:
-    out_dir = os.path.join(ROOT, "report", "figures", "results")
+    out_dir = os.path.join(ROOT, "submission", "build", "figures", "results")
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, name)
     fig.savefig(path, dpi=DPI, bbox_inches="tight", pad_inches=0.28)

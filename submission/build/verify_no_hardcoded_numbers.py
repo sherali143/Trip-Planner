@@ -135,7 +135,7 @@ def _repository_measured_values() -> Dict[str, str]:
 
 def _build(output: str, values_out: str) -> Dict[str, Any]:
     proc = subprocess.run(
-        [sys.executable, "-m", "report.build.build_report",
+        [sys.executable, "-m", "submission.build.build_dissertation",
          "--no-tests", "--output", output, "--values-out", values_out],
         cwd=ROOT, capture_output=True, text=True, timeout=900,
     )

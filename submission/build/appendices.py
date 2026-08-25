@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from evaluation import measured
-from report.build.common import Report, val
-from report.build.references import REFERENCES
+from submission.build.common import Report, val
+from submission.build.references import REFERENCES
 
 
 def references(report: Report) -> None:
-    from report.build.common import CITATIONS
+    from submission.build.common import CITATIONS
 
     report.start_excluded("references")
     report.unnumbered_h1("References")
@@ -57,10 +57,10 @@ def appendices(report: Report) -> None:
         "\n"
         "python demos/compare_all_approaches.py  # all four, from the recordings\n"
         "\n"
-        "python report/build/make_diagrams.py    # 8 diagrams, 300 dpi, validated\n"
-        "python report/build/make_charts.py      # 6 charts from measured data\n"
-        "python -m report.build.build_report     # this document\n"
-        "python -m report.build.verify_no_hardcoded_numbers   # perturbation check\n"
+        "python submission/build/make_diagrams.py    # 8 diagrams, 300 dpi, validated\n"
+        "python submission/build/make_charts.py      # 6 charts from measured data\n"
+        "python -m submission.build.build_dissertation     # this document\n"
+        "python -m submission.build.verify_no_hardcoded_numbers   # perturbation check\n"
         "\n"
         "# Re-measuring the four arms needs a model that can run all of them.\n"
         "# See Section 6.7: the model these results came from has been withdrawn.\n"
@@ -232,10 +232,10 @@ def appendices(report: Report) -> None:
              "Cross-cutting concerns that no single caller owns"],
             ["evaluation/", "The four arms, the scenarios, the metrics, the runner",
              "Evaluation code must not be reachable from the shipped path"],
-            ["report/build/make_*.py", "Figure generation with mechanical layout "
+            ["submission/build/make_*.py", "Figure generation with mechanical layout "
              "validation",
              "A document generator is code, and can be wrong like any other"],
-            ["report/build/", "One module per chapter, plus shared helpers",
+            ["submission/build/", "One module per chapter, plus shared helpers",
              "Every number is interpolated from measured data, never typed"],
         ],
         "Module decomposition and the reason for each boundary.",

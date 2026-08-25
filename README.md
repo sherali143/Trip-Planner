@@ -172,12 +172,12 @@ and the stored file, so no key material reaches disk.
 | `python -m evaluation.verify_approaches` | Prove every approach, the MCP server and the A2A layer are wired up | free |
 | `python -m evaluation.exp_protocol` | Protocol conformance audit | free |
 | `python -m evaluation.exp_budget_gate` | Budget gate, 20 scenarios | free |
-| `python report/build/make_diagrams.py` | 8 diagrams at 300 dpi, validated | free |
-| `python report/build/make_charts.py` | 6 charts from measured data | free |
-| `python -m report.build.build_report --figures` | Rebuild the dissertation | free |
-| `python report/build/make_handover.py` | Rebuild `submission/PROJECT_OVERVIEW.docx` | free |
-| `python -m report.build.make_viva_deck` | Rebuild `submission/CMP7200_Viva_Presentation.pptx` | free |
-| `python -m report.build.verify_no_hardcoded_numbers` | Prove no number is typed by hand | free |
+| `python submission/build/make_diagrams.py` | 8 diagrams at 300 dpi, validated | free |
+| `python submission/build/make_charts.py` | 6 charts from measured data | free |
+| `python -m submission.build.build_dissertation --figures` | Rebuild the dissertation | free |
+| `python submission/build/make_handover.py` | Rebuild `submission/PROJECT_OVERVIEW.docx` | free |
+| `python -m submission.build.make_viva_deck` | Rebuild `submission/CMP7200_Viva_Presentation.pptx` | free |
+| `python -m submission.build.verify_no_hardcoded_numbers` | Prove no number is typed by hand | free |
 | `python -m evaluation.run_comparison SC-01` | The four-approach comparison | model quota |
 | `python run_cli.py` | Plan a trip in the terminal | API keys |
 | `python run_web.py` | Plan a trip in the browser | API keys |

@@ -18,11 +18,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))))
 
 from evaluation import measured
-from report.build import (appendices, ch1_introduction, ch2_literature,
+from submission.build import (appendices, ch1_introduction, ch2_literature,
                          ch3_methodology, ch4_design, ch5_implementation,
                          ch6_evaluation, ch7_reflection, ch8_conclusion,
                          frontmatter)
-from report.build.common import (CITATIONS, ROOT, VALUES, BuildError, Report,
+from submission.build.common import (CITATIONS, ROOT, VALUES, BuildError, Report,
                                 find_banned_words, find_dangling_references,
                                 find_duplicate_prose,
                                 find_spelling_inconsistencies)
@@ -59,7 +59,7 @@ def run_test_suite() -> dict:
 
 
 def regenerate_figures() -> None:
-    for script in ("report/build/make_diagrams.py", "report/build/make_charts.py"):
+    for script in ("submission/build/make_diagrams.py", "submission/build/make_charts.py"):
         proc = subprocess.run([sys.executable, script], cwd=ROOT,
                               capture_output=True, text=True, timeout=900)
         if proc.returncode != 0:

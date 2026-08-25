@@ -33,7 +33,7 @@ ALL_TEXT = "\n".join(DOCS.values())
 def test_documentation_exists_for_every_package():
     """Each top-level folder explains itself."""
     for folder in ("trip_planner", "evaluation", "demos", "testing",
-                   "submission", "report"):
+                   "submission"):
         assert (ROOT / folder / "README.md").exists(), f"{folder}/ has no README"
 
 
@@ -48,7 +48,7 @@ def test_the_dissertation_is_present():
     report = ROOT / "submission" / "CMP7200_Dissertation.docx"
     assert report.exists(), (
         "submission/CMP7200_Dissertation.docx is missing — regenerate with "
-        "python -m report.build.build_report"
+        "python -m submission.build.build_dissertation"
     )
 
 
@@ -396,7 +396,7 @@ def test_conformance_defect_counts_in_docs_match_the_audit():
 def _production_files():
     """Everything that ships or is run, excluding the test suite itself."""
     files = [ROOT / "run_cli.py", ROOT / "run_web.py"]
-    for package in ("trip_planner", "evaluation", "demos", "report"):
+    for package in ("trip_planner", "evaluation", "demos", "submission"):
         files += [p for p in (ROOT / package).rglob("*.py")
                   if "__pycache__" not in p.parts]
     return files

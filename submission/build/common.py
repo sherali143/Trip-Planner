@@ -20,10 +20,10 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Inches, Pt, RGBColor
 
-from report.build.references import REFERENCES
+from submission.build.references import REFERENCES
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-FIGURES = os.path.join(ROOT, "report", "figures")
+FIGURES = os.path.join(ROOT, "submission", "build", "figures")
 
 ACCENT = RGBColor(0x1F, 0x4E, 0x79)
 MUTED = RGBColor(0x52, 0x51, 0x4E)
@@ -363,7 +363,7 @@ class Report:
         if not os.path.exists(path):
             raise BuildError(
                 f"figure {relative_path} does not exist. Run "
-                f"report/build/make_diagrams.py and report/build/make_charts.py first.")
+                f"submission/build/make_diagrams.py and submission/build/make_charts.py first.")
         self._figure_n += 1
         tag = f"Figure {self.chapter}.{self._figure_n}"
         self.doc.add_picture(path, width=Inches(width))

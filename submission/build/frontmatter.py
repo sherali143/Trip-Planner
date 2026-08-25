@@ -8,7 +8,7 @@ from docx.oxml.ns import qn
 from docx.shared import Pt
 
 from evaluation import measured
-from report.build.common import (ACCENT, AWARD, FACULTY, MODULE_CODE,
+from submission.build.common import (ACCENT, AWARD, FACULTY, MODULE_CODE,
                                 MODULE_TITLE, MUTED, STUDENT_NUMBER,
                                 SUBMISSION_DATE, TITLE, UNIVERSITY, Report, val)
 

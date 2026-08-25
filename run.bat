@@ -289,8 +289,8 @@ goto menu
 :figures
 echo  Regenerating every figure from the measured results...
 echo.
-"%PY%" report/build/make_diagrams.py
-"%PY%" report/build/make_charts.py
+"%PY%" submission/build/make_diagrams.py
+"%PY%" submission/build/make_charts.py
 echo.
 pause
 goto menu
@@ -299,7 +299,7 @@ goto menu
 echo  Rebuilding the dissertation. This regenerates the figures, runs the
 echo  test suite, rebuilds the document and reports the word count.
 echo.
-"%PY%" -m report.build.build_report --figures
+"%PY%" -m submission.build.build_dissertation --figures
 echo.
 pause
 goto menu
@@ -309,7 +309,7 @@ echo  Rebuilding PROJECT_OVERVIEW.docx - the plain-English guide to this
 echo  project. Every number in it is read from the measured results, so it
 echo  stays correct after the experiments are re-run.
 echo.
-"%PY%" report/build/make_handover.py
+"%PY%" submission/build/make_handover.py
 echo.
 pause
 goto menu
@@ -319,7 +319,7 @@ echo  Rebuilding CMP7200_Viva_Presentation.pptx - the viva slides. Every
 echo  number on a slide is read from the measured results, and the detail
 echo  for each one is in that slide's speaker notes.
 echo.
-"%PY%" report/build/make_viva_deck.py
+"%PY%" submission/build/make_viva_deck.py
 echo.
 pause
 goto menu

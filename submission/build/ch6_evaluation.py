@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from evaluation import measured
-from report.build.common import BuildError, Report, val
+from submission.build.common import BuildError, Report, val
 
 # The two arms this chapter's headline comparison is between.
 _TUNED, _DIRECT = "C", "D"

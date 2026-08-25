@@ -3,8 +3,8 @@
 Generated output. Nothing here is edited by hand — regenerate instead:
 
 ```bash
-python report/build/make_diagrams.py    # diagrams/
-python report/build/make_charts.py      # results/
+python submission/build/make_diagrams.py    # diagrams/
+python submission/build/make_charts.py      # results/
 ```
 
 Everything is 300 dpi, and every diagram passes geometric validation before it

@@ -22,7 +22,7 @@ from pptx.util import Emu, Inches, Pt
 from evaluation import measured
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-FIGURES = os.path.join(ROOT, "report", "figures")
+FIGURES = os.path.join(ROOT, "submission", "build", "figures")
 OUTPUT = os.path.join(ROOT, "submission", "CMP7200_Viva_Presentation.pptx")
 
 STUDENT = "25182589"          # anonymous marking: student number only
