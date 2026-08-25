@@ -46,7 +46,7 @@ from evaluation import measured
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FIGURES = os.path.join(ROOT, "report", "figures")
-OUTPUT = os.path.join(ROOT, "CMP7200_Viva_Presentation.pptx")
+OUTPUT = os.path.join(ROOT, "submission", "CMP7200_Viva_Presentation.pptx")
 
 STUDENT = "25182589"          # anonymous marking: student number only
 MODULE = "CMP7200 — Individual Master's Project"

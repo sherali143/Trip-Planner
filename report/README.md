@@ -33,7 +33,7 @@ actually instrumented.
 | `build/verify_no_hardcoded_numbers.py` | The perturbation proof |
 | `build/make_viva_deck.py` | The viva slides, built from the same measured data |
 | `build/make_charts.py`, `build/make_diagrams.py`, `build/figlib.py` | The figures |
-| `build/make_handover.py` | `PROJECT_OVERVIEW.docx`, the plain-English guide |
+| `build/make_handover.py` | `submission/PROJECT_OVERVIEW.docx`, the plain-English guide |
 
 ## What the build refuses to produce
 

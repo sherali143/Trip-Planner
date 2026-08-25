@@ -33,7 +33,7 @@ ALL_TEXT = "\n".join(DOCS.values())
 def test_documentation_exists_for_every_package():
     """Each top-level folder explains itself."""
     for folder in ("trip_planner", "evaluation", "demos", "testing",
-                   "proposal", "report"):
+                   "submission", "report"):
         assert (ROOT / folder / "README.md").exists(), f"{folder}/ has no README"
 
 
@@ -45,9 +45,9 @@ def test_the_dissertation_is_present():
     results in a second document; keeping both meant two places for the same
     number to be wrong in.
     """
-    report = ROOT / "report" / "CMP7200_Dissertation.docx"
+    report = ROOT / "submission" / "CMP7200_Dissertation.docx"
     assert report.exists(), (
-        "report/CMP7200_Dissertation.docx is missing — regenerate with "
+        "submission/CMP7200_Dissertation.docx is missing — regenerate with "
         "python -m report.build.build_report"
     )
 

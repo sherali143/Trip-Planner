@@ -11,7 +11,7 @@ architectures actually cost.
 
 ## Start here
 
-Read **`PROJECT_OVERVIEW.docx`** first — six pages of plain English covering the
+Read **`submission/PROJECT_OVERVIEW.docx`** first — six pages of plain English covering the
 problem, the four approaches, what was found, the known issues, and how to
 demonstrate the work. It is written for someone who has never seen this
 repository.
@@ -65,7 +65,7 @@ Paste into `.env`:
 | **`evaluation/`** | The four approaches, the scenarios, the metrics and the measured results the dissertation is built from. |
 | **`demos/`** | One runnable demonstration per approach, plus a side-by-side comparison. Works with no keys. |
 | **`report/`** | The dissertation, the code that generates it, and every figure. |
-| **`proposal/`** | The original proposal and the assignment brief. |
+| **`submission/`** | The original proposal and the assignment brief. |
 | **`testing/`** | The test suite. |
 
 Every source file opens with a comment saying what that file does and why.
@@ -175,8 +175,8 @@ and the stored file, so no key material reaches disk.
 | `python report/build/make_diagrams.py` | 8 diagrams at 300 dpi, validated | free |
 | `python report/build/make_charts.py` | 6 charts from measured data | free |
 | `python -m report.build.build_report --figures` | Rebuild the dissertation | free |
-| `python report/build/make_handover.py` | Rebuild `PROJECT_OVERVIEW.docx` | free |
-| `python -m report.build.make_viva_deck` | Rebuild `CMP7200_Viva_Presentation.pptx` | free |
+| `python report/build/make_handover.py` | Rebuild `submission/PROJECT_OVERVIEW.docx` | free |
+| `python -m report.build.make_viva_deck` | Rebuild `submission/CMP7200_Viva_Presentation.pptx` | free |
 | `python -m report.build.verify_no_hardcoded_numbers` | Prove no number is typed by hand | free |
 | `python -m evaluation.run_comparison SC-01` | The four-approach comparison | model quota |
 | `python run_cli.py` | Plan a trip in the terminal | API keys |

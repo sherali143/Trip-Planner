@@ -30,7 +30,7 @@ from docx.shared import Inches, Pt, RGBColor
 from evaluation import measured
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-OUTPUT = os.path.join(ROOT, "PROJECT_OVERVIEW.docx")
+OUTPUT = os.path.join(ROOT, "submission", "PROJECT_OVERVIEW.docx")
 
 ACCENT = RGBColor(0x1F, 0x4E, 0x79)
 MUTED = RGBColor(0x52, 0x51, 0x4E)
@@ -1084,7 +1084,7 @@ def build() -> str:
 
         "Choose option 6 to show the test suite passing.",
 
-        "Open report/CMP7200_Dissertation.docx. Say: every number in this "
+        "Open submission/CMP7200_Dissertation.docx. Say: every number in this "
         "document is read from the measured results files, none is typed by hand, "
         "and there is a script that proves it by corrupting the data and checking "
         "the document changes.",

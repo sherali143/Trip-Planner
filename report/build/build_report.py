@@ -47,7 +47,7 @@ from report.build.common import (CITATIONS, ROOT, VALUES, BuildError, Report,
 
 WORD_LIMIT = 12000
 TOLERANCE = 0.10
-OUTPUT = os.path.join(ROOT, "report", "CMP7200_Dissertation.docx")
+OUTPUT = os.path.join(ROOT, "submission", "CMP7200_Dissertation.docx")
 
 CHAPTERS = [
     ch1_introduction,
