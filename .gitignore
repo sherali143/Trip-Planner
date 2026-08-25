@@ -38,6 +38,15 @@ env/
 .DS_Store
 Thumbs.db
 
+# The deliverables live in submission/ and nowhere else. A copy of the deck sat
+# at the root because PowerShell held the file open during the move, and a later
+# `git add -A` committed it back — so the repository briefly shipped two of them
+# and a reader had no way to know which was current. Anchored to the root, so
+# submission/ is unaffected.
+/CMP7200_Viva_Presentation.pptx
+/CMP7200_Dissertation.docx
+/PROJECT_OVERVIEW.docx
+
 # Word's owner/lock files. It creates ~$name.docx beside any open document, and
 # one got committed by a `git add -A` while PROJECT_OVERVIEW.docx was open. It is
 # a lock file for a session that ended; it means nothing to anyone else.
