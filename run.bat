@@ -151,7 +151,10 @@ REM ---------------------------------------------------------------- 5/5
 REM One self-check, so a broken install is reported here rather than inside
 REM whichever menu option happens to be chosen first.
 echo  [5/5] Checking the install...
-"%PY%" -c "import crewai, litellm, streamlit, matplotlib, docx, pytest" 2>nul
+REM Every third-party module the project imports, not a sample of them. This
+REM checked six of eleven, so a failed python-pptx install passed setup and
+REM then broke the slides option several menus later.
+"%PY%" -c "import crewai, litellm, streamlit, matplotlib, docx, pptx, dotenv, requests, pydantic, mcp, pytest" 2>nul
 if errorlevel 1 (
     echo.
     echo  [X] Some dependencies are missing. Delete the .venv folder and run
