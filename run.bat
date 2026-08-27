@@ -162,10 +162,19 @@ REM ---------------------------------------------------------------- 3/4
 REM Dependencies are PINNED in requirements.txt to the versions the
 REM published results were produced with. A marker file records that the
 REM install succeeded, so later runs do not reinstall every time.
+REM NOT --quiet on the main install. It was, and pip then printed nothing at all
+REM for the whole 400 MB download: several minutes of a window that looks frozen,
+REM which is indistinguishable from a hang and gets killed. Progress output is
+REM noisy and that is the correct trade - a reader needs to see it is alive.
 if not exist ".venv\.installed" (
-    echo  [3/4] Installing dependencies ^(one-off, 2-5 minutes^)...
+    echo  [3/4] Installing dependencies...
+    echo.
+    echo        This downloads about 400 MB and takes 2-5 minutes. Pip will
+    echo        scroll a lot of text below. That is normal - leave it running.
+    echo        Do not close this window.
+    echo.
     "%PY%" -m pip install --quiet --upgrade pip
-    "%PY%" -m pip install --quiet -r requirements.txt
+    "%PY%" -m pip install --progress-bar on -r requirements.txt
     if errorlevel 1 (
         echo.
         echo  [X] Installation failed. The two usual causes, in order:
