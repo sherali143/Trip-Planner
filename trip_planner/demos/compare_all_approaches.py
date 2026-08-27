@@ -11,7 +11,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-from trip_planner.demos._presenter import RULE, _scenario_request
+from trip_planner.demos._presenter import (RULE, _protect_travel_quota,
+                                           _scenario_request)
 from trip_planner.demos.approach_a_single_llm import APPROACH_A
 from trip_planner.demos.approach_b_six_agent_naive import APPROACH_B
 from trip_planner.demos.approach_c_six_agent_tuned import APPROACH_C
@@ -132,6 +133,13 @@ def main() -> int:
     argv = sys.argv[1:]
     pause = "--no-pause" not in argv
     live = "--live" in argv
+    if live:
+        # The same protection the single-approach demos apply, and it was missing
+        # here — which is the worse place for it: this runs all four arms, so a
+        # cache miss costs up to four times as much. --live means a real model
+        # doing real reasoning; it does not mean buying flight data already on
+        # disk. --live-apis opts back in.
+        _protect_travel_quota(argv)
 
     from trip_planner.evaluation import measured
     coverage = measured.coverage()
