@@ -20,35 +20,81 @@ echo  ==================================================================
 echo.
 
 REM ---------------------------------------------------------------- 1/4
-REM Python must be present and recent enough. 3.10+ is required because
-REM the code uses match-free but 3.10-era typing syntax throughout.
-where python >nul 2>&1
-if errorlevel 1 (
-    echo  [X] Python is not installed, or not on PATH.
+REM Find a Python that actually works, and install one if there is none.
+REM
+REM This used to be `where python`, and that is not the same question. Windows
+REM ships a fake python.exe in WindowsApps whose only behaviour is to print
+REM "Python was not found; run without arguments to install from the Microsoft
+REM Store" and exit. `where` finds it, so the check passed on a machine with no
+REM Python at all, reported "Python was found", and then failed three steps
+REM later inside `python -m venv` where the cause was much harder to see.
+REM
+REM So every candidate is RUN, not merely located, and the first one that
+REM reports a usable version wins. :probe does that; PYEXE holds the winner.
+set "PYEXE="
+call :probe py -3.11
+call :probe py -3.12
+call :probe py -3.10
+call :probe py -3
+call :probe python
+call :probe "%LOCALAPPDATA%\Programs\Python\Python311\python.exe"
+call :probe "%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
+call :probe "%LOCALAPPDATA%\Programs\Python\Python310\python.exe"
+if defined PYEXE goto python_ready
+
+REM Nothing usable. Install it, rather than telling someone to go and do it.
+echo  [1/4] No working Python found. Installing Python 3.11...
+echo        ^(one-off, a few minutes. Nothing else on this machine is touched.^)
+echo.
+
+REM winget ships with Windows 11 and handles the download and the PATH itself.
+where winget >nul 2>&1
+if not errorlevel 1 (
+    echo        Trying winget...
+    winget install --id Python.Python.3.11 --scope user --silent --accept-package-agreements --accept-source-agreements
     echo.
-    echo      Install Python 3.10 or newer from https://www.python.org/downloads/
-    echo      During installation, TICK "Add Python to PATH".
+)
+call :probe py -3.11
+call :probe "%LOCALAPPDATA%\Programs\Python\Python311\python.exe"
+if defined PYEXE goto python_installed
+
+REM No winget, or winget could not do it. Fetch the official installer directly.
+REM curl has shipped with Windows since 2018. InstallAllUsers=0 keeps this a
+REM per-user install, so it needs no administrator rights.
+echo        Downloading python.org installer...
+curl -L -# -o "%TEMP%\python-3.11.9-amd64.exe" https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
+if not exist "%TEMP%\python-3.11.9-amd64.exe" (
+    echo.
+    echo  [X] Could not download Python. Check the internet connection, or
+    echo      install Python 3.11 by hand from https://www.python.org/downloads/
+    echo      and TICK "Add Python to PATH" during installation.
     echo.
     pause
     exit /b 1
 )
+echo        Installing quietly...
+"%TEMP%\python-3.11.9-amd64.exe" /quiet InstallAllUsers=0 PrependPath=1 Include_pip=1 Include_launcher=1
+del "%TEMP%\python-3.11.9-amd64.exe" >nul 2>&1
+call :probe py -3.11
+call :probe "%LOCALAPPDATA%\Programs\Python\Python311\python.exe"
 
-for /f "tokens=2" %%v in ('python --version 2^>^&1') do set PYVER=%%v
+:python_installed
+if not defined PYEXE (
+    echo.
+    echo  [X] Python was installed but this window cannot see it yet. That is
+    echo      normal: PATH is read when a window opens.
+    echo.
+    echo      FIX: close this window and run run.bat again. It will find it.
+    echo.
+    pause
+    exit /b 1
+)
+echo        Installed.
+echo.
+
+:python_ready
+for /f "tokens=2" %%v in ('%PYEXE% --version 2^>^&1') do set "PYVER=%%v"
 echo  [1/4] Python %PYVER% found.
-
-REM The comment above said "3.10+ is required" and nothing checked it, so a
-REM Python 3.9 user got a SyntaxError from a type annotation several minutes into
-REM the install and no clue why. Checked here instead.
-python -c "import sys; sys.exit(0 if sys.version_info[:2] >= (3,10) else 1)"
-if errorlevel 1 (
-    echo.
-    echo  [X] Python %PYVER% is too old. This project needs 3.10 or newer.
-    echo      Install from https://www.python.org/downloads/ and TICK
-    echo      "Add Python to PATH" during installation.
-    echo.
-    pause
-    exit /b 1
-)
 
 REM Upper bound is a WARNING, not a stop. requirements.txt is pinned to the exact
 REM versions the published results were produced with, and some of those pins
@@ -56,10 +102,10 @@ REM predate the newest interpreters, so pip may fail to build a wheel. That is a
 REM dependency problem, not a code problem, and naming it here saves an hour of
 REM reading a compiler traceback. The evaluation was produced and verified on
 REM 3.11.
-python -c "import sys; sys.exit(1 if sys.version_info[:2] > (3,12) else 0)"
+%PYEXE% -c "import sys; sys.exit(1 if sys.version_info[:2] > (3,12) else 0)"
 if errorlevel 1 (
     echo.
-    echo  [!] Python %PYVER% is newer than this project was tested on.
+    echo  [warning] Python %PYVER% is newer than this project was tested on.
     echo      Dependencies are pinned to the versions the published results were
     echo      measured with, and pip may fail to build one of them on a very new
     echo      interpreter.
@@ -79,10 +125,10 @@ REM "No such file or directory" OSError that reads like a corrupt download.
 REM Verified: a clean install from a short path succeeds and all tests pass; the
 REM same install from a deeply nested path fails on a jedi stub file. Checked
 REM here so the cause is named before it costs anyone an afternoon.
-python -c "import os,sys; sys.exit(1 if len(os.path.abspath('.'))>90 else 0)"
+%PYEXE% -c "import os,sys; sys.exit(1 if len(os.path.abspath('.'))>90 else 0)"
 if errorlevel 1 (
     echo.
-    echo  [!] WARNING: this folder is nested deeply:
+    echo  [warning] This folder is nested deeply:
     echo      %CD%
     echo.
     echo      Windows limits paths to 260 characters and the install creates
@@ -101,7 +147,7 @@ REM The virtual environment keeps this project's pinned dependencies
 REM away from anything else on the machine.
 if not exist ".venv\Scripts\python.exe" (
     echo  [2/4] Creating the virtual environment ^(one-off, ~20 seconds^)...
-    python -m venv .venv
+    %PYEXE% -m venv .venv
     if errorlevel 1 (
         echo  [X] Could not create the virtual environment.
         pause
@@ -191,7 +237,7 @@ echo  ==================================================================
 echo    WHAT WOULD YOU LIKE TO DO?
 echo  ==================================================================
 echo.
-echo    NEW HERE? Read PROJECT_OVERVIEW.docx first - six pages, plain English.
+echo    NEW HERE? Read submission\PROJECT_OVERVIEW.docx first - plain English.
 echo.
 echo    DEMONSTRATIONS - free, no keys, no internet, no quota
 echo      1. Compare all four approaches       ^(show this first^)
@@ -204,7 +250,7 @@ echo    THE PROJECT - free
 echo      6. Run the test suite
 echo      7. Run the evaluation experiments    ^(protocol + budget gate^)
 echo      8. Rebuild the figures               ^(8 diagrams, 6 charts^)
-echo      9. Rebuild the dissertation          ^(report/*.docx^)
+echo      9. Rebuild the dissertation          ^(submission/*.docx^)
 echo     10. Rebuild the project overview      ^(PROJECT_OVERVIEW.docx^)
 echo     11. Rebuild the viva presentation     ^(CMP7200_Viva_Presentation.pptx^)
 echo.
@@ -337,6 +383,16 @@ echo.
 echo.
 pause
 goto menu
+
+:probe
+REM Test one candidate interpreter. Sets PYEXE only if it runs AND reports a
+REM usable version, so the Microsoft Store stub -- which exists, runs, prints an
+REM advert and exits non-zero -- never wins. First usable candidate keeps it.
+if defined PYEXE goto :eof
+%* -c "import sys; sys.exit(0 if (3,10) <= sys.version_info[:2] < (3,14) else 1)" >nul 2>&1
+if errorlevel 1 goto :eof
+set "PYEXE=%*"
+goto :eof
 
 :end
 echo  Goodbye.
