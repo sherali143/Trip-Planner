@@ -30,15 +30,11 @@ MODULE = "CMP7200 — Individual Master's Project"
 
 INK = RGBColor(0x16, 0x1A, 0x23)
 SOFT = RGBColor(0x54, 0x5C, 0x6E)
-FAINT = RGBColor(0x8A, 0x91, 0xA0)
 ACCENT = RGBColor(0x43, 0x38, 0xCA)
 TEAL = RGBColor(0x0E, 0xA5, 0xA4)
 WARN = RGBColor(0xA8, 0x5B, 0x00)
 PAPER = RGBColor(0xFF, 0xFF, 0xFF)
 DARK = RGBColor(0x1E, 0x1B, 0x4B)
-GREY_FILL_P = RGBColor(0xEF, 0xEE, 0xEA)
-PURPLE_FILL_P = RGBColor(0x4E, 0x3F, 0xB8)
-AQUA_FILL_P = RGBColor(0xD6, 0xF2, 0xE8)
 
 W, H = Inches(13.333), Inches(7.5)      # 16:9
 
@@ -167,44 +163,10 @@ def _table(slide, headers, rows, left=Inches(0.9), top=Inches(2.1),
 # The deck
 # ---------------------------------------------------------------------------
 
-def _panel(slide, left, top, width, height, text, *, fill, edge=None,
-           size=15, bold=False, colour=None, align=PP_ALIGN.CENTER):
-    """A filled rounded box with text in it. Used for the flow diagrams."""
-    shape = slide.shapes.add_shape(5, left, top, width, height)  # rounded rect
-    shape.fill.solid()
-    shape.fill.fore_color.rgb = fill
-    if edge is None:
-        shape.line.fill.background()
-    else:
-        shape.line.color.rgb = edge
-        shape.line.width = Pt(1.25)
-    shape.shadow.inherit = False
-    frame = shape.text_frame
-    frame.word_wrap = True
-    frame.vertical_anchor = MSO_ANCHOR.MIDDLE
-    para = frame.paragraphs[0]
-    para.alignment = align
-    run = para.add_run()
-    run.text = text
-    run.font.size = Pt(size)
-    run.font.bold = bold
-    run.font.color.rgb = colour or INK
-    run.font.name = "Calibri"
-    return shape
-
-
-def _arrow_down(slide, cx, top, height=Inches(0.32)):
-    """A small downward arrow between two flow panels."""
-    _text(slide, cx - Inches(0.4), top, Inches(0.8), height,
-          [("▼", 14, False, FAINT)], align=PP_ALIGN.CENTER)
-
-
 def build() -> str:
     arms = measured.results()["arms"]
     gains = measured.results().get("improvements", {})
     coverage = measured.coverage()
-    protocol = measured.protocol_summary()
-    gate = measured.gate_agreement()
     cache = measured.api_cache_stats()
     tests = measured.test_count()["collected"]
     per_arm = measured.api_calls_per_arm()["arms"]
@@ -214,15 +176,10 @@ def build() -> str:
     from trip_planner.core.trip_cost import assess_budget
     from trip_planner.evaluation.scenarios import scenario
 
-    demo_scenario = scenario(measured.scenario_ids()[0])
-    demo = demo_scenario["params"]
+    demo = scenario(measured.scenario_ids()[0])["params"]
     verdict = assess_budget(demo["budget"], demo["legs"][0][0], demo["nights"],
                             demo["adults"], demo["origin"],
                             price_probe=PriceProbe())
-    grounding_ties = measured.intervals_overlap("C", "D", "prices_grounded_pct")
-
-    def A(key):
-        return arms["A"][key]
 
     def calls(letter):
         return arms[letter]["avg_llm_calls"]
@@ -232,6 +189,9 @@ def build() -> str:
 
     def grounded(letter):
         return arms[letter]["avg_prices_grounded_pct"]
+
+    def secs(letter):
+        return arms[letter]["avg_latency"]
 
     prs = Presentation()
     prs.slide_width, prs.slide_height = W, H
@@ -268,283 +228,214 @@ def build() -> str:
     _text(slide, Inches(0.9), Inches(6.35), Inches(11.5), Inches(0.5),
           [(f"Student {STUDENT}", 12, False, RGBColor(0x9C, 0xA3, 0xF5))])
     _notes(slide, """
-        Twelve slides. A working travel planner, and one research question inside
-        it: which parts actually need AI? I built it four ways and measured all
-        four.
+        Nine slides. A working travel planner, and one question inside it: which
+        parts of it really need AI? I built it four ways and measured all four.
     """)
 
-    # ======================================================== 2  the real question
+    # ============================================================= 2  the agents
     slide = _blank(prs)
-    _heading(slide, "1  ·  What the system has to do",
-             "One request, eight jobs")
-    _panel(slide, Inches(0.9), Inches(2.05), Inches(11.5), Inches(0.75),
-           f'"{demo_scenario["input"]}"',
-           fill=RGBColor(0xF7, 0xF8, 0xFC), edge=RGBColor(0xE3, 0xE7, 0xF0),
-           size=15, colour=SOFT)
+    _heading(slide, "1  ·  The agents", "Each one has a name and one job")
     _table(slide,
-           ["Understand the request", "Get real information", "Then"],
-           [["1  Lahore to Istanbul", "4  Find real flights",
-             "8  Build the day-by-day plan"],
-            ["2  The dates", "5  Find real hotels", ""],
-            ["3  The budget", "6  Find real attractions", ""],
-            ["", "7  Find real restaurants", ""]],
-           col_widths=[3.4, 3.6, 4.5], font=13.5, top=Inches(3.1))
-    _text(slide, Inches(0.9), Inches(5.5), Inches(11.5), Inches(1.4),
-          [("So the real question is:", 16, False, SOFT),
-           ("Should AI decide when to search for flights and hotels, or should "
-            "normal code just do it?", 21, True, ACCENT)], spacing=1.3)
+           ["Agent", "What it does"],
+           [["Travel Conversation Assistant",
+             "Asks the traveller for anything missing"],
+            ["Travel Preferences Extractor",
+             "Turns those words into exact fields"],
+            ["Flight Search Specialist", "Looks up flights"],
+            ["Hotel Search Specialist", "Looks up hotels"],
+            ["Activities Specialist",
+             "Looks up places to visit and places to eat"],
+            ["Itinerary Coordinator", "Writes the final day-by-day plan"]],
+           col_widths=[4.0, 6.8], font=15, top=Inches(2.3))
+    _text(slide, Inches(0.9), Inches(6.1), Inches(11.5), Inches(0.8),
+          [("Six agents. The next four slides show which of them each approach "
+            "uses, and what tools each one is given.", 17, False, SOFT)])
     _notes(slide, """
-        This is the scenario every one of the four approaches is given, word for
-        word, so nothing in the comparison depends on phrasing. Jobs 1 to 3 need
-        judgement - there is no single right way to read a sentence. Jobs 4 to 7
-        are fixed once you know the destination and the dates. Job 8 needs
-        judgement again.
+        Six agents. Two of them read what the traveller wrote, three look things
+        up, and one writes the plan. Keep this slide up while naming them - the
+        next four slides all refer back to these names.
     """)
 
-    # ============================================================= 3  the agents
+    # ============================================================ 3  approach A
     slide = _blank(prs)
-    _heading(slide, "2  ·  The agents we use", "Each has a name and one job")
+    _heading(slide, "2  ·  Approach A", "One AI on its own. No agents, no tools")
     _table(slide,
-           ["Agent", "What it does", "Needs AI?"],
-           [["Travel Conversation Assistant", "Asks for anything missing",
-             "Yes - people write in many ways"],
-            ["Travel Preferences Extractor", "Turns those words into exact fields",
-             "Yes - same reason"],
-            ["Flight Search Specialist", "Looks up flights", "No"],
-            ["Hotel Search Specialist", "Looks up hotels", "No"],
-            ["Activities Specialist", "Looks up places to visit and eat", "No"],
-            ["Itinerary Coordinator", "Writes the day-by-day plan",
-             "Yes - which day, what order"]],
-           col_widths=[3.4, 4.6, 3.0], font=13, top=Inches(2.2))
-    _text(slide, Inches(0.9), Inches(5.9), Inches(11.5), Inches(0.9),
-          [("Looking something up does not need thinking. Only three of the six "
-            "really need AI.", 19, True, ACCENT)])
-    _notes(slide, """
-        The test for each agent: could I write its job as ordinary code? You
-        cannot write a rule that understands any way a person might phrase a
-        request, and you cannot write a rule that makes a day pleasant. You can
-        absolutely write a rule that calls a flight API with a date.
-    """)
-
-    # ======================================================== 4  four approaches
-    slide = _blank(prs)
-    _heading(slide, "3  ·  I built it four ways", "Same request, same data")
-    _table(slide,
-           ["", "Name", "Simple meaning", "Agents", "Who fetches the data"],
-           [["A", "Single AI", "AI answers from its own knowledge", "1",
-             "nobody - no APIs at all"],
-            ["B", "6 agents, naive", "Each agent decides its own tool use", "6",
-             "the agents, through the tool server"],
-            ["C", "6 agents, tuned", "Same six, configured properly", "6",
-             "the agents, calling directly"],
-            ["D", "3 agents, direct", "AI thinks; code does the searching", "3",
-             "plain Python"]],
-           col_widths=[0.4, 2.0, 3.9, 0.9, 3.8], font=13, top=Inches(2.2))
-    _text(slide, Inches(0.9), Inches(5.4), Inches(11.5), Inches(1.3),
-          [("All four get the identical request and the identical travel data.",
-            18, True, INK),
-           ("So the only thing being tested is who decides when to fetch it.",
-            17, False, SOFT)], spacing=1.25)
-    _notes(slide, """
-        C is the one that makes this honest. Without it, someone could say D only
-        won because B was configured badly - and they would be partly right, which
-        is the finding on slide 7.
-    """)
-
-    # ============================================================ 5  approach A
-    slide = _blank(prs)
-    _heading(slide, "4  ·  Approach A  —  Single AI", "The baseline")
-    _panel(slide, Inches(2.6), Inches(2.1), Inches(2.4), Inches(0.85), "USER",
-           fill=GREY_FILL_P, size=14, bold=True)
-    _panel(slide, Inches(5.5), Inches(2.1), Inches(2.4), Inches(0.85), "AI",
-           fill=PURPLE_FILL_P, size=14, bold=True, colour=PAPER)
-    _panel(slide, Inches(8.4), Inches(2.1), Inches(2.4), Inches(0.85), "ITINERARY",
-           fill=GREY_FILL_P, size=14, bold=True)
-    _text(slide, Inches(5.0), Inches(2.25), Inches(0.5), Inches(0.5),
-          [("▶", 14, False, FAINT)], align=PP_ALIGN.CENTER)
-    _text(slide, Inches(7.9), Inches(2.25), Inches(0.5), Inches(0.5),
-          [("▶", 14, False, FAINT)], align=PP_ALIGN.CENTER)
-    _text(slide, Inches(0.9), Inches(3.3), Inches(11.5), Inches(0.6),
-          [("No tools. No APIs. The AI writes the plan from what it already knows.",
-            17, False, SOFT)], align=PP_ALIGN.CENTER)
+           ["Agent", "How many tools", "Which tools"],
+           [["none — just one AI call", "0", "none"]],
+           col_widths=[4.4, 2.6, 3.8], font=15, top=Inches(2.3))
+    _text(slide, Inches(0.9), Inches(3.4), Inches(11.5), Inches(0.7),
+          [("The AI writes the whole plan from what it already knows. It cannot "
+            "look anything up.", 18, False, INK)])
     _stat_row(slide, [
         (f"{calls('A'):.0f}", "AI call"),
-        (f"{grounded('A'):.1f}%", "of its prices matched a real fare"),
-        (f"{A('avg_latency'):.0f}s", "to produce the plan"),
-    ], top=Inches(4.1), colour=WARN)
-    _text(slide, Inches(0.9), Inches(6.05), Inches(11.5), Inches(0.9),
-          [("Cheap and fast, and the information cannot be trusted. That is what "
-            "this approach is here to show.", 18, True, WARN)])
+        (f"{grounded('A'):.1f}%", "of its prices were real"),
+        (f"{secs('A'):.0f}s", "to finish"),
+    ], top=Inches(4.3), colour=WARN)
+    _text(slide, Inches(0.9), Inches(6.2), Inches(11.5), Inches(0.8),
+          [("So it makes the prices up. This is the baseline everything else has "
+            "to beat.", 20, True, WARN)])
     _notes(slide, f"""
-        Say it plainly: Approach A is the baseline. It shows what happens when AI
-        plans a trip with no access to real travel data. It produced a fluent,
-        confident itinerary and {grounded('A'):.1f}% of the prices in it matched
-        anything real. Every other approach has to beat this, and if one of them
-        did not, the tool layer would not be earning its place.
+        Say it plainly: Approach A shows what happens when AI plans a trip with no
+        access to real travel data. It produced a confident, well-written
+        itinerary and {grounded('A'):.1f}% of the prices in it matched anything
+        real. Every other approach has to beat this.
     """)
 
-    # ============================================================ 6  approach B
+    # ============================================================ 4  approach B
     slide = _blank(prs)
-    _heading(slide, "5  ·  Approach B  —  6 agents, naive",
-             "Every agent decides for itself")
+    _heading(slide, "3  ·  Approach B",
+             "Six agents. Each one picks its own tools")
     _table(slide,
-           ["The hotel agent's thinking", "Each line is a separate AI call"],
-           [["\"I need Istanbul's destination ID\"", "tool call"],
-            ["\"Now I'll search hotels\"", "tool call - 12,000 characters back"],
-            ["\"Maybe I should check the reviews\"", "tool call"],
-            ["\"Maybe I should look at nearby attractions\"", "tool call"],
-            ["...and it may keep going, up to 10 steps", "8 tool descriptions "
-             "re-sent every single time"]],
-           col_widths=[6.2, 4.6], font=13, top=Inches(2.15))
-    _stat_row(slide, [
-        (f"{calls('B'):.0f}", "AI calls per trip"),
-        (f"{arms['B']['avg_latency']:.0f}s", "to plan one trip"),
-        ("2", "tools it never called at all"),
-    ], top=Inches(4.7), colour=WARN)
-    _text(slide, Inches(0.9), Inches(6.5), Inches(11.5), Inches(0.7),
-          [("Too much freedom: it keeps thinking and searching when it does not "
-            "need to - and still skipped tools.", 17, True, WARN)])
+           ["Agent", "Tools", "Which tools"],
+           [["Travel Preferences Extractor", "0", "none"],
+            ["Flight Search Specialist", "4",
+             "search_comprehensive_flights,  search_round_trip_flights,  "
+             "search_internet,  calculate"],
+            ["Hotel Search Specialist", "8",
+             "search_hotels_comprehensive,  search_accommodations_with_location,  "
+             "search_hotel_destination,  search_hotels_by_dest_id,  "
+             "get_hotel_reviews,  get_attractions_near_hotel,  search_internet,  "
+             "calculate"],
+            ["Activities Specialist", "4",
+             "search_attractions,  search_restaurants,  search_internet,  "
+             "calculate"],
+            ["Itinerary Coordinator", "4",
+             "calculate,  search_internet,  search_attractions,  "
+             "search_restaurants"],
+            ["Total", "20", ""]],
+           col_widths=[3.2, 0.9, 6.9], font=11, top=Inches(2.15))
+    _text(slide, Inches(0.9), Inches(5.5), Inches(11.5), Inches(1.4),
+          [(f"It used {calls('B'):.0f} AI calls and took {secs('B'):.0f} seconds "
+            f"to plan one trip.", 20, True, INK),
+           ("Too much freedom: the agents keep thinking and searching — and they "
+            "still never called two of their own tools.", 17, True, WARN)],
+          spacing=1.25)
     _notes(slide, f"""
-        This was my original proposal. The agents can keep thinking, and every
-        step re-sends the conversation and all the tool descriptions. On the
-        recorded run it took {calls('B'):.1f} AI calls and
-        {arms['B']['avg_latency']:.0f} seconds, produced malformed output twice
-        that its own loop had to retry, and never called the attractions or the
-        restaurant tool once - while still writing a complete-looking plan.
+        This was my original proposal. The hotel agent has eight tools and is
+        allowed ten thinking steps, and every step is a separate AI call that
+        re-sends the conversation and all eight tool descriptions. It took
+        {calls('B'):.1f} AI calls and {secs('B'):.0f} seconds, gave broken output
+        twice, and never once called the attractions or the restaurant tool -
+        while still producing a plan that looked complete.
     """)
 
-    # ============================================================ 7  approach C
+    # ============================================================ 5  approach C
     slide = _blank(prs)
-    _heading(slide, "6  ·  Approach C  —  6 agents, tuned",
-             "Approach B done properly")
+    _heading(slide, "4  ·  Approach C",
+             "The same six agents, but set up properly")
     _table(slide,
-           ["", "Approach B", "Approach C"],
-           [["Tools per agent", "up to 8", "1 or 2"],
-            ["Thinking steps allowed", "8 to 15", "3"],
-            ["What the AI is sent", "the full 12,000-character API reply",
-             "the best 3 results, trimmed"],
-            ["When agents run", "one after another", "at the same time"]],
-           col_widths=[2.8, 4.0, 3.7], font=13.5, top=Inches(2.2))
-    _stat_row(slide, [
-        (f"{gains.get('C_vs_B', {}).get('tokens_pct', 0):.0f}%", "less text sent, "
-         "from settings alone"),
-        (f"{calls('C'):.0f}", f"AI calls, down from {calls('B'):.0f}"),
-        (f"{grounded('C'):.0f}%", "of its prices are real"),
-    ], top=Inches(4.6), colour=ACCENT)
-    _text(slide, Inches(0.9), Inches(6.4), Inches(11.5), Inches(0.8),
-          [("This is one of the biggest findings: most of B's cost was bad "
-            "configuration, not the design.", 18, True, ACCENT)])
+           ["Agent", "Tools", "Which tools"],
+           [["Travel Preferences Extractor", "0", "none"],
+            ["Flight Search Specialist", "1", "distilled_search_flights"],
+            ["Hotel Search Specialist", "1", "distilled_search_hotels"],
+            ["Activities Specialist", "2",
+             "distilled_search_attractions,  distilled_search_restaurants"],
+            ["Itinerary Coordinator", "0", "none"],
+            ["Total", "4", ""]],
+           col_widths=[3.2, 0.9, 6.9], font=13, top=Inches(2.2))
+    _text(slide, Inches(0.9), Inches(5.0), Inches(11.5), Inches(1.9),
+          [("Three changes: fewer tools each, only 3 thinking steps instead of "
+            "15, and the AI is shown the best 3 results instead of 12,000 "
+            "characters.", 17, False, INK),
+           ("", 5, False, INK),
+           (f"Result: {gains.get('C_vs_B', {}).get('tokens_pct', 0):.0f}% less "
+            f"text sent, and {calls('C'):.0f} AI calls instead of "
+            f"{calls('B'):.0f}.", 20, True, ACCENT),
+           ("Worth saying out loud: most of B's cost was bad setup, not the "
+            "design.", 17, True, WARN)], spacing=1.2)
     _notes(slide, f"""
-        Instead of handing the AI 12,000 characters of hotel data, C trims it to
-        three lines - Theodora Pension $33 10/10, Hotel Sultania $41 9/10, and so
-        on. Configuration alone removed
+        Approach C is Approach B done properly, and it exists so nobody can say D
+        only won because B was set up badly. Instead of handing the AI twelve
+        thousand characters of hotel data, it gets three lines - Theodora Pension
+        $33 10/10, and so on. Settings alone removed
         {gains.get('C_vs_B', {}).get('tokens_pct', 0):.0f}% of the tokens. Being
-        honest about that is what makes the next slide's claim defensible rather
-        than inflated.
+        honest about that is what makes the next slide believable.
     """)
 
-    # ============================================================ 8  approach D
+    # ============================================================ 6  approach D
     slide = _blank(prs)
-    _heading(slide, "7  ·  Approach D  —  3 agents, direct",
-             "The design that ships")
-    mid = W / 2
-    _panel(slide, mid - Inches(3.2), Inches(2.05), Inches(6.4), Inches(0.8),
-           "AI STEP 1     understand the request",
-           fill=PURPLE_FILL_P, size=15, bold=True, colour=PAPER)
-    _arrow_down(slide, mid, Inches(2.9))
-    _panel(slide, mid - Inches(3.2), Inches(3.3), Inches(6.4), Inches(1.5),
-           "PLAIN PYTHON     fetch flights, hotels,\nattractions and restaurants",
-           fill=AQUA_FILL_P, size=15, bold=True)
-    _arrow_down(slide, mid, Inches(4.85))
-    _panel(slide, mid - Inches(3.2), Inches(5.25), Inches(6.4), Inches(0.8),
-           "AI STEP 2     build the day-by-day plan",
-           fill=PURPLE_FILL_P, size=15, bold=True, colour=PAPER)
-    _text(slide, Inches(0.9), Inches(6.3), Inches(11.5), Inches(0.9),
-          [("Once we know the destination and the dates, searching is fixed. "
-            "There is nothing left for AI to decide.", 18, True, INK)],
-          align=PP_ALIGN.CENTER)
+    _heading(slide, "5  ·  Approach D",
+             "Three agents. Plain Python does the searching")
+    _table(slide,
+           ["Agent", "Tools", "Which tools"],
+           [["Travel Conversation Assistant", "0", "none"],
+            ["Travel Preferences Extractor", "0", "none"],
+            ["Itinerary Coordinator", "0",
+             "none — the data is handed to it already"],
+            ["Total", "0", ""]],
+           col_widths=[3.2, 0.9, 6.9], font=13.5, top=Inches(2.2))
+    _text(slide, Inches(0.9), Inches(4.25), Inches(11.5), Inches(0.5),
+          [("The three search agents are gone. Plain Python fetches the flights, "
+            "hotels, attractions and restaurants.", 18, True, INK)])
+    _text(slide, Inches(0.9), Inches(4.8), Inches(11.5), Inches(0.5),
+          [("(In the web app the coordinator keeps 4 helper tools — calculate, "
+            "search_internet, search_attractions, search_restaurants. The "
+            "measured run removes them.)", 12, False, SOFT)])
+    _stat_row(slide, [
+        (f"{calls('D'):.0f}", "AI calls"),
+        (f"{secs('D'):.0f}s", "to finish"),
+        (f"{per_arm['D']['total_http']}", "searches, every single time"),
+    ], top=Inches(5.35), colour=ACCENT)
+    _text(slide, Inches(0.9), Inches(7.0), Inches(11.5), Inches(0.4),
+          [("Once we know the place and the dates, there is nothing left for AI "
+            "to decide.", 16, False, SOFT)])
     _notes(slide, f"""
-        The one-sentence version of the whole project: AI decides what the user
-        wants and how to present it; Python decides what data needs fetching. It
-        makes exactly {per_arm['D']['total_http']} requests every time, in the
-        same order, because an IF statement decides rather than a model. Nothing
-        can be skipped, and {calls('D'):.0f} AI calls do the whole trip.
+        This is the one that ships. AI understands the request, Python fetches the
+        data, AI writes the plan. No agent holds a search tool in the measured
+        run, so it makes exactly {per_arm['D']['total_http']} searches every time
+        in the same order - an IF statement decides rather than a model, so
+        nothing can be skipped, which is exactly what B and C both did. If asked
+        about the four helper tools in the web app: they are on the coordinator
+        for the interactive path, and the measured arm strips them so the
+        comparison is clean.
     """)
 
-    # =========================================================== 9  where MCP fits
+    # ========================================================== 7  the comparison
     slide = _blank(prs)
-    _heading(slide, "8  ·  Where the tool server fits",
-             "12 tools, but not every approach uses it the same way")
+    _heading(slide, "6  ·  All four side by side",
+             f"Each one run {coverage['repeats_per_arm']} times")
     _table(slide,
-           ["", "How it reaches a travel API"],
-           [["A", "It does not. No tools at all"],
-            ["B", "Agent -> tool wrapper -> MCP client -> JSON-RPC -> MCP server "
-                  "-> travel API"],
-            ["C", "Agent -> the same server functions, called directly in the "
-                  "process. No JSON-RPC"],
-            ["D", "Plain Python -> the same server functions, called directly. "
-                  "Code decides when"]],
-           col_widths=[0.4, 10.6], font=13.5, top=Inches(2.2))
-    _text(slide, Inches(0.9), Inches(5.2), Inches(11.5), Inches(1.5),
-          [("If asked \"does the final system use the MCP server?\"", 16, False,
-            SOFT),
-           ("It uses the same tool functions the server exposes, but calls them "
-            "in-process rather than over JSON-RPC. The protocol itself is "
-            "exercised by Approach B and by the conformance audit.", 17, True,
-            INK)], spacing=1.3)
-    _notes(slide, """
-        This is the question most likely to catch someone out, so it is on a slide
-        rather than left to memory. It is also stated in Section 7.2 of the report
-        as a limitation rather than glossed over: the two protocols the project is
-        named for are less load-bearing in the shipped version than the proposal
-        implied.
-    """)
-
-    # ========================================================= 10  the comparison
-    slide = _blank(prs)
-    _heading(slide, "9  ·  The four side by side",
-             f"{coverage['repeats_per_arm']} runs of each")
-    _table(slide,
-           ["", "A  single AI", "B  6 naive", "C  6 tuned", "D  3 direct"],
-           [["AI calls", f"{calls('A'):.0f}", f"{calls('B'):.0f}",
+           ["", "A  one AI", "B  6 agents", "C  6 tuned", "D  3 agents"],
+           [["Tools given to agents", "0", "20", "4", "0"],
+            ["AI calls", f"{calls('A'):.0f}", f"{calls('B'):.0f}",
              f"{calls('C'):.0f}", f"{calls('D'):.0f}"],
             ["Text sent to the AI", f"{tokens('A'):,.0f}", f"{tokens('B'):,.0f}",
              f"{tokens('C'):,.0f}", f"{tokens('D'):,.0f}"],
             ["Cost per trip", f"${arms['A']['avg_cost_usd']:.4f}",
-             f"${arms['B']['avg_cost_usd']:.4f}", f"${arms['C']['avg_cost_usd']:.4f}",
+             f"${arms['B']['avg_cost_usd']:.4f}",
+             f"${arms['C']['avg_cost_usd']:.4f}",
              f"${arms['D']['avg_cost_usd']:.4f}"],
-            ["Time", f"{arms['A']['avg_latency']:.0f}s",
-             f"{arms['B']['avg_latency']:.0f}s", f"{arms['C']['avg_latency']:.0f}s",
-             f"{arms['D']['avg_latency']:.0f}s"],
-            ["Prices that are real", f"{grounded('A'):.1f}%", f"{grounded('B'):.0f}%",
-             f"{grounded('C'):.0f}%", f"{grounded('D'):.0f}%"]],
-           col_widths=[3.0, 2.0, 2.0, 2.0, 2.2], font=13.5, top=Inches(2.2))
-    _text(slide, Inches(0.9), Inches(5.3), Inches(11.5), Inches(1.5),
-          [("The honest reading, not the flattering one:", 16, False, SOFT),
-           (f"D is not more accurate than C — their ranges overlap. D is "
-            f"{tokens('C') / tokens('D'):.1f}x cheaper than C and "
-            f"{tokens('B') / tokens('D'):.0f}x cheaper than B, with no "
-            f"detectable loss of accuracy.", 18, True, ACCENT)], spacing=1.3)
+            ["Time", f"{secs('A'):.0f}s", f"{secs('B'):.0f}s",
+             f"{secs('C'):.0f}s", f"{secs('D'):.0f}s"],
+            ["Prices that were real", f"{grounded('A'):.1f}%",
+             f"{grounded('B'):.0f}%", f"{grounded('C'):.0f}%",
+             f"{grounded('D'):.0f}%"]],
+           col_widths=[3.0, 2.0, 2.0, 2.0, 2.2], font=14, top=Inches(2.2))
+    _text(slide, Inches(0.9), Inches(5.7), Inches(11.5), Inches(1.2),
+          [("Being honest: D is not more accurate than C — their ranges overlap.",
+            17, False, SOFT),
+           (f"What D is: {tokens('C') / tokens('D'):.1f}x cheaper than C and "
+            f"{tokens('B') / tokens('D'):.0f}x cheaper than B, with no drop in "
+            f"accuracy.", 19, True, ACCENT)], spacing=1.3)
     _notes(slide, f"""
-        Read the last row carefully. C scores {grounded('C'):.0f}% and D
-        {grounded('D'):.0f}%, and their intervals overlap, so I cannot claim D is
-        better grounded - and I do not. What does not overlap is the token count.
-        The claim is therefore cheaper and faster with no measurable penalty,
-        which is a smaller claim than the numbers first suggest and the only one
-        the data supports.
+        Read the last row carefully. C is {grounded('C'):.0f}% and D is
+        {grounded('D'):.0f}%, and their ranges overlap, so I cannot claim D is
+        better grounded and I do not. What does not overlap is the token count.
+        The claim is cheaper and faster with no measurable penalty - a smaller
+        claim than the numbers first suggest, and the only one the data supports.
     """)
 
-    # ======================================================== 11  what user sees
+    # ======================================================== 8  what user sees
     slide = _blank(prs)
-    _heading(slide, "10  ·  What the user sees",
-             "And the check that stops a fantasy trip")
-    _figure(slide, "frontend.png", top=Inches(1.9), height=Inches(3.7))
+    _heading(slide, "7  ·  What the user sees",
+             "And the check that stops an impossible trip")
+    _figure(slide, "frontend.png", top=Inches(1.9), height=Inches(3.4))
     _stat_row(slide, [
         (f"${demo['budget']:,.0f}", "traveller asked for"),
         (f"${verdict.estimate.minimum:,.0f}", "cheapest it can be done"),
         ("REFUSED" if not verdict.feasible else "ALLOWED",
          "with three ways to fix it"),
-    ], top=Inches(5.75), colour=WARN)
+    ], top=Inches(5.45), colour=WARN)
     _notes(slide, f"""
         Two things worth demonstrating. The seven step rows tick over live as each
         finishes, so the page never looks frozen. And the budget check: it works
@@ -555,42 +446,38 @@ def build() -> str:
         trip, a bigger budget, or a nearer city.
     """)
 
-    # ============================================================ 12  conclusion
+    # ============================================================= 9  conclusion
     slide = _blank(prs)
     _fill(slide, DARK)
-    _text(slide, Inches(1.1), Inches(1.15), Inches(11.2), Inches(0.5),
+    _text(slide, Inches(1.1), Inches(1.4), Inches(11.2), Inches(0.5),
           [("IN ONE SENTENCE", 14, True, RGBColor(0x9C, 0xA3, 0xF5))])
-    _text(slide, Inches(1.1), Inches(1.65), Inches(11.2), Inches(2.0),
-          [("AI decides what the user wants and how to present it.", 30, True,
+    _text(slide, Inches(1.1), Inches(1.9), Inches(11.2), Inches(2.0),
+          [("AI decides what the user wants and how to show it.", 30, True,
             PAPER),
-           ("Python decides what data needs to be fetched.", 30, True,
+           ("Python decides what data to fetch.", 30, True,
             RGBColor(0x6E, 0xE7, 0xDF))], spacing=1.2)
-    _rule(slide, Inches(1.1), Inches(3.85), Inches(1.6), TEAL)
-    _text(slide, Inches(1.1), Inches(4.2), Inches(11.2), Inches(2.6),
+    _rule(slide, Inches(1.1), Inches(4.1), Inches(1.6), TEAL)
+    _text(slide, Inches(1.1), Inches(4.45), Inches(11.2), Inches(2.4),
           [("WHAT I FOUND", 12, True, RGBColor(0x9C, 0xA3, 0xF5)),
            ("", 5, False, PAPER),
-           ("Without tools, AI invents travel information. Tools are essential.",
-            16, False, RGBColor(0xC7, 0xD2, 0xFE)),
-           (f"Configuration matters enormously — settings alone saved "
-            f"{gains.get('C_vs_B', {}).get('tokens_pct', 0):.0f}%.", 16, False,
-            RGBColor(0xC7, 0xD2, 0xFE)),
-           ("Taking AI out of the lookup step is cheaper and faster, with no "
-            "detectable loss of accuracy.", 16, False,
-            RGBColor(0x6E, 0xE7, 0xDF)),
+           ("1.  Without tools, AI makes travel prices up. Tools are essential.",
+            17, False, RGBColor(0xC7, 0xD2, 0xFE)),
+           (f"2.  Setup matters hugely — settings alone saved "
+            f"{gains.get('C_vs_B', {}).get('tokens_pct', 0):.0f}% of the cost.",
+            17, False, RGBColor(0xC7, 0xD2, 0xFE)),
+           ("3.  Taking AI out of the searching is cheaper and faster, and just "
+            "as accurate.", 17, False, RGBColor(0x6E, 0xE7, 0xDF)),
            ("", 5, False, PAPER),
-           (f"The gap: {coverage['scenarios_measured']} of "
+           (f"Honest gap: only {coverage['scenarios_measured']} of "
             f"{coverage['scenarios_designed']} trips measured for cost, because "
-            f"of the free API limits. {protocol['passed']} of "
-            f"{protocol['total_checks']} of my own design checks pass. Both are "
-            f"in the report.", 14, False, RGBColor(0x9C, 0xA3, 0xF5))],
-          spacing=1.25)
+            f"of the free API limits.", 14, False,
+            RGBColor(0x9C, 0xA3, 0xF5))], spacing=1.25)
     _notes(slide, f"""
-        Land the claim and its limits together. The three findings map onto three
-        comparisons: A against the rest shows tools are essential; B against C
-        shows configuration matters; C against D shows removing AI from
-        deterministic lookup is free money. {tests} tests and
-        {cache['entries']} saved API replies mean anyone can check all of it
-        without a single API key.
+        Three findings from three comparisons: A against the rest shows tools are
+        essential, B against C shows setup matters, C against D shows that
+        removing AI from the searching costs nothing in quality. {tests} tests
+        and {cache['entries']} saved API replies mean anyone can check all of it
+        without an API key.
     """)
 
     prs.save(OUTPUT)
