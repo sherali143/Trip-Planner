@@ -166,7 +166,6 @@ def _table(slide, headers, rows, left=Inches(0.9), top=Inches(2.1),
 
 def build() -> str:
     arms = measured.results()["arms"]
-    gains = measured.results().get("improvements", {})
     coverage = measured.coverage()
     protocol = measured.protocol_summary()
     gate = measured.gate_agreement()
@@ -175,9 +174,8 @@ def build() -> str:
     per_arm = measured.api_calls_per_arm()["arms"]
     anchor = measured.gate_external_validity()
 
-    # The refusal example, computed rather than typed. Its whole point is that the
-    # floor comes from a real recorded fare, so quoting it from memory would be
-    # the one hardcoded number in a deck built to avoid them.
+    # Computed, not typed: the whole point of this example is that the floor comes
+    # from a real recorded fare.
     from trip_planner.core.real_prices import PriceProbe
     from trip_planner.core.trip_cost import assess_budget
     from trip_planner.evaluation.scenarios import scenario
@@ -199,271 +197,285 @@ def build() -> str:
     prs = Presentation()
     prs.slide_width, prs.slide_height = W, H
 
-    # ------------------------------------------------- 1  title + problem + fix
+    # ----------------------------------------- 1  title, problem, solution
     slide = _blank(prs)
     _fill(slide, DARK)
-    _text(slide, Inches(0.9), Inches(0.55), Inches(11.5), Inches(0.4),
+    _text(slide, Inches(0.9), Inches(0.6), Inches(11.5), Inches(0.4),
           [("MSc DISSERTATION  ·  VIVA VOCE  ·  " + MODULE, 12, True,
             RGBColor(0x9C, 0xA3, 0xF5))])
-    _text(slide, Inches(0.9), Inches(1.0), Inches(11.5), Inches(1.2),
+    _text(slide, Inches(0.9), Inches(1.05), Inches(11.5), Inches(1.1),
           [("AI Trip Planner", 46, True, PAPER)])
-    _text(slide, Inches(0.9), Inches(2.15), Inches(11.5), Inches(0.7),
-          [("Type where you want to go. Get a day-by-day plan built from real "
-            "flight and hotel prices.", 17, False, RGBColor(0xC7, 0xD2, 0xFE))])
+    _text(slide, Inches(0.9), Inches(2.15), Inches(11.5), Inches(0.6),
+          [("You type where you want to go. It gives you a day-by-day plan with "
+            "real flight and hotel prices.", 17, False,
+            RGBColor(0xC7, 0xD2, 0xFE))])
     _rule(slide, Inches(0.9), Inches(2.95), Inches(1.4), TEAL)
 
-    # Two blocks: the problem, then what I did about it.
-    _text(slide, Inches(0.9), Inches(3.35), Inches(5.4), Inches(2.6),
+    _text(slide, Inches(0.9), Inches(3.4), Inches(5.4), Inches(2.5),
           [("THE PROBLEM", 13, True, RGBColor(0xF0, 0xB4, 0x6A)),
            ("", 6, False, PAPER),
-           ("AI agents are given tools and left to decide when to use them.",
-            17, False, PAPER),
-           ("", 5, False, PAPER),
-           (f"That cost {calls('B'):.0f} AI calls to plan one trip — and the "
-            f"agents still skipped their own tools.", 15, False,
-            RGBColor(0xC7, 0xD2, 0xFE))], spacing=1.25)
+           ("Planning a trip needs flights, hotels, places to visit and a budget "
+            "that adds up.", 17, False, PAPER),
+           ("", 4, False, PAPER),
+           ("One AI doing all of it is slow, expensive, and makes prices up.",
+            17, False, PAPER)], spacing=1.25)
 
-    _text(slide, Inches(6.9), Inches(3.35), Inches(5.5), Inches(2.6),
+    _text(slide, Inches(6.9), Inches(3.4), Inches(5.5), Inches(2.5),
           [("MY SOLUTION", 13, True, RGBColor(0x6E, 0xE7, 0xDF)),
            ("", 6, False, PAPER),
-           ("Use AI only where a step needs thinking. Fetch data with plain code.",
-            17, False, PAPER),
-           ("", 5, False, PAPER),
-           (f"Same plan for {calls('D'):.0f} AI calls — "
-            f"{tokens('B') / tokens('D'):.0f}x cheaper, just as accurate.",
-            15, False, RGBColor(0x6E, 0xE7, 0xDF))], spacing=1.25)
+           ("Split the job between several small agents, each with one clear "
+            "task.", 17, False, PAPER),
+           ("", 4, False, PAPER),
+           ("Then give AI only to the agents that need to think.", 17, False,
+            RGBColor(0x6E, 0xE7, 0xDF))], spacing=1.25)
 
     _text(slide, Inches(0.9), Inches(6.35), Inches(11.5), Inches(0.5),
           [(f"Student {STUDENT}", 12, False, RGBColor(0x9C, 0xA3, 0xF5))])
     _notes(slide, f"""
-        Ten slides, fifteen minutes. The project is a working travel planner. The
-        research question is which steps inside it actually need AI. I built it
-        four ways and measured all four: the agent version needed
-        {calls('B'):.1f} AI calls per trip and mine needs {calls('D'):.1f}.
+        Ten slides. The project is a working travel planner. The question is which
+        parts of it actually need AI. I built it four different ways and measured
+        all four: the all-agent version needs {calls('B'):.1f} AI calls per trip
+        and mine needs {calls('D'):.1f}.
     """)
 
-    # ---------------------------------------------------------- 2  the agents
+    # ----------------------------------------------------- 2  the agents
     slide = _blank(prs)
-    _heading(slide, "1  ·  The agents", "Their real names, and what each one does")
+    _heading(slide, "1  ·  We use several agents",
+             "Each one has a name and one job")
     _table(slide,
-           ["Agent name", "Its job", "Uses AI?"],
+           ["Agent", "What it does", "Needs AI?"],
            [["Travel Conversation Assistant",
-             "Asks the traveller for anything missing", "YES"],
+             "Asks the traveller for anything missing", "Yes - people write in "
+             "many ways"],
             ["Travel Preferences Extractor",
-             "Turns the words into exact fields, then checks the budget", "YES"],
-            ["Flight Search Specialist", "Finds flights", "no — removed in D"],
-            ["Hotel Search Specialist", "Finds hotels", "no — removed in D"],
-            ["Activities Specialist", "Finds attractions and restaurants",
-             "no — removed in D"],
-            ["Itinerary Coordinator",
-             "Writes the day-by-day plan from what was found", "YES"]],
-           col_widths=[3.4, 5.4, 2.2], font=13, top=Inches(2.2))
+             "Turns those words into exact fields", "Yes - same reason"],
+            ["Flight Search Specialist", "Looks up flights", "No"],
+            ["Hotel Search Specialist", "Looks up hotels", "No"],
+            ["Activities Specialist", "Looks up places to visit and eat", "No"],
+            ["Itinerary Coordinator", "Writes the day-by-day plan",
+             "Yes - which day, what order"]],
+           col_widths=[3.4, 4.6, 3.0], font=13, top=Inches(2.2))
     _text(slide, Inches(0.9), Inches(5.9), Inches(11.5), Inches(0.9),
-          [("The three search agents were removed. Plain code does their job for "
-            "a fraction of the cost.", 18, True, ACCENT)])
+          [("Looking something up does not need thinking. Only three agents "
+            "really need AI.", 19, True, ACCENT)])
     _notes(slide, """
-        Six agents became three. The three that stayed each fail the test "could I
-        write this as ordinary code?" - you cannot write a rule that understands
-        any phrasing a person might use, and you cannot write a rule that makes a
-        day pleasant. The three that went were only ever making API calls, and an
-        IF statement does that perfectly well.
+        The test for each agent: could I write its job as ordinary code? You
+        cannot write a rule that understands any way a person might phrase a
+        request, and you cannot write a rule that makes a day pleasant. You can
+        absolutely write a rule that calls a flight API with a date.
     """)
 
-    # ------------------------------------------------------ 3  the approaches
+    # -------------------------------------------------- 3  the approaches
     slide = _blank(prs)
-    _heading(slide, "2  ·  The four approaches",
-             "Only one thing changes: who fetches the data")
+    _heading(slide, "2  ·  I built it four ways", "So I could compare them fairly")
     _table(slide,
-           ["", "Approach", "Who fetches the data", "Why it exists"],
-           [["A", "One AI call, no tools", "nobody",
-             "The floor. Shows what AI invents with no data"],
-            ["B", "Six agents, first attempt", "each agent decides",
-             "My original proposal, untuned"],
-            ["C", "Six agents, tuned", "each agent decides",
-             "Proves the gain is the design, not the settings"],
-            ["D", "Three agents", "plain code",
-             "What I ship. The idea being tested"]],
-           col_widths=[0.5, 2.9, 2.3, 5.0], font=13.5, top=Inches(2.2))
+           ["", "Name", "What it is"],
+           [["A", "One AI, no tools",
+             "A single AI call. It has no way to look anything up, so it invents "
+             "the whole plan"],
+            ["B", "Six agents, first try",
+             "Every agent gets tools and decides for itself when to use them. "
+             "This was my original plan"],
+            ["C", "Six agents, tidied up",
+             "Same six agents, but fewer tools each and a tighter limit on how "
+             "long they can think"],
+            ["D", "Three agents",
+             "The look-up agents are gone. Normal code fetches the data. This is "
+             "what I ship"]],
+           col_widths=[0.5, 2.5, 8.0], font=13.5, top=Inches(2.2))
     _text(slide, Inches(0.9), Inches(5.7), Inches(11.5), Inches(1.0),
-          [("C matters most. Without it, someone could say D only won because B "
-            "was set up badly.", 18, True, ACCENT)])
-    _notes(slide, f"""
-        Tuning the six agents without changing the design cut the text sent by
-        {gains.get('C_vs_B', {}).get('tokens_pct', 0):.0f}%. Comparing B against D
-        alone would have mixed two effects together and claimed credit for both.
-    """)
-
-    # ----------------------------------------------- 4  tools per agent per arm
-    slide = _blank(prs)
-    _heading(slide, "3  ·  Tools given to each agent",
-             "Counted from the code. This is where the cost came from")
-    _table(slide,
-           ["Agent", "A", "B", "C", "D"],
-           [["Travel Preferences Extractor", "—", "0 tools", "0 tools", "0 tools"],
-            ["Flight Search Specialist", "—", "4 tools, 8 steps",
-             "1 tool, 3 steps", "removed"],
-            ["Hotel Search Specialist", "—", "8 tools, 10 steps",
-             "1 tool, 3 steps", "removed"],
-            ["Activities Specialist", "—", "4 tools, 10 steps",
-             "2 tools, 3 steps", "removed"],
-            ["Itinerary Coordinator", "—", "4 tools, 15 steps",
-             "0 tools", "4 tools"],
-            ["Travel Conversation Assistant", "—", "—", "—", "0 tools"],
-            ["TOTAL TOOLS", "0", "20", "4", "4"]],
-           col_widths=[3.6, 0.9, 2.4, 2.0, 1.6], font=12.5, top=Inches(2.15))
-    _text(slide, Inches(0.9), Inches(5.95), Inches(11.5), Inches(0.9),
-          [("\"Steps\" is how many times an agent may loop. Each loop re-sends "
-            "every tool description to the AI — that is the bill.", 17, True,
-            INK)])
+          [("C exists so nobody can say D only won because B was set up badly.",
+            19, True, ACCENT)])
     _notes(slide, """
-        The single most useful table in the deck. The hotel agent held 8 tools and
-        was allowed 10 loops. Every loop is a full AI call that re-sends the
-        conversation and all 8 tool descriptions. Twenty tool slots in B, four in
-        C, four in D - and in D they belong to the coordinator, which does not
-        loop looking for data because the data is already there.
+        A is the floor: it shows what AI produces with no real data. B is my
+        original proposal. C is the same design with sensible settings, which is
+        what makes the comparison honest. D is the idea being tested.
     """)
 
-    # --------------------------------------------------------- 5  the frontend
+    # ---------------------------------------------- 4  tools in each approach
     slide = _blank(prs)
-    _heading(slide, "4  ·  What the user sees",
+    _heading(slide, "3  ·  Which tools each agent gets",
+             "Read from the code. A has none at all")
+    _table(slide,
+           ["Agent", "B  (first try)", "C  (tidied)", "D  (shipped)"],
+           [["Preferences Extractor", "none", "none", "none"],
+            ["Conversation Assistant", "not used", "not used", "none"],
+            ["Flight Search",
+             "search_comprehensive_flights, search_round_trip_flights, "
+             "search_internet, calculate",
+             "distilled_search_flights", "agent removed"],
+            ["Hotel Search",
+             "search_hotels_comprehensive, search_accommodations_with_location, "
+             "search_hotel_destination, search_hotels_by_dest_id, "
+             "get_hotel_reviews, get_attractions_near_hotel, search_internet, "
+             "calculate",
+             "distilled_search_hotels", "agent removed"],
+            ["Activities",
+             "search_attractions, search_restaurants, search_internet, calculate",
+             "distilled_search_attractions, distilled_search_restaurants",
+             "agent removed"],
+            ["Itinerary Coordinator",
+             "calculate, search_internet, search_attractions, search_restaurants",
+             "none",
+             "calculate, search_internet, search_attractions, search_restaurants"],
+            ["TOTAL TOOLS", "20", "4", "4"]],
+           col_widths=[2.2, 4.2, 2.6, 2.4], font=9.5, top=Inches(2.1))
+    _text(slide, Inches(0.9), Inches(6.4), Inches(11.5), Inches(0.7),
+          [("The hotel agent alone had 8 tools. Every time it thinks, all 8 tool "
+            "descriptions are sent to the AI again.", 16, True, INK)])
+    _notes(slide, """
+        The most useful slide for a question. In B the hotel agent had eight tools
+        and was allowed ten thinking steps; each step is a full AI call that
+        re-sends the conversation and all eight tool descriptions. In C the same
+        agent has one tool that returns the best three hotels already trimmed. In
+        D there is no hotel agent at all - four lines of Python make the call.
+    """)
+
+    # ------------------------------------------------------- 5  AI calls
+    slide = _blank(prs)
+    _heading(slide, "4  ·  How many AI calls each one makes", "Per trip planned")
+    _table(slide,
+           ["", "Approach", "AI calls", "Text sent to the AI", "Cost per trip"],
+           [["A", "One AI, no tools", f"{calls('A'):.0f}",
+             f"{tokens('A'):,.0f}", f"${arms['A']['avg_cost_usd']:.3f}"],
+            ["B", "Six agents, first try", f"{calls('B'):.0f}",
+             f"{tokens('B'):,.0f}", f"${arms['B']['avg_cost_usd']:.3f}"],
+            ["C", "Six agents, tidied up", f"{calls('C'):.0f}",
+             f"{tokens('C'):,.0f}", f"${arms['C']['avg_cost_usd']:.3f}"],
+            ["D", "Three agents  (shipped)", f"{calls('D'):.0f}",
+             f"{tokens('D'):,.0f}", f"${arms['D']['avg_cost_usd']:.3f}"]],
+           col_widths=[0.5, 3.4, 1.6, 2.6, 2.2], font=14, top=Inches(2.3))
+    _text(slide, Inches(0.9), Inches(4.9), Inches(11.5), Inches(1.6),
+          [(f"B needs {calls('B'):.0f} AI calls. D needs {calls('D'):.0f}.",
+            26, True, ACCENT),
+           ("", 6, False, INK),
+           (f"That is {tokens('B') / tokens('D'):.0f} times less text, for the "
+            f"same finished plan.", 19, False, SOFT)], spacing=1.25)
+    _notes(slide, f"""
+        Averages over {coverage['repeats_per_arm']} runs each. A looks cheap but
+        it retrieves nothing, so its plan is invented - the next slide but one
+        shows that. The interesting pair is B and D: same task, same data, same AI
+        model, {tokens('B') / tokens('D'):.0f} times the text.
+    """)
+
+    # ------------------------------------------------------- 6  frontend
+    slide = _blank(prs)
+    _heading(slide, "5  ·  What the user sees",
              "One form, live progress, the plan in tabs")
     _figure(slide, "frontend.png", top=Inches(1.95), height=Inches(4.7))
     _text(slide, Inches(0.9), Inches(6.75), Inches(11.5), Inches(0.5),
-          [("Purple steps use AI. Green steps are plain code.", 15, False, SOFT)])
+          [("Purple steps use AI. Green steps are normal code.", 15, False, SOFT)])
     _notes(slide, """
-        Worth demonstrating live. The seven rows tick over as each step finishes,
-        so the page never looks frozen, and the same steps are narrated in the
-        terminal at the same time. Ask for six nights in London on three thousand
-        dollars and it refuses, names the shortfall, and offers a shorter trip or
-        a nearer city.
+        Worth showing live. The seven rows tick over as each step finishes, so the
+        page never looks frozen, and the same steps are printed in the terminal at
+        the same time. Ask for six nights in London on three thousand dollars and
+        it refuses, says how much short you are, and offers a shorter trip or a
+        cheaper city.
     """)
 
-    # ------------------------------------------------------------- 6  defects
+    # ------------------------------------------------- 7  what went wrong
     slide = _blank(prs)
-    _heading(slide, "5  ·  What went wrong in each approach",
+    _heading(slide, "6  ·  What went wrong in each one",
              "Measured, not guessed. This is why D exists")
     _table(slide,
            ["", "The problem I measured"],
            [["A", f"No tools, so it invents everything. Only {grounded('A'):.1f}% "
-                  "of its prices matched a real fare"],
-            ["B", "Skipped its own tools: never called the attractions or the "
-                  "restaurant tool once. Twice produced broken output"],
-            ["C", "Better, but still unreliable: never called the flight tool at "
-                  "all on the recorded run"],
+                  "of its prices matched a real one"],
+            ["B", "Did not use its own tools: never called the attractions or the "
+                  "restaurant tool once. Twice gave broken output"],
+            ["C", "Better, but still missed things: never called the flight tool "
+                  "at all on the recorded run"],
             ["D", f"Always makes the same {per_arm['D']['total_http']} requests, "
-                  "because code decides, not AI. Nothing is skipped"]],
+                  "because code decides, not AI. Nothing gets skipped"]],
            col_widths=[0.5, 10.5], font=13.5, top=Inches(2.2))
     _text(slide, Inches(0.9), Inches(5.4), Inches(11.5), Inches(1.3),
-          [("When AI decides which tools to call, it sometimes does not call them.",
-            21, True, WARN),
-           ("The plan still looks finished. That is what makes it dangerous.",
+          [("When AI decides which tools to use, sometimes it just does not use "
+            "them.", 21, True, WARN),
+           ("The plan still looks complete. That is what makes it dangerous.",
             17, False, SOFT)], spacing=1.25)
     _notes(slide, """
         The heart of the argument. An agent that skips a tool still writes a
-        confident, well-formatted itinerary, so you cannot tell by reading it. B
-        never fetched attractions or restaurants at all and still produced a full
-        plan. That is why groundedness is measured rather than judged by eye.
+        confident, tidy itinerary, so you cannot tell by reading it. B never
+        fetched attractions or restaurants at all and still produced a full plan.
+        That is why I measure how much of a plan came from real data.
     """)
 
-    # -------------------------------------------------------------- 7  budget
+    # ---------------------------------------------------- 8  budget check
     slide = _blank(prs)
-    _heading(slide, "6  ·  The budget check", "It divides the money, then refuses the impossible")
+    _heading(slide, "7  ·  The budget check",
+             "It splits the money, then refuses the impossible")
     _table(slide,
            ["Step", "What it does"],
-           [["1  Divide", "Splits the budget across flights, hotel, food and "
-                          "activities — worked out from this trip, not a fixed %"],
-            ["2  Listen", "\"a luxury stay\" moves money to the room; "
+           [["1  Split", "Divides the budget across flights, hotel, food and "
+                         "things to do - based on this trip, not a fixed share"],
+            ["2  Listen", "\"a luxury stay\" moves money to the hotel; "
                           "\"I can compromise\" moves it to experiences"],
             ["3  Check", "Works out the cheapest this trip could possibly cost"],
             ["4  Refuse", "If the budget is below that, it says so and offers "
                           "three ways to fix it"]],
-           col_widths=[1.7, 8.8], font=13.5, top=Inches(2.15))
+           col_widths=[1.6, 8.9], font=13.5, top=Inches(2.15))
     _stat_row(slide, [
-        (f"${demo['budget']:,.0f}", "asked for"),
+        (f"${demo['budget']:,.0f}", "traveller asked for"),
         (f"${verdict.estimate.minimum:,.0f}", "cheapest it can be done"),
         ("REFUSED" if not verdict.feasible else "ALLOWED", "with reasons given"),
     ], top=Inches(5.05), colour=WARN)
     _text(slide, Inches(0.9), Inches(6.6), Inches(11.5), Inches(0.6),
-          [(f"It uses the real recorded fare. The built-in table said "
-            f"${anchor['estimated_minimum']:,.0f} — the API returned "
+          [(f"It uses the real recorded price. The built-in table said "
+            f"${anchor['estimated_minimum']:,.0f}; the API returned "
             f"${anchor['cheapest_real_fare']:,.0f}.", 15, False, SOFT)])
     _notes(slide, f"""
-        Two features people ask about. Dividing: it used to be one fixed
-        percentage for every trip, and now it reads the wording - on a two
-        thousand dollar Istanbul trip the room budget moves from $327 to $664
-        depending on what the traveller says matters. Checking: tested on all
-        {coverage['scenarios_designed']} trips, it never wrongly refuses a
-        workable one and misses {gate['false_negative']} impossible one.
-        Agreement score {gate['cohens_kappa']:.3f}.
+        Two things people ask about. Splitting: it used to be one fixed percentage
+        for every trip; now it reads the wording, and on a two thousand dollar
+        Istanbul trip the hotel budget moves from $327 to $664 depending on what
+        the traveller says matters. Checking: tested on all
+        {coverage['scenarios_designed']} trips, it never wrongly refuses a trip
+        that works, and misses {gate['false_negative']} impossible one.
     """)
 
-    # ------------------------------------------------------------- 8  results
+    # -------------------------------------------------------- 9  results
     slide = _blank(prs)
-    _heading(slide, "7  ·  Results", "Cheaper, and no less accurate")
-    _figure(slide, "efficiency.png", top=Inches(1.9), height=Inches(3.9))
+    _heading(slide, "8  ·  Results", "Cheaper, and just as accurate")
+    _figure(slide, "efficiency.png", top=Inches(1.9), height=Inches(3.8))
     _stat_row(slide, [
-        (f"{tokens('B') / tokens('D'):.0f}x", "cheaper than the agent version"),
-        (f"{grounded('D'):.0f}%", "of D's prices match a real fare"),
-        (f"{grounded('A'):.1f}%", "of A's do — it has no tools"),
-    ], top=Inches(5.95), colour=ACCENT)
-    _notes(slide, f"""
-        {coverage['repeats_per_arm']} runs of each version, so every bar has a
-        range, and the ranges for B and D do not overlap. On accuracy: A is the
-        control and scores {grounded('A'):.1f}% - a confident itinerary invented
-        from nothing, which is what that measure exists to catch. It caught a real
-        one: my first working run produced a complete plan while every tool call
-        was silently failing.
-    """)
-
-    # ---------------------------------------------------------- 9  my problems
-    slide = _blank(prs)
-    _heading(slide, "8  ·  Problems in my own system",
-             "Found by measuring it. Reported, not hidden")
-    _stat_row(slide, [
+        (f"{tokens('B') / tokens('D'):.0f}x", "cheaper than the all-agent version"),
+        (f"{grounded('D'):.0f}%", "of my plan's prices are real"),
         (f"{protocol['passed']}/{protocol['total_checks']}",
-         "design checks pass.\nSix things I claimed do not happen"),
-        (f"{gate['recall']:.0%}",
-         "of impossible budgets caught.\nIt misses the other half"),
-        (f"{coverage['scenarios_measured']}/{coverage['scenarios_designed']}",
-         "trips measured for cost.\nThe free API limits stopped me"),
-    ], colour=WARN)
-    _text(slide, Inches(0.9), Inches(5.3), Inches(11.5), Inches(1.4),
-          [("All three are in the report, with the evidence.", 20, True, INK),
-           ("An evaluation that only confirms its author is not an evaluation.",
-            17, False, SOFT)], spacing=1.25)
+         "of my own design checks pass"),
+    ], top=Inches(5.85), colour=ACCENT)
     _notes(slide, f"""
-        {protocol['failed']} of {protocol['total_checks']} checks fail: message
-        priority is declared and never used, permissions declared and never
-        enforced. Cost coverage is one trip because the free plans allow thirty
-        flight searches a month, and {cache['entries']} saved responses mean
-        anyone can still reproduce every number with no API keys. All three are
-        stated in the abstract, not buried.
+        Cheaper and no less accurate, so there is no hidden trade-off. The third
+        number is deliberately on this slide: {protocol['failed']} of my own
+        design checks fail - message priority is declared and never used, and
+        permissions are declared and never enforced. Cost coverage is also only
+        {coverage['scenarios_measured']} of {coverage['scenarios_designed']} trips
+        because the free API plans allow thirty flight searches a month. All of it
+        is in the report rather than hidden.
     """)
 
-    # ------------------------------------------------------------ 10  closing
+    # ------------------------------------------------------- 10  closing
     slide = _blank(prs)
     _fill(slide, DARK)
-    _text(slide, Inches(1.1), Inches(1.5), Inches(11.2), Inches(0.5),
+    _text(slide, Inches(1.1), Inches(1.6), Inches(11.2), Inches(0.5),
           [("IN ONE SENTENCE", 14, True, RGBColor(0x9C, 0xA3, 0xF5))])
-    _text(slide, Inches(1.1), Inches(2.0), Inches(11.2), Inches(2.2),
-          [("Use AI where a step needs thinking.", 36, True, PAPER),
-           ("Everywhere else, it is just a bill.", 36, True,
+    _text(slide, Inches(1.1), Inches(2.1), Inches(11.2), Inches(2.2),
+          [("Give AI the steps that need thinking.", 36, True, PAPER),
+           ("Let normal code do the looking up.", 36, True,
             RGBColor(0x6E, 0xE7, 0xDF))], spacing=1.2)
-    _rule(slide, Inches(1.1), Inches(4.45), Inches(1.6), TEAL)
-    _text(slide, Inches(1.1), Inches(4.8), Inches(11.2), Inches(2.0),
+    _rule(slide, Inches(1.1), Inches(4.55), Inches(1.6), TEAL)
+    _text(slide, Inches(1.1), Inches(4.9), Inches(11.2), Inches(2.0),
           [(f"{tokens('B') / tokens('D'):.0f}x cheaper  ·  same accuracy  ·  "
             f"{tests} tests  ·  {cache['entries']} saved API replies so anyone "
             f"can repeat it", 17, False, RGBColor(0xC7, 0xD2, 0xFE)),
            ("", 8, False, PAPER),
            (f"The gap: only {coverage['scenarios_measured']} of "
-            f"{coverage['scenarios_designed']} trips measured for cost. "
-            f"Everything needed to widen it is saved and runs without keys.",
-            15, False, RGBColor(0x9C, 0xA3, 0xF5))], spacing=1.3)
+            f"{coverage['scenarios_designed']} trips measured for cost, because "
+            f"of the free API limits.", 15, False, RGBColor(0x9C, 0xA3, 0xF5))],
+          spacing=1.3)
     _notes(slide, """
-        Land the claim and its limit in the same breath. The effect is large and
-        the sample is narrow, and both are in the abstract. The saved replies, the
-        harness and the twenty trips are committed, so the next person - or me
-        next month when the limits reset - can widen it without rebuilding.
+        Land the claim and its limit together. The effect is large and the sample
+        is narrow, and both are in the abstract. The saved replies, the test
+        harness and the twenty trips are all committed, so this can be widened
+        next month when the API limits reset, without rebuilding anything.
     """)
 
     prs.save(OUTPUT)
