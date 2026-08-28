@@ -473,6 +473,76 @@ def fig_methodology() -> str:
     return c.save("methodology.png")
 
 
+# ========================================================= 9. the web page
+def fig_frontend() -> str:
+    """
+    What the user actually sees, drawn rather than screenshotted.
+
+    A screenshot would be a picture of one run on one day at one window width.
+    This shows the two states the page has and what each panel is for, which is
+    what a reader needs in order to follow a live demonstration.
+    """
+    c = Canvas(13.0, 7.2, "The web page",
+               "Two states: filling in the trip, and reading the plan. The same "
+               "seven steps are narrated in the terminal at the same time.",
+               footer="Every price shown is traceable to a live travel API response. "
+                      "Where a figure had to be estimated instead, the page says so.")
+
+    # ---- left: the form ---------------------------------------------------
+    c.label(2, 89, "WHILE YOU FILL IT IN", ha="left", fontsize=9,
+            weight="bold", colour=PURPLE, opaque=False)
+
+    form = [
+        (74, "1  Where and when", "destination, origin, dates"),
+        (61, "2  Who is going", "adults, children"),
+        (48, "3  Budget and style", "total in USD, what matters most"),
+        (35, "4  Preferences", "interests, special requirements"),
+    ]
+    for y, head, detail in form:
+        c.box(2, y, 40, 10.0, f"{head}\n{detail}",
+              edge=BLUE, fill=BLUE_FILL, fontsize=8.6, name=head[:6])
+
+    c.box(2, 20, 40, 8.0, "Build my itinerary",
+          edge=PURPLE, fill=PURPLE_FILL, fontsize=9.5, weight="bold",
+          name="button")
+
+    # ---- middle: the steps ------------------------------------------------
+    c.label(48, 89, "WHILE IT RUNS", ha="left", fontsize=9, weight="bold",
+            colour=PURPLE, opaque=False)
+    steps = ["1  Conversation", "2  Preferences", "3  Flights", "4  Hotels",
+             "5  Attractions", "6  Restaurants", "7  Itinerary"]
+    for index, name in enumerate(steps):
+        y = 76 - index * 8.2
+        uses_ai = index in (0, 1, 6)
+        c.box(48, y, 22, 6.4, name,
+              edge=PURPLE if uses_ai else AQUA,
+              fill=PURPLE_FILL if uses_ai else AQUA_FILL,
+              fontsize=8.2, name=f"step{index}")
+    c.label(59, 12, "purple = uses AI\ngreen = plain code", fontsize=7.8,
+            colour=INK_2, opaque=False)
+
+    # ---- right: the result ------------------------------------------------
+    c.label(75, 89, "WHEN IT IS DONE", ha="left", fontsize=9, weight="bold",
+            colour=PURPLE, opaque=False)
+    # Boxes grow to fit their text, so these y values are the bottom edge and the
+    # heights are minimums. The header band floor is 86.
+    c.box(75, 74, 23, 5.0, "4 of 4 days present\nprice measured, not estimated",
+          edge=AQUA, fill=AQUA_FILL, fontsize=7.6, name="badges")
+    c.box(75, 65, 23, 5.0, "Nights 4    Travellers 1\nBudget $1,600    Fare $937",
+          edge=GREY, fill=GREY_FILL, fontsize=7.6, name="metrics")
+
+    tabs = ["Overview", "Flights", "Hotels", "Day by day", "Budget", "Tips"]
+    for index, name in enumerate(tabs):
+        y = 56 - index * 7.0
+        c.box(75, y, 23, 5.6, name, edge=BLUE, fill=BLUE_FILL, fontsize=8.2,
+              name=f"tab{index}")
+    c.label(86.5, 11, "one block per day\ninside 'Day by day'", fontsize=7.8,
+            colour=INK_2, opaque=False)
+
+    c.validate()
+    return c.save("frontend.png")
+
+
 DIAGRAMS = [
     fig_architecture,
     fig_dataflow,
@@ -482,6 +552,7 @@ DIAGRAMS = [
     fig_mcp_lifecycle,
     fig_conceptual_framework,
     fig_methodology,
+    fig_frontend,
 ]
 
 
