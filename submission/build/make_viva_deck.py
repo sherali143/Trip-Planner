@@ -124,7 +124,9 @@ def _stat_row(slide, stats, top=Inches(2.3), colour=ACCENT):
         left = int(gutter + index * span)
         _text(slide, Emu(left), top, Emu(int(span)), Inches(1.3),
               [(value, 60, True, colour)], align=PP_ALIGN.CENTER)
-        _text(slide, Emu(left), top + Inches(1.25), Emu(int(span)), Inches(0.8),
+        # 0.5in fits the one-line caption; a taller box would hang off the slide
+        # on the lower stat rows without showing anything.
+        _text(slide, Emu(left), top + Inches(1.25), Emu(int(span)), Inches(0.5),
               [(label, 14, False, SOFT)], align=PP_ALIGN.CENTER)
 
 
@@ -263,15 +265,18 @@ def build() -> str:
            ["Agent", "How many tools", "Which tools"],
            [["none — just one AI call", "0", "none"]],
            col_widths=[4.4, 2.6, 3.8], font=15, top=Inches(2.3))
-    _text(slide, Inches(0.9), Inches(3.4), Inches(11.5), Inches(0.7),
+    _text(slide, Inches(0.9), Inches(3.35), Inches(11.5), Inches(0.5),
           [("The AI writes the whole plan from what it already knows. It cannot "
             "look anything up.", 18, False, INK)])
+    _text(slide, Inches(0.9), Inches(3.95), Inches(11.5), Inches(0.5),
+          [("How it runs:  one AI call, and that is the whole thing.", 17, True,
+            TEAL)])
     _stat_row(slide, [
         (f"{calls('A'):.0f}", "AI call"),
         (f"{grounded('A'):.1f}%", "of its prices were real"),
         (f"{secs('A'):.0f}s", "to finish"),
-    ], top=Inches(4.3), colour=WARN)
-    _text(slide, Inches(0.9), Inches(6.2), Inches(11.5), Inches(0.8),
+    ], top=Inches(4.6), colour=WARN)
+    _text(slide, Inches(0.9), Inches(6.45), Inches(11.5), Inches(0.5),
           [("So it makes the prices up. This is the baseline everything else has "
             "to beat.", 20, True, WARN)])
     _notes(slide, f"""
@@ -303,20 +308,24 @@ def build() -> str:
              "calculate,  search_internet,  search_attractions,  "
              "search_restaurants"],
             ["Total", "20", ""]],
-           col_widths=[3.2, 0.9, 6.9], font=11, top=Inches(2.15))
-    _text(slide, Inches(0.9), Inches(5.5), Inches(11.5), Inches(1.4),
-          [(f"It used {calls('B'):.0f} AI calls and took {secs('B'):.0f} seconds "
-            f"to plan one trip.", 20, True, INK),
+           col_widths=[3.2, 0.9, 6.9], font=11, top=Inches(2.05))
+    _text(slide, Inches(0.9), Inches(5.05), Inches(11.5), Inches(1.9),
+          [("How they run:  one after another. Flights finish, then hotels, then "
+            "attractions, then the plan. Nothing overlaps.", 17, True, TEAL),
+           (f"It used {calls('B'):.0f} AI calls and took {secs('B'):.0f} seconds "
+            f"to plan one trip.", 19, True, INK),
            ("Too much freedom: the agents keep thinking and searching — and they "
-            "still never called two of their own tools.", 17, True, WARN)],
-          spacing=1.25)
+            "still never called two of their own tools.", 16, True, WARN)],
+          spacing=1.2)
     _notes(slide, f"""
-        This was my original proposal. The hotel agent has eight tools and is
-        allowed ten thinking steps, and every step is a separate AI call that
-        re-sends the conversation and all eight tool descriptions. It took
-        {calls('B'):.1f} AI calls and {secs('B'):.0f} seconds, gave broken output
-        twice, and never once called the attractions or the restaurant tool -
-        while still producing a plan that looked complete.
+        This was my original proposal. The four search and coordination agents run
+        in one sequential crew, so the hotel agent cannot start until the flight
+        agent has finished. The hotel agent has eight tools and is allowed ten
+        thinking steps, and every step is a separate AI call that re-sends the
+        conversation and all eight tool descriptions. It took {calls('B'):.1f} AI
+        calls and {secs('B'):.0f} seconds, gave broken output twice, and never
+        once called the attractions or the restaurant tool - while still producing
+        a plan that looked complete.
     """)
 
     # ============================================================ 5  approach C
@@ -332,23 +341,28 @@ def build() -> str:
              "distilled_search_attractions,  distilled_search_restaurants"],
             ["Itinerary Coordinator", "0", "none"],
             ["Total", "4", ""]],
-           col_widths=[3.2, 0.9, 6.9], font=13, top=Inches(2.2))
-    _text(slide, Inches(0.9), Inches(5.0), Inches(11.5), Inches(1.9),
-          [("Three changes: fewer tools each, only 3 thinking steps instead of "
-            "15, and the AI is shown the best 3 results instead of 12,000 "
-            "characters.", 17, False, INK),
-           ("", 5, False, INK),
+           col_widths=[3.2, 0.9, 6.9], font=13, top=Inches(2.1))
+    _text(slide, Inches(0.9), Inches(4.95), Inches(11.5), Inches(2.0),
+          [("How they run:  flights, hotels and activities run at the same time, "
+            "not one after another. Then the coordinator writes the plan.", 17,
+            True, TEAL),
+           ("Also: fewer tools each, 3 thinking steps instead of 15, and the AI "
+            "is shown the best 3 results instead of 12,000 characters.", 15,
+            False, SOFT),
            (f"Result: {gains.get('C_vs_B', {}).get('tokens_pct', 0):.0f}% less "
-            f"text sent, and {calls('C'):.0f} AI calls instead of "
-            f"{calls('B'):.0f}.", 20, True, ACCENT),
-           ("Worth saying out loud: most of B's cost was bad setup, not the "
-            "design.", 17, True, WARN)], spacing=1.2)
+            f"text than B, {calls('C'):.0f} AI calls instead of "
+            f"{calls('B'):.0f}, and {secs('C'):.0f}s instead of "
+            f"{secs('B'):.0f}s.", 19, True, ACCENT),
+           ("So most of B's cost was bad setup, not the design.", 16, True,
+            WARN)], spacing=1.15)
     _notes(slide, f"""
         Approach C is Approach B done properly, and it exists so nobody can say D
-        only won because B was set up badly. Instead of handing the AI twelve
-        thousand characters of hotel data, it gets three lines - Theodora Pension
-        $33 10/10, and so on. Settings alone removed
-        {gains.get('C_vs_B', {}).get('tokens_pct', 0):.0f}% of the tokens. Being
+        only won because B was set up badly. Two things changed. Running the three
+        specialists in parallel instead of in a queue is most of why the time
+        drops from {secs('B'):.0f} seconds to {secs('C'):.0f}. And instead of
+        handing the AI twelve thousand characters of hotel data it gets three
+        lines - Theodora Pension $33 10/10, and so on - which is most of why the
+        tokens drop by {gains.get('C_vs_B', {}).get('tokens_pct', 0):.0f}%. Being
         honest about that is what makes the next slide believable.
     """)
 
@@ -363,31 +377,31 @@ def build() -> str:
             ["Itinerary Coordinator", "0",
              "none — the data is handed to it already"],
             ["Total", "0", ""]],
-           col_widths=[3.2, 0.9, 6.9], font=13.5, top=Inches(2.2))
-    _text(slide, Inches(0.9), Inches(4.25), Inches(11.5), Inches(0.5),
-          [("The three search agents are gone. Plain Python fetches the flights, "
-            "hotels, attractions and restaurants.", 18, True, INK)])
-    _text(slide, Inches(0.9), Inches(4.8), Inches(11.5), Inches(0.5),
-          [("(In the web app the coordinator keeps 4 helper tools — calculate, "
+           col_widths=[3.2, 0.9, 6.9], font=13.5, top=Inches(2.15))
+    _text(slide, Inches(0.9), Inches(4.45), Inches(11.5), Inches(1.1),
+          [("How it runs:  three steps. AI reads the request  →  Python fetches "
+            "the flights, hotels, attractions and restaurants  →  AI writes the "
+            "plan.", 17, True, TEAL),
+           ("(In the web app the coordinator keeps 4 helper tools — calculate, "
             "search_internet, search_attractions, search_restaurants. The "
-            "measured run removes them.)", 12, False, SOFT)])
+            "measured run removes them.)", 12, False, SOFT)], spacing=1.15)
     _stat_row(slide, [
         (f"{calls('D'):.0f}", "AI calls"),
         (f"{secs('D'):.0f}s", "to finish"),
         (f"{per_arm['D']['total_http']}", "searches, every single time"),
-    ], top=Inches(5.35), colour=ACCENT)
-    _text(slide, Inches(0.9), Inches(7.0), Inches(11.5), Inches(0.4),
-          [("Once we know the place and the dates, there is nothing left for AI "
-            "to decide.", 16, False, SOFT)])
+    ], top=Inches(5.6), colour=ACCENT)
     _notes(slide, f"""
-        This is the one that ships. AI understands the request, Python fetches the
-        data, AI writes the plan. No agent holds a search tool in the measured
-        run, so it makes exactly {per_arm['D']['total_http']} searches every time
-        in the same order - an IF statement decides rather than a model, so
-        nothing can be skipped, which is exactly what B and C both did. If asked
-        about the four helper tools in the web app: they are on the coordinator
-        for the interactive path, and the measured arm strips them so the
-        comparison is clean.
+        This is the one that ships. Once we know the place and the dates, there is
+        nothing left for AI to decide - so AI understands the request, Python
+        fetches the data, AI writes the plan. No agent holds a search tool in the
+        measured run, so it makes exactly {per_arm['D']['total_http']} searches
+        every time in the same order - an IF statement decides rather than a
+        model, so nothing can be skipped, which is exactly what B and C both did.
+        Worth noting the Python fetches also run one after another, so D is not
+        faster because of parallelism: it is faster because there are only
+        {calls('D'):.0f} AI calls in it. If asked about the four helper tools in
+        the web app: they are on the coordinator for the interactive path, and the
+        measured arm strips them so the comparison is clean.
     """)
 
     # ========================================================== 7  the comparison
@@ -397,6 +411,8 @@ def build() -> str:
     _table(slide,
            ["", "A  one AI", "B  6 agents", "C  6 tuned", "D  3 agents"],
            [["Tools given to agents", "0", "20", "4", "0"],
+            ["How the agents run", "one call", "one after\nanother",
+             "3 at the\nsame time", "AI → Python\n→ AI"],
             ["AI calls", f"{calls('A'):.0f}", f"{calls('B'):.0f}",
              f"{calls('C'):.0f}", f"{calls('D'):.0f}"],
             ["Text sent to the AI", f"{tokens('A'):,.0f}", f"{tokens('B'):,.0f}",
@@ -410,7 +426,7 @@ def build() -> str:
             ["Prices that were real", f"{grounded('A'):.1f}%",
              f"{grounded('B'):.0f}%", f"{grounded('C'):.0f}%",
              f"{grounded('D'):.0f}%"]],
-           col_widths=[3.0, 2.0, 2.0, 2.0, 2.2], font=14, top=Inches(2.2))
+           col_widths=[3.0, 2.0, 2.0, 2.0, 2.2], font=13, top=Inches(2.05))
     _text(slide, Inches(0.9), Inches(5.7), Inches(11.5), Inches(1.2),
           [("Being honest: D is not more accurate than C — their ranges overlap.",
             17, False, SOFT),
@@ -418,7 +434,12 @@ def build() -> str:
             f"{tokens('B') / tokens('D'):.0f}x cheaper than B, with no drop in "
             f"accuracy.", 19, True, ACCENT)], spacing=1.3)
     _notes(slide, f"""
-        Read the last row carefully. C is {grounded('C'):.0f}% and D is
+        Two rows to point at. The run row explains the time row: B queues its
+        agents so it takes {secs('B'):.0f} seconds, C runs three of them at once
+        and drops to {secs('C'):.0f}. D fetches its data one call after another
+        in Python and is still the fastest at {secs('D'):.0f}, because the saving
+        comes from removing AI steps, not from running things in parallel. Then
+        read the last row carefully: C is {grounded('C'):.0f}% and D is
         {grounded('D'):.0f}%, and their ranges overlap, so I cannot claim D is
         better grounded and I do not. What does not overlap is the token count.
         The claim is cheaper and faster with no measurable penalty - a smaller
