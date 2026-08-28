@@ -261,6 +261,97 @@ def split_blocks(body: str):
     return blocks or [(None, text.strip())]
 
 
+def split_meta(body: str):
+    """
+    Pull "**Label:** value | **Label:** value" header lines out of a section.
+
+    Returns (facts, remaining_text), where facts are (label, value) pairs with the
+    markdown removed, so the page can render them as a clean table instead.
+
+    Why this exists. The coordinator opens a plan with two lines like
+
+        **Prepared for:** 1 Adult Traveler | **Dates:** August 15, 2026 ...
+        **Origin:** Lahore (LHE) | **Destination:** Istanbul (IST) | ...
+
+    Two consecutive lines containing pipes, with no |---| separator row. A
+    markdown renderer cannot tell whether that is meant to be a table, and
+    Streamlit resolves the ambiguity by printing it verbatim -- so the reader sees
+    raw asterisks at the very top of the plan, which is the first thing they look
+    at. Real tables in the plan have a separator row and render correctly; these
+    two lines never did.
+
+    Two guards keep this from eating content. Only the first ten lines are
+    considered, because this is a header block. And every pair must have a value:
+    "**DAY 1 SUMMARY:**" is a heading with nothing after the colon, and taking it
+    would delete a day's summary. Prose that merely contains a pipe is untouched,
+    since it does not parse as label/value pairs.
+    """
+    pair = re.compile(r"^\*\*(.+?):\*\*\s*(.*)$")
+    lines = (body or "").splitlines()
+    facts, taken = [], set()
+
+    for index, line in enumerate(lines[:10]):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        matches = [pair.match(part.strip()) for part in stripped.split("|")]
+        if not matches or not all(matches):
+            continue
+        if not all(match.group(2).strip() for match in matches):
+            continue
+        for match in matches:
+            facts.append((match.group(1).strip(), match.group(2).strip()))
+        taken.add(index)
+
+    # One more shape carries the same risk without being label/value pairs: a
+    # whole line wrapped in ** with a pipe inside it, such as
+    # "**4-Day Custom Travel Itinerary for 1 Traveler | Lahore to Istanbul**".
+    # The pipe still makes the line look like a table row. Unwrapping the bold
+    # and replacing the pipe with a middot removes the ambiguity and reads better
+    # than a line of asterisks.
+    whole_bold = re.compile(r"^\*\*(.+)\*\*$")
+    kept = []
+    for index, line in enumerate(lines):
+        if index in taken:
+            continue
+        match = whole_bold.match(line.strip()) if index < 10 else None
+        if match and "|" in match.group(1):
+            kept.append(match.group(1).replace(" | ", "  ·  ").strip())
+        else:
+            kept.append(line)
+
+    if not facts and kept == lines:
+        return [], body
+    return facts, "\n".join(kept).strip()
+
+
+def defuse_pipes(text: str) -> str:
+    """
+    Replace pipes with a middot on every line that is not part of a real table.
+
+    This is the general form of the bug split_meta fixes one case of. A pipe is
+    how markdown marks a table cell, so a line containing one looks like a table
+    row -- and when the surrounding rows do not agree, or there is no |---|
+    separator, the renderer gives up and prints the line verbatim, asterisks and
+    all. The plans are full of pipes used as ordinary separators:
+
+        * **Outbound Flight:** LHE (03:05) -> IST (10:45) | Duration 7h 40m
+        **Prepared for:** 1 Adult | **Dates:** August 15, 2026
+
+    A genuine table row starts with a pipe, and those are left exactly as they
+    are: the flight and hotel comparison tables have proper separator rows and
+    render correctly. Everything else gets a middot, which is what the pipe was
+    being used as anyway.
+    """
+    out = []
+    for line in (text or "").splitlines():
+        stripped = line.strip()
+        if "|" in line and not stripped.startswith("|"):
+            line = re.sub(r"\s*\|\s*", "  ·  ", line).rstrip()
+        out.append(line)
+    return "\n".join(out)
+
+
 def plan_checks(console: str, refused: bool = False):
     """
     The checks the run actually applied, as (text, tone) pairs.

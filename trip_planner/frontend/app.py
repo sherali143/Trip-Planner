@@ -17,10 +17,11 @@ from dotenv import load_dotenv
 
 from trip_planner.core.log_setup import TeeStream
 from trip_planner.orchestrator import TripPlannerCrew, set_progress_hook
-from trip_planner.frontend.plan_layout import (DONE, IDLE, NOW, SEARCH_ROW, STEPS,
-                                         group_into_tabs, plan_checks,
-                                         progress_states, split_blocks,
-                                         split_days)
+from trip_planner.frontend.plan_layout import (DONE, IDLE, NOW, SEARCH_ROW,
+                                               STEPS, group_into_tabs,
+                                               plan_checks, progress_states,
+                                               defuse_pipes, split_blocks,
+                                               split_days, split_meta)
 
 load_dotenv()
 
@@ -285,7 +286,17 @@ def _render_section(body: str) -> None:
     A flight or hotel section is three recommended options and a table of the
     rest, each under its own sub-heading. Run together as one markdown string
     they become a column of text with the boundaries buried in it.
+
+    A section may also open with "**Label:** value | **Label:** value" header
+    lines. Those are pulled out and shown as a fact table, because two pipe-laden
+    lines with no |---| row confuse the markdown renderer into printing them
+    verbatim -- raw asterisks, at the top of the plan, where a reader looks first.
     """
+    facts, body = split_meta(body)
+    if facts:
+        st.markdown(_facts(facts), unsafe_allow_html=True)
+    body = defuse_pipes(body)
+
     blocks = split_blocks(body)
     if len(blocks) < 2:
         # No card: one border around a whole section is a border for no reason.

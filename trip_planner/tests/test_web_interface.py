@@ -626,6 +626,136 @@ def test_a_section_with_nothing_to_split_comes_back_whole():
 
 
 # ---------------------------------------------------------------------------
+# Asterisks must not reach the reader
+# ---------------------------------------------------------------------------
+#
+# A pipe is how markdown marks a table cell. The coordinator uses pipes as plain
+# separators all over a plan, and when the surrounding lines do not form a valid
+# table the renderer gives up and prints the line verbatim -- so the reader sees
+# "**Prepared for:** 1 Adult Traveler | **Dates:** ..." with the asterisks
+# showing, at the very top of the plan, which is the first thing they look at.
+#
+# Two fixes, tested here. split_meta lifts the label/value header lines out into
+# a proper fact table. defuse_pipes replaces pipes with a middot on every line
+# that is not a genuine table row. Genuine rows start with a pipe and have a
+# separator; the flight and hotel comparison tables must survive untouched.
+
+def test_the_header_lines_become_facts_not_asterisks():
+    from trip_planner.frontend.plan_layout import split_meta
+
+    body = ("**Prepared for:** 1 Adult Traveler | **Dates:** August 15, 2026\n"
+            "**Origin:** Lahore (LHE) | **Destination:** Istanbul (IST)\n"
+            "\nWelcome to your trip.")
+    facts, rest = split_meta(body)
+    assert dict(facts) == {
+        "Prepared for": "1 Adult Traveler",
+        "Dates": "August 15, 2026",
+        "Origin": "Lahore (LHE)",
+        "Destination": "Istanbul (IST)",
+    }, facts
+    assert "**" not in rest
+    assert "Welcome to your trip." in rest
+
+
+def test_a_fully_bold_title_with_a_pipe_is_unwrapped():
+    """
+    "**4-Day Itinerary for 1 Traveler | Lahore to Istanbul**" is a title, not a
+    pair of label/value cells, but the pipe makes it look like a table row all
+    the same.
+    """
+    from trip_planner.frontend.plan_layout import split_meta
+
+    _, rest = split_meta("**4-Day Itinerary | Lahore to Istanbul**\nThen prose.")
+    assert "**" not in rest
+    assert "4-Day Itinerary" in rest and "Lahore to Istanbul" in rest
+
+
+def test_prose_containing_a_pipe_is_not_torn_apart():
+    """
+    "for **Istanbul (Check-in: Aug 15 | Check-out: Aug 19)**" is a sentence.
+    Treating it as cells would break it mid-clause.
+    """
+    from trip_planner.frontend.plan_layout import split_meta
+
+    prose = "Data for **Istanbul (Check-in: Aug 15 | Check-out: Aug 19)** today."
+    facts, rest = split_meta(prose)
+    assert facts == []
+    assert rest == prose
+
+
+def test_a_heading_with_no_value_is_not_swallowed():
+    """
+    "**DAY 1 SUMMARY:**" has nothing after the colon. Taking it as a fact with an
+    empty value would delete the day's summary from the page, because empty
+    values are filtered out when the fact table is drawn.
+    """
+    from trip_planner.frontend.plan_layout import split_meta
+
+    facts, rest = split_meta("**DAY 1 SUMMARY:**\nWalked twelve miles.")
+    assert facts == []
+    assert "DAY 1 SUMMARY" in rest
+
+
+def test_pipes_outside_a_table_become_a_middot():
+    from trip_planner.frontend.plan_layout import defuse_pipes
+
+    line = "* **Outbound:** LHE 03:05 -> IST 10:45 | Duration 7h 40m | 1 stop"
+    out = defuse_pipes(line)
+    assert "|" not in out
+    assert "Duration 7h 40m" in out and "1 stop" in out
+
+
+def test_a_real_table_is_left_exactly_alone():
+    """
+    The flight and hotel comparison tables have separator rows and render
+    correctly. Rewriting their pipes would destroy them.
+    """
+    from trip_planner.frontend.plan_layout import defuse_pipes
+
+    table = "\n".join([
+        "| Option | Airline | Price |",
+        "| :--- | :--- | :--- |",
+        "| **Opt 1** | Turkish Airlines | **$946.97** |",
+    ])
+    assert defuse_pipes(table) == table
+
+
+@pytest.mark.parametrize("name", sorted(PLANS))
+def test_no_real_plan_leaves_a_pipe_outside_a_table(name):
+    """
+    End to end on both recorded plans: after the page's own processing, no line
+    carries a pipe unless it is a table row.
+    """
+    from trip_planner.frontend.plan_layout import (defuse_pipes, group_into_tabs,
+                                                   split_blocks, split_meta)
+
+    for _, sections in group_into_tabs(PLANS[name]):
+        for _, body in sections:
+            _, body = split_meta(body)
+            for _, text in split_blocks(defuse_pipes(body)):
+                for line in text.splitlines():
+                    if line.strip().startswith("|"):
+                        continue          # a genuine table row
+                    assert "|" not in line, f"{name}: pipe outside a table: {line[:70]}"
+
+
+@pytest.mark.parametrize("name", sorted(PLANS))
+def test_the_real_tables_survive_in_both_plans(name):
+    """The comparison tables are the densest information in the plan."""
+    from trip_planner.frontend.plan_layout import (defuse_pipes, group_into_tabs,
+                                                   split_meta)
+
+    rows = 0
+    for _, sections in group_into_tabs(PLANS[name]):
+        for _, body in sections:
+            _, body = split_meta(body)
+            rows += sum(1 for l in defuse_pipes(body).splitlines()
+                        if l.strip().startswith("|"))
+    assert rows >= 10, f"{name}: only {rows} table rows survived"
+
+
+
+# ---------------------------------------------------------------------------
 # The results page itself
 # ---------------------------------------------------------------------------
 #
