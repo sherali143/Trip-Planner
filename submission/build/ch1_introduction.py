@@ -81,12 +81,12 @@ def build(report: Report) -> None:
     report.h2("1.3  Aim")
 
     report.p("""
-        The aim of this project is to design, build and evaluate a multi-agent
-        travel planning system that produces day-by-day itineraries grounded in
-        live flight, hotel and venue data through a schema-validated Model
-        Context Protocol tool layer and a typed agent-to-agent message protocol,
-        and to measure what delegating data retrieval to a language model costs
-        and what it contributes.
+        The aim is to design, build and evaluate a multi-agent travel planning
+        system that produces day-by-day itineraries grounded in live flight, hotel
+        and venue data, through a schema-validated Model Context Protocol tool
+        layer and a typed agent-to-agent message protocol. It is then to measure
+        what delegating retrieval to a language model costs and what it
+        contributes.
     """)
 
     # ------------------------------------------------------------------ 1.4
@@ -165,13 +165,13 @@ def build(report: Report) -> None:
     report.h2("1.6  Contributions")
 
     report.p(f"""
-        Three things are offered. The first is a reproducible measurement harness:
-        every model request is counted through provider callbacks, every HTTP response
-        is recorded and committed, and the whole comparison replays from disk with no
-        credentials, so the numbers here can be checked rather than trusted. The second
-        is a comparison that includes its own fair baseline — the multi-agent arm was
-        tuned before being used as a comparator, which weakened the headline result and
-        is reported anyway. The third is a conformance audit of the project's own
+        Three things are offered. The first is a reproducible measurement harness.
+        Every model request is counted through provider callbacks and every HTTP
+        response is recorded and committed, so the whole comparison replays from
+        disk with no credentials and the numbers here can be checked rather than
+        trusted. The second is a comparison that includes its own fair baseline:
+        the multi-agent arm was tuned before being used as a comparator, which
+        weakened the headline result and is reported anyway. The third is a conformance audit of the project's own
         protocol layer, which found
         {val(measured.protocol_summary()['failed'])} defects in work this
         dissertation would otherwise have described as complete.

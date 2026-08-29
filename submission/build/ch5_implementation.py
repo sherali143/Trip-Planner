@@ -26,12 +26,12 @@ def build(report: Report) -> None:
     report.p(f"""
         The system is {val(stats['total_lines'], '{:,}')} lines of Python across
         {val(stats['total_files'])} files, developed over {val(git['commits'])}
-        commits, and Appendix E breaks it down by area. It was built in the order the
-        layers depend on each other: the tool server first, because nothing can be
-        retrieved without it; then the message layer, the agents and the interfaces;
-        and last, later than it should have been, the measurement infrastructure.
-        That ordering is the root of the first failure below, and Section 7.6 argues
-        it should have been reversed.
+        commits, and Appendix E breaks it down by area. It was built in dependency
+        order: the tool server first, because nothing can be retrieved without it;
+        then the message layer, the agents and the interfaces; and last, later than
+        it should have been, the measurement infrastructure. That ordering is the
+        root of the first failure below, and Section 7.6 argues it should have been
+        reversed.
     """)
 
     # ------------------------------------------------------------------ 5.2
@@ -88,16 +88,13 @@ def build(report: Report) -> None:
     """)
 
     report.p(f"""
-        The cache holds {val(evidence['broken_recordings'])} recordings made with
-        the snake_case parameters. Both are small —
-        {' and '.join(val(b) for b in evidence['broken_bytes'])} bytes — and both
-        contain {val(evidence['broken_max_itineraries'])} itineraries. The
-        recording made after the parameters were corrected is
-        {val(evidence['fixed_bytes'], '{:,}')} bytes and contains
+        Appendix F tabulates the recordings on either side of the fix: the
+        {val(evidence['broken_recordings'])} made with snake_case parameters return
+        {val(evidence['broken_max_itineraries'])} itineraries, the corrected one
         {val(evidence['fixed_itineraries'])}. This is a class of API defect worth
-        naming: a parameter that is rejected costs minutes, and a parameter that
-        is silently discarded can cost weeks, because every observable signal says
-        the call succeeded.
+        naming. A parameter that is rejected costs minutes; a parameter that is
+        silently discarded can cost weeks, because every observable signal says the
+        call succeeded.
     """)
 
     report.h3("5.3.2  A search endpoint that does not return results")
@@ -112,14 +109,11 @@ def build(report: Report) -> None:
     """)
 
     report.p(f"""
-        The evidence is again in the cache. The corrected search response carries
-        {val(evidence['fixed_itineraries'])} itineraries and a status of
-        "{evidence['fixed_status']}"; the poll that follows it returns
-        {val(evidence['poll_bytes'], '{:,}')} bytes containing
-        {val(evidence['poll_itineraries'])} itineraries with a status of
-        "{evidence['poll_status']}". Reading only the first response therefore
+        Appendix F compares the two responses: the search returns
+        {val(evidence['fixed_itineraries'])} itineraries, the poll that follows it
+        {val(evidence['poll_itineraries'])}. Reading only the first therefore
         discarded most of the available fares even once the parameters were right.
-        A third defect compounded the diagnosis: the provider's console lists these
+        A third defect compounded the diagnosis. The provider's console lists these
         paths in the singular while only the plural form resolves, so an
         exploratory call made from the documentation returns 404 and suggests the
         endpoint does not exist.
@@ -244,15 +238,12 @@ def build(report: Report) -> None:
     """)
 
     report.p("""
-        Both lessons were acted on together. Figure layout is now mechanical rather
-        than estimated: text is measured with the renderer at its actual size, boxes
-        grow to fit their measured contents, a header band is reserved so a title
-        cannot collide with content, connectors route orthogonally, labels carry
-        opaque backgrounds so no line strikes through them, and a validation pass
-        raises on any overlap, any content outside the frame, and any text larger than
-        the box around it. That validator caught a box positioned outside the canvas
-        on its first run — something the previous character-count estimate would have
-        exported without complaint.
+        Both lessons were acted on together. Figure layout is now measured rather
+        than estimated: text is sized by the renderer itself, boxes grow to fit it,
+        and a validation pass raises on any overlap, any content outside the frame,
+        and any text larger than the box around it. That validator caught a box
+        positioned outside the canvas on its first run — something the previous
+        character-count estimate would have exported without complaint.
     """)
 
     # ------------------------------------------------------------------ 5.7
@@ -266,14 +257,14 @@ def build(report: Report) -> None:
     """)
 
     report.p("""
-        Appendix H tabulates coverage by area. The pattern is that the budget
-        allocation, cost estimation and validation modules are tested thoroughly
-        because they are pure functions needing no network and no model, while the
-        message layer, the tool server, the record-and-replay cache and the metric
-        collector have no unit tests at all. The four arms have none either, because
-        each run costs model quota. Coverage followed what was cheap to test rather
-        than what a defect would cost, and Section 6.4 reports where the defects
-        turned out to be.
+        Appendix H tabulates coverage by area. The budget allocation, cost
+        estimation and validation modules are tested thoroughly, because they are
+        pure functions needing no network and no model. The message layer, the tool
+        server, the record-and-replay cache and the metric collector have no unit
+        tests at all, and the four arms have none either, because each run costs
+        model quota. Coverage followed what was cheap to test rather than what a
+        defect would cost, and Section 6.4 reports where the defects turned out to
+        be.
     """)
 
     report.p("""
@@ -298,9 +289,9 @@ def build(report: Report) -> None:
 
     report.p("""
         This one was fixed rather than recorded, because the remedy is confined and
-        verifiable. The evaluator now lives in one module, the tool delegates to it,
-        exponentiation is bounded before evaluation rather than after, and the tests
-        import the shipped code — one of them asserting that the server's tool is
+        verifiable. The evaluator now lives in one module and the tool delegates to
+        it, exponentiation is bounded before evaluation rather than after, and the
+        tests import the shipped code. One test asserts that the server's tool is
         that code and not a copy, so the two cannot drift again. The measurements in
         Chapter 6 predate the change and are unaffected: the fix alters which
         expressions are refused, not the value returned for any well-formed one.

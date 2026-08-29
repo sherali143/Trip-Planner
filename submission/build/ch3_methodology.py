@@ -73,24 +73,25 @@ def build(report: Report) -> None:
     """)
 
     report.p("""
-        Arm C is the methodological centre of the evaluation and it was expensive to
-        include: building it meant implementing three commitments the proposal had made
-        and the first implementation had not, then handing the improved version the
-        strongest possible position before comparing against it. It also produced the
-        result in Section 6.3, that most of the difference the project set out to
-        demonstrate was implementation quality rather than architecture. Arm C is what
-        makes that finding available; its absence is what would have made the headline
-        claim indefensible under questioning.
+        Arm C is the methodological centre of the evaluation, and it was expensive
+        to include. Building it meant implementing three commitments the proposal
+        had made and the first implementation had not, then giving the improved
+        version the strongest possible position before comparing against it. It
+        also produced the result in Section 6.3: that most of the difference the
+        project set out to demonstrate was implementation quality rather than
+        architecture. Without Arm C that finding is unavailable and the headline
+        claim is indefensible under questioning.
     """)
 
     report.p("""
-        One control is imperfect. The six-agent arms instantiate five agents: the conversational agent is omitted so
-        every arm receives one identical request string, since a multi-turn dialogue
-        cannot be held identical across four architectures. The comparison is therefore
-        between three agents and a five-agent ablation of the six-agent design. The
-        omitted role is the same in both multi-agent arms and absent from the other two,
-        so it does not bias the contrast — but the arms are named for the design they
-        represent, and the difference should be visible.
+        One control is imperfect. The six-agent arms instantiate five agents: the
+        conversational agent is omitted so every arm receives one identical request
+        string, since a multi-turn dialogue cannot be held identical across four
+        architectures. The comparison is therefore between three agents and a
+        five-agent ablation of the six-agent design. The omitted role is the same in
+        both multi-agent arms and absent from the other two, so it does not bias the
+        contrast, but the arms are named for the design they represent and the
+        difference should be visible.
     """)
 
     # ------------------------------------------------------------------ 3.3
@@ -100,12 +101,12 @@ def build(report: Report) -> None:
     report.p(f"""
         {val(coverage['scenarios_designed'])} scenarios were written before any
         measurement, to span the axes that change an itinerary's difficulty rather
-        than to sample uniformly: trip length from three to fourteen nights,
-        distance from short-haul Dubai to long-haul Tokyo, party size from solo to
-        a family of four, destination price tier, multi-city routes, and budgets
-        from generous down to deliberately impossible. Every arm receives the
-        identical request string, so nothing in the comparison depends on
-        phrasing.
+        than to sample uniformly. Those axes are trip length, from three to
+        fourteen nights; distance, from short-haul Dubai to long-haul Tokyo; party
+        size, from solo to a family of four; destination price tier; multi-city
+        routes; and budgets from generous down to deliberately impossible. Every
+        arm receives the identical request string, so nothing in the comparison
+        depends on phrasing.
     """)
 
     report.p("""
@@ -202,15 +203,15 @@ def build(report: Report) -> None:
         ethical approval was required; this was confirmed with the supervisor at the
         first check-in. All API use is read-only and within published free-tier terms,
         and no endpoint was scraped. The response cache holds third-party commercial
-        data — hotel names, review scores, fares — locally and solely to reproduce the
-        reported results; it contains no personal data, and request headers carrying
-        credentials are excluded from what is written to disk.
+        data — hotel names, review scores, fares — solely to reproduce the reported
+        results. It holds no personal data, and request headers carrying credentials
+        are excluded from what is written to disk.
     """)
 
     report.p("""
-        One obligation runs beyond compliance and shaped a measurement. The BCS code
-        requires members not to misrepresent what their work can do [@bcs2022], and a
-        system that prints prices invites the reading that those prices are bookable.
-        That is why groundedness is measured rather than assumed. Section 7.5 returns
-        to the professional and legal position with the measured result in hand.
+        One obligation runs beyond compliance and shaped a measurement. A system
+        that prints prices invites the reading that those prices are bookable, so
+        groundedness is measured rather than assumed. Section 7.5 returns to the
+        professional and legal position, and to the BCS obligation behind it
+        [@bcs2022], with the measured result in hand.
     """)

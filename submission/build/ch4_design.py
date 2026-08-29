@@ -109,10 +109,10 @@ def build(report: Report) -> None:
         of the network rather than inside each tool means every tool inherits both
         replay and quota protection without knowing either exists, and adding a
         tool cannot accidentally bypass them. The cost is that the cache key is
-        computed from method, URL, parameters and body, so a semantically
-        equivalent call with reordered parameters misses — acceptable here because
-        the deterministic arm issues canonical parameters, and the reason that arm
-        runs first.
+        computed from method, URL, parameters and body, so an equivalent call with
+        reordered parameters misses. That is acceptable here because the
+        deterministic arm issues canonical parameters, and it is why that arm runs
+        first.
     """)
 
     report.h3("4.3.2  The inter-agent interface")
@@ -173,12 +173,12 @@ def build(report: Report) -> None:
         accommodation, food and activities. The original implementation used one
         fixed percentage split for every trip, which is wrong in a way that
         compounds: airfare is incurred per person and scales with distance, while
-        accommodation is incurred per night and is shared between travellers. A
-        split that suits a solo short-haul trip therefore misallocates badly for a
-        family travelling far. The replacement derives the split from what the
-        components of that specific trip cost, and honours an explicit split when
-        the traveller gives one, because a user who says how to divide their money
-        has expressed a preference and not made an error.
+        accommodation is incurred per night and is shared. A split that suits a
+        solo short-haul trip therefore misallocates badly for a family travelling
+        far. The replacement derives the split from what that specific trip's
+        components cost, and honours an explicit split when the traveller gives
+        one, because a user who says how to divide their money has expressed a
+        preference and not made an error.
     """)
 
     report.h3("4.4.3  A feasibility floor rather than a rejection rule")

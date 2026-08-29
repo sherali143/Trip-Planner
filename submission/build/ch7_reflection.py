@@ -79,12 +79,12 @@ def build(report: Report) -> None:
     """)
 
     report.p("""
-        This follows directly from the pivot rather than from carelessness. Once
-        retrieval stopped being performed by agents there was nothing left for agents
-        to send each other about retrieval, so the message layer's role narrowed to an
-        audit trail — genuinely useful, since it is what makes the exchange
-        inspectable, and not what was promised. The pivot that produced the project's
-        main result also hollowed out two of its stated deliverables.
+        This follows from the pivot rather than from carelessness. Once agents
+        stopped performing retrieval there was nothing left for them to send each
+        other about it, so the message layer's role narrowed to an audit trail. That
+        is genuinely useful, since it is what makes the exchange inspectable, but it
+        is not what was promised. The pivot that produced the project's main result
+        also hollowed out two of its stated deliverables.
     """)
 
     # ------------------------------------------------------------------ 7.3
@@ -92,11 +92,11 @@ def build(report: Report) -> None:
 
     report.p(f"""
         Eight commitments changed between the proposal and delivery, and Appendix I
-        tabulates each with its reason and its evidence. Three were forced from outside:
-        the proposed flight provider withdrew free access mid-project, which also
-        collapsed two planned flight tools into one, and the model changed to a free
-        tier that made repeated evaluation affordable while removing model choice as a
-        confound between arms. Two followed from measurement: six agents became three
+        tabulates each with its reason and its evidence. Three were forced from
+        outside. The proposed flight provider withdrew free access mid-project,
+        which also collapsed two planned flight tools into one. The model changed to
+        a free tier, which made repeated evaluation affordable and removed model
+        choice as a confound between arms. Two followed from measurement: six agents became three
         because instrumentation showed most requests were spent on deterministic
         retrieval, and scenario coverage fell to
         {val(coverage['scenarios_measured'])} for the cost comparison because the
@@ -137,9 +137,9 @@ def build(report: Report) -> None:
         The test suite's coverage is narrower than its size implies: thorough on the
         pure-Python modules, absent on the protocol layer, the record-and-replay cache
         and the metric collector. Six protocol defects were found by a purpose-written
-        experiment and none by the suite that passed throughout. One further defect —
-        a test block exercising a copy of the calculator rather than the shipped one —
-        was found by the same audit and has been closed (Section 5.7); the rest are
+        experiment and none by the suite that passed throughout. The same audit found
+        one further defect, a test block exercising a copy of the calculator rather
+        than the shipped one, and that has been closed (Section 5.7). The rest are
         recorded rather than repaired, for the reason given above.
     """)
 
@@ -184,10 +184,10 @@ def build(report: Report) -> None:
     report.p("""
         The clearest mistake was ordering. Measurement was built in the second cycle,
         after the system worked, and until then every claim about cost was a guess — one
-        of which had been written into the project's own documentation as a result.
-        Had the request counter existed on the first day, the pivot this dissertation is
-        built on would have been visible in week two rather than week six, and there
-        would have been quota left for the scenario coverage the evaluation now lacks.
+        of which reached the project's own documentation as a result. Had the request
+        counter existed on day one, the pivot this dissertation is built on would have
+        been visible in week two rather than week six, and quota would have been left
+        for the scenario coverage the evaluation now lacks.
         Instrumentation is not a reporting concern to add when writing up; it is what
         tells you what to build next.
     """)

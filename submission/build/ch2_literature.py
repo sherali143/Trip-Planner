@@ -16,8 +16,8 @@ def build(report: Report) -> None:
         interfaces are specified, how travel planning has been evaluated as a
         task, and how groundedness is measured. Each is examined for what it
         establishes and where it stops, because the gaps are what the design has
-        to answer. The chapter closes by drawing the five together into the
-        framework that governed the build.
+        to answer. The chapter closes by drawing them into the framework that
+        governed the build.
     """)
 
     # ------------------------------------------------------------------ 2.1
@@ -106,22 +106,21 @@ def build(report: Report) -> None:
         standardises how a tool is described and invoked, giving each tool a
         JSON-RPC entry point and a declared input schema [@anthropic2024]. The
         appeal is straightforward: a malformed call is rejected at the boundary
-        rather than reaching an API as a silent error. MCP is young, however, and
-        an early analysis of its landscape notes that the specification governs
-        the transport and the schema declaration while leaving the correspondence
-        between a declared schema and the code behind it entirely to the
-        implementer [@hou2025]. That is not a small gap, and Section 6.4 reports
-        what auditing it found in this project's own server.
+        rather than reaching an API as a silent error. MCP is young, however. An
+        early analysis of its landscape notes that the specification governs the
+        transport and the schema declaration, but leaves the correspondence between
+        a declared schema and the code behind it to the implementer [@hou2025].
+        That is not a small gap, and Section 6.4 reports what auditing it found in
+        this project's own server.
     """)
 
     report.p("""
-        Above the agents there is no equivalent standard. The nearest thing is
-        much older: the FIPA Communicative Act Library defines a typed vocabulary
-        of speech acts for agent messaging — request, inform, agree, refuse and
-        others — precisely so that the intent of a message is not left to
-        interpretation [@fipa2002]. Modern LLM frameworks largely abandoned this
-        in favour of free text, and the observed consequence is what motivated
-        the reintroduction of typing here. In a study of twenty-five generative
+        Above the agents there is no equivalent standard. The nearest is much
+        older. The FIPA Communicative Act Library defines a typed vocabulary of
+        speech acts for agent messaging — request, inform, agree, refuse — so that
+        the intent of a message is not left to interpretation [@fipa2002]. Modern
+        LLM frameworks largely abandoned this for free text, and the observed
+        consequence is what motivated the reintroduction of typing here. In a study of twenty-five generative
         agents, information transmitted between agents as natural language
         degraded across successive hops as each recipient paraphrased what it had
         received [@park2023].
@@ -149,13 +148,12 @@ def build(report: Report) -> None:
         TravelPlanner is the reference point. It supplies 1,225 tasks with
         explicit budget and commonsense constraints and a sandboxed environment,
         and reports that the best single-agent GPT-4 configuration achieves a
-        0.6% final pass rate [@xie2024]. The value of the benchmark is that it
-        separates plausibility from correctness. Its limit, for a project like
-        this one, is that its environment is a frozen snapshot: an agent that
-        performs well on it has not demonstrated it can cope with a live API that
-        returns a session identifier instead of results, or ignores a parameter it
-        does not recognise. Both of those happened here, and Chapter 5 documents
-        them.
+        0.6% final pass rate [@xie2024]. Its value is that it separates
+        plausibility from correctness. Its limit, for a project like this one, is
+        that its environment is a frozen snapshot. An agent that scores well on it
+        has not shown it can cope with a live API that returns a session identifier
+        instead of results, or ignores a parameter it does not recognise. Both
+        happened here, and Chapter 5 documents them.
     """)
 
     report.p("""
@@ -228,11 +226,11 @@ def build(report: Report) -> None:
     report.p(f"""
         The fourth column is what distinguishes this framework from a restatement
         of its sources. Each response was tested, and two did not hold. The schema
-        layer that was supposed to prevent malformed invocation contains
+        layer meant to prevent malformed invocation contains
         {val(len(measured.mcp_schema_stats()['defective_tools']))} tools whose
         declared schemas disagree with their implementations, and the typed
         message layer honours its permission rules while ignoring the priority
-        ordering it advertises — {val(protocol['passed'])} of
+        ordering it advertises: {val(protocol['passed'])} of
         {val(protocol['total_checks'])} conformance checks pass. Adopting a
         protocol is not the same as conforming to it, and the literature reviewed
         above offers no method for telling the difference. Section 6.4 supplies

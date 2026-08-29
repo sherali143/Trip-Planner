@@ -71,8 +71,8 @@ def build(report: Report) -> None:
     report.p(f"""
         E1's sample is uneven in a way that must be stated before its numbers are
         read. Every architecture was run {val(coverage['repeats_per_arm'])} times, so
-        every figure carries a standard deviation and a 95% interval — but those
-        repeats sit on {val(coverage['scenarios_measured'])} of
+        every figure carries a standard deviation and a 95% interval. Those repeats
+        sit on {val(coverage['scenarios_measured'])} of
         {val(coverage['scenarios_designed'])} designed scenarios, because repeats
         replay recorded responses free while each new scenario costs about four of
         the eighty API requests a month allows. Differences between architectures on
@@ -251,14 +251,14 @@ def build(report: Report) -> None:
     c_vs_b = measured.improvement("C_vs_B")
     report.p(f"""
         E3 is the result that most constrains what this dissertation can claim.
-        Tuning the six-agent arm — one narrow tool per specialist instead of up to
-        eight, an iteration ceiling of three instead of up to fifteen, distilled
-        tool results, shorter role descriptions, and the three specialists run
-        concurrently — reduced its tokens by
+        The six-agent arm was tuned in five ways: one narrow tool per specialist
+        instead of up to eight, an iteration ceiling of three instead of fifteen,
+        distilled tool results, shorter role descriptions, and the three
+        specialists run concurrently. With the same architecture and the same
+        retrieved data, that reduced its tokens by
         {val(c_vs_b['tokens_pct'], '{:.1f}')}%, its cost by
         {val(c_vs_b['cost_pct'], '{:.1f}')}% and its request count by
-        {val(c_vs_b['llm_calls_pct'], '{:.1f}')}%, with the same architecture and
-        the same retrieved data. Prompt tokens fell from
+        {val(c_vs_b['llm_calls_pct'], '{:.1f}')}%. Prompt tokens fell from
         {val(b_llm['prompt_tokens'], '{:,.0f}')} to
         {val(c_llm['prompt_tokens'], '{:,.0f}')}.
     """)
@@ -400,9 +400,9 @@ def build(report: Report) -> None:
     report.p("""
         The obvious response is to raise the anchor, and it has deliberately not been
         done. One route cannot calibrate three distance bands. Correcting the
-        medium-haul constant against the single route for which fares are recorded would
-        be tuning a model on its only validation point, leaving the short-haul and
-        long-haul constants as unvalidated as before while making the whole model appear
+        medium-haul constant against the only route with recorded fares would be
+        tuning a model on its single validation point: the short-haul and long-haul
+        constants would stay as unvalidated as before, while the whole model appeared
         checked.
     """)
 
@@ -459,11 +459,10 @@ def build(report: Report) -> None:
         reasoning loop prompts. The three-agent arm was unaffected, having no such
         loop; the six-agent arms could not run at all. A compatibility layer now
         adjusts only requests that would otherwise be rejected, passes the rest
-        through untouched, and counts what it changed. Two consequences: these
-        figures are not comparable with the earlier round because the model differs,
-        and an architecture evaluated against someone else's hosted model inherits
-        that model's lifetime — a stronger argument for the recorded response cache
-        than the one originally made for it.
+        through untouched, and counts what it changed. These figures are therefore
+        not comparable with the earlier round, and an architecture evaluated against
+        someone else's hosted model inherits that model's lifetime — a stronger
+        argument for the recorded response cache than the one originally made.
     """)
 
     report.p(f"""
