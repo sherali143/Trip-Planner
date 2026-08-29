@@ -5,6 +5,7 @@ Shared drawing helpers for the figures: colours, boxes, arrows and labels.
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -478,3 +479,26 @@ def save_chart(fig, name: str) -> str:
     fig.savefig(path, dpi=DPI, bbox_inches="tight", pad_inches=0.28)
     plt.close(fig)
     return path
+
+
+def run_builders(builders, noun: str, catching=Exception) -> int:
+    """
+    Run every figure builder, say which ones worked, and return an exit code.
+
+    `catching` is the caller's choice for a reason. The chart script reports any
+    failure and carries on, because one broken chart should not stop the other
+    twelve being written. The diagram script narrows it to AssertionError, so
+    that a failed layout check is counted as an invalid diagram while a genuine
+    bug still crashes and gets noticed.
+    """
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    failures = 0
+    for builder in builders:
+        try:
+            print(f"  ok   {os.path.relpath(builder(), ROOT)}")
+        except catching as exc:
+            failures += 1
+            print(f"  FAIL {builder.__name__}: {type(exc).__name__}: {exc}")
+    print(f"\n{len(builders) - failures}/{len(builders)} {noun} at {DPI} dpi")
+    return 1 if failures else 0

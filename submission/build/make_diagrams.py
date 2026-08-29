@@ -11,7 +11,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(
 from trip_planner.evaluation import measured
 from submission.build.figlib import (AQUA, AQUA_FILL, BLUE, BLUE_FILL, GREY, GREY_FILL,
                             INK, INK_2, ORANGE, ORANGE_FILL, PURPLE,
-                            PURPLE_FILL, RED, RED_FILL, ROOT, Canvas, stack)
+                            PURPLE_FILL, RED, RED_FILL, Canvas,
+                            run_builders, stack)
 
 
 # ============================================================ 1. architecture
@@ -557,18 +558,7 @@ DIAGRAMS = [
 
 
 def main() -> int:
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
-    failures = 0
-    for builder in DIAGRAMS:
-        try:
-            path = builder()
-            print(f"  ok   {os.path.relpath(path, ROOT)}")
-        except AssertionError as exc:
-            failures += 1
-            print(f"  FAIL {builder.__name__}\n       {exc}")
-    print(f"\n{len(DIAGRAMS) - failures}/{len(DIAGRAMS)} diagrams valid at 300 dpi")
-    return 1 if failures else 0
+    return run_builders(DIAGRAMS, "diagrams valid", catching=AssertionError)
 
 
 if __name__ == "__main__":

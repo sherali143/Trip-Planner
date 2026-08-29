@@ -16,8 +16,8 @@ from matplotlib.ticker import FuncFormatter, MaxNLocator
 
 from trip_planner.evaluation import measured
 from trip_planner.evaluation.measured import ARM_ORDER
-from submission.build.figlib import (AQUA, BLUE, DPI, GREY, INK, INK_2, ORANGE, RED,
-                            ROOT, save_chart)
+from submission.build.figlib import (AQUA, BLUE, GREY, INK, INK_2, ORANGE, RED,
+                            run_builders, save_chart)
 
 GRID = "#e3e2dd"
 SURFACE = "#fcfcfb"
@@ -441,18 +441,7 @@ CHARTS = [
 
 
 def main() -> int:
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
-    failures = 0
-    for builder in CHARTS:
-        try:
-            path = builder()
-            print(f"  ok   {os.path.relpath(path, ROOT)}")
-        except Exception as exc:
-            failures += 1
-            print(f"  FAIL {builder.__name__}: {type(exc).__name__}: {exc}")
-    print(f"\n{len(CHARTS) - failures}/{len(CHARTS)} charts written at {DPI} dpi")
-    return 1 if failures else 0
+    return run_builders(CHARTS, "charts written")
 
 
 if __name__ == "__main__":

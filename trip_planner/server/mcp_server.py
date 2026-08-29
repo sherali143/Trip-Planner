@@ -45,33 +45,43 @@ _HOTEL_ENRICHMENT_TOP_N = int(os.getenv("HOTEL_ENRICHMENT_TOP_N", "0"))
 # HOTEL/ACCOMMODATION FUNCTIONS
 # ============================================
 
+def _booking_get(path: str, params: dict, failure: str) -> dict:
+    """
+    One request to Booking.com, wrapped in the success/error envelope.
+
+    Every endpoint below sends the same host and credential, waits the same
+    thirty seconds, and reports failure the same way, so that lives here once
+    instead of in each of them.
+
+    `path` completes the URL rather than replacing it: the response cache keys
+    on the exact URL and parameters, so both are passed through untouched and
+    every existing recording still matches.
+    """
+    try:
+        response = cached_get(
+            f"https://{BOOKING_HOST}/api/v1/{path}",
+            headers={"x-rapidapi-host": BOOKING_HOST,
+                     "x-rapidapi-key": RAPIDAPI_KEY},
+            params=params, timeout=30)
+        response.raise_for_status()
+        return {"success": True, "data": response.json()}
+    except Exception as e:
+        return {"success": False, "error": str(e), "message": failure}
+
+
 def search_hotel_destination(query: str) -> dict:
     """
     Search for a destination to get its dest_id for hotel searches.
     This is STEP 1 of hotel search - required before searching hotels.
-    
+
     Args:
         query: Destination city name (e.g., "Paris", "London", "Doha")
-    
+
     Returns:
         Destination search results with dest_id
     """
-    url = "https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination"
-    
-    params = {"query": query}
-    
-    headers = {
-        "x-rapidapi-host": BOOKING_HOST,
-        "x-rapidapi-key": RAPIDAPI_KEY
-    }
-    
-    try:
-        response = cached_get(url, headers=headers, params=params, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        return {"success": True, "data": data}
-    except Exception as e:
-        return {"success": False, "error": str(e), "message": "Failed to search destination"}
+    return _booking_get("hotels/searchDestination", {"query": query},
+                        "Failed to search destination")
 
 
 def search_hotels_by_destination(
@@ -103,8 +113,6 @@ def search_hotels_by_destination(
     Returns:
         Hotel search results with hotel_id for each hotel
     """
-    url = "https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels"
-    
     params = {
         "dest_id": dest_id,
         "search_type": search_type,
@@ -118,22 +126,11 @@ def search_hotels_by_destination(
         "languagecode": "en-us",
         "currency_code": currency_code
     }
-    
+
     if children_age:
         params["children_age"] = children_age
-    
-    headers = {
-        "x-rapidapi-host": BOOKING_HOST,
-        "x-rapidapi-key": RAPIDAPI_KEY
-    }
-    
-    try:
-        response = cached_get(url, headers=headers, params=params, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        return {"success": True, "data": data}
-    except Exception as e:
-        return {"success": False, "error": str(e), "message": "Failed to search hotels"}
+
+    return _booking_get("hotels/searchHotels", params, "Failed to search hotels")
 
 
 def get_hotel_reviews(hotel_id: str) -> dict:
@@ -147,25 +144,9 @@ def get_hotel_reviews(hotel_id: str) -> dict:
     Returns:
         Hotel review scores and ratings
     """
-    url = "https://booking-com15.p.rapidapi.com/api/v1/hotels/getHotelReviewScores"
-    
-    params = {
-        "hotel_id": hotel_id,
-        "languagecode": "en-us"
-    }
-    
-    headers = {
-        "x-rapidapi-host": BOOKING_HOST,
-        "x-rapidapi-key": RAPIDAPI_KEY
-    }
-    
-    try:
-        response = cached_get(url, headers=headers, params=params, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        return {"success": True, "data": data}
-    except Exception as e:
-        return {"success": False, "error": str(e), "message": "Failed to get hotel reviews"}
+    return _booking_get("hotels/getHotelReviewScores",
+                        {"hotel_id": hotel_id, "languagecode": "en-us"},
+                        "Failed to get hotel reviews")
 
 
 def get_attractions_near_hotel(hotel_id: str) -> dict:
@@ -179,25 +160,9 @@ def get_attractions_near_hotel(hotel_id: str) -> dict:
     Returns:
         Nearby attractions and points of interest
     """
-    url = "https://booking-com15.p.rapidapi.com/api/v1/hotels/getPopularAttractionNearBy"
-    
-    params = {
-        "hotel_id": hotel_id,
-        "languagecode": "en-us"
-    }
-    
-    headers = {
-        "x-rapidapi-host": BOOKING_HOST,
-        "x-rapidapi-key": RAPIDAPI_KEY
-    }
-    
-    try:
-        response = cached_get(url, headers=headers, params=params, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        return {"success": True, "data": data}
-    except Exception as e:
-        return {"success": False, "error": str(e), "message": "Failed to get attractions near hotel"}
+    return _booking_get("hotels/getPopularAttractionNearBy",
+                        {"hotel_id": hotel_id, "languagecode": "en-us"},
+                        "Failed to get attractions near hotel")
 
 
 def search_car_rentals(
@@ -216,8 +181,6 @@ def search_car_rentals(
     """
     Search for car rentals using Booking.com API
     """
-    url = "https://booking-com15.p.rapidapi.com/api/v1/cars/searchCarRentals"
-    
     params = {
         "pick_up_latitude": pick_up_latitude,
         "pick_up_longitude": pick_up_longitude,
@@ -231,18 +194,15 @@ def search_car_rentals(
         "currency_code": currency_code,
         "location": location
     }
-    
-    headers = {
-        "x-rapidapi-host": BOOKING_HOST,
-        "x-rapidapi-key": RAPIDAPI_KEY
-    }
-    
-    try:
-        response = cached_get(url, headers=headers, params=params, timeout=30)
-        response.raise_for_status()
-        return response.json()
-    except Exception as e:
-        return {"error": str(e), "message": "Failed to search car rentals"}
+
+    # Unwrapped deliberately: this endpoint has always returned the payload
+    # itself rather than the envelope the hotel calls use, and its caller reads
+    # it that way. Left as it is rather than quietly changing a tool's contract.
+    result = _booking_get("cars/searchCarRentals", params,
+                          "Failed to search car rentals")
+    if result["success"]:
+        return result["data"]
+    return {"error": result["error"], "message": result["message"]}
 
 
 def search_hotels_comprehensive(

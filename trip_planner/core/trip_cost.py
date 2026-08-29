@@ -207,13 +207,25 @@ class BudgetVerdict:
             f"{reached}.")
 
 
-def classify_haul(destination: str) -> str:
+def _first_match(destination: str, groups, default: str) -> str:
+    """
+    The label of the first group naming a city that appears in `destination`.
+
+    Both classifiers below are the same lookup over different lists, so the
+    matching rule — lowercase, substring, first group wins — is written once
+    and cannot drift between them.
+    """
     dest = (destination or "").strip().lower()
-    if any(city in dest for city in _SHORT_HAUL):
-        return "short"
-    if any(city in dest for city in _LONG_HAUL):
-        return "long"
-    return "medium"
+    for group, label in groups:
+        if any(city in dest for city in group):
+            return label
+    return default
+
+
+def classify_haul(destination: str) -> str:
+    return _first_match(destination,
+                        [(_SHORT_HAUL, "short"), (_LONG_HAUL, "long")],
+                        "medium")
 
 
 def is_known_destination(destination: str) -> bool:
@@ -235,12 +247,9 @@ def is_known_destination(destination: str) -> bool:
 
 
 def classify_price_tier(destination: str) -> str:
-    dest = (destination or "").strip().lower()
-    if any(city in dest for city in _CHEAP):
-        return "cheap"
-    if any(city in dest for city in _EXPENSIVE):
-        return "expensive"
-    return "moderate"
+    return _first_match(destination,
+                        [(_CHEAP, "cheap"), (_EXPENSIVE, "expensive")],
+                        "moderate")
 
 
 def estimate_trip_cost(
