@@ -77,6 +77,8 @@ def assemble() -> Report:
     appendices.references(report)
     appendices.appendices(report)
     frontmatter.figure_and_table_lists(report)
+    # Last, because it reports the body count and so must run after the body.
+    frontmatter.declare_word_count(report)
     return report
 
 

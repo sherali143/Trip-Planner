@@ -14,7 +14,7 @@ from submission.build.common import (ACCENT, AWARD, FACULTY, MODULE_CODE,
 
 
 def _centred(report: Report, text: str, *, size: float = 11, bold: bool = False,
-             colour=None, space_after: float = 6) -> None:
+             colour=None, space_after: float = 6):
     paragraph = report.doc.add_paragraph()
     paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
     paragraph.paragraph_format.space_after = Pt(space_after)
@@ -25,6 +25,7 @@ def _centred(report: Report, text: str, *, size: float = 11, bold: bool = False,
     if colour is not None:
         run.font.color.rgb = colour
     report._count(text)
+    return run
 
 
 def title_page(report: Report) -> None:
@@ -45,7 +46,15 @@ def title_page(report: Report) -> None:
     _centred(report,
              f"Submitted in partial fulfilment of the requirements for the degree of "
              f"{AWARD}", size=10.5, colour=MUTED, space_after=6)
-    _centred(report, SUBMISSION_DATE, size=10.5, colour=MUTED, space_after=30)
+    _centred(report, SUBMISSION_DATE, size=10.5, colour=MUTED, space_after=18)
+
+    # Filled in by declare_word_count() once the body has been built, because
+    # the count is not known while this page is being written. Without it a
+    # marker running Word's own count sees the whole file — front matter,
+    # references and every appendix — against a limit that applies to the eight
+    # chapters only.
+    report.wordcount_run = _centred(report, "Word count: pending",
+                                    size=10.5, colour=MUTED, space_after=30)
 
     coverage = measured.coverage()
     _centred(report,
@@ -193,14 +202,37 @@ def figure_and_table_lists(report: Report) -> None:
     matter section instead — a compromise noted in the build output.
     """
     report.start_excluded("lists of figures and tables")
-    report.unnumbered_h1("Figures")
-    for tag, caption in report.figure_index:
-        paragraph = report.doc.add_paragraph(f"{tag}   {caption}")
-        paragraph.paragraph_format.line_spacing = 1.15
-        paragraph.paragraph_format.space_after = Pt(3)
+    for heading, index in (("Figures", report.figure_index),
+                           ("Tables", report.table_index)):
+        report.unnumbered_h1(heading, page_break=(heading == "Figures"))
+        for tag, caption in index:
+            line = f"{tag}   {caption}"
+            paragraph = report.doc.add_paragraph(line)
+            paragraph.paragraph_format.line_spacing = 1.15
+            paragraph.paragraph_format.space_after = Pt(3)
+            # Counted, even though it is excluded from the limit. These 35 lines
+            # are the longest text in the document that no counter saw, and a
+            # build that reports its own totals should not be missing a third of
+            # the excluded words.
+            report._count(line)
 
-    report.unnumbered_h1("Tables", page_break=False)
-    for tag, caption in report.table_index:
-        paragraph = report.doc.add_paragraph(f"{tag}   {caption}")
-        paragraph.paragraph_format.line_spacing = 1.15
-        paragraph.paragraph_format.space_after = Pt(3)
+
+def declare_word_count(report: Report) -> None:
+    """
+    Write the main-body word count onto the title page.
+
+    Called after the body is assembled, so the figure is the counter's own and
+    cannot drift from the document it describes. Says what is excluded as well
+    as the number, because the number alone invites the wrong comparison.
+    """
+    if report.wordcount_run is None:      # title page not built
+        return
+    was = len(report.wordcount_run.text.split())
+    report.wordcount_run.text = (
+        f"Word count (main body, Chapters 1–8): {report.body_words:,} words. "
+        f"Front matter, references, tables, captions and appendices are "
+        f"excluded.")
+    # The placeholder was already counted when the title page was written, so
+    # correct the excluded tally rather than leaving it describing text that is
+    # no longer in the document.
+    report.excluded_words += len(report.wordcount_run.text.split()) - was

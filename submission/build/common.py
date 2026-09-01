@@ -183,6 +183,9 @@ class Report:
     table_index: List[Tuple[str, str]] = field(default_factory=list)
     prose_blocks: List[Tuple[str, str]] = field(default_factory=list)
     all_text: List[str] = field(default_factory=list)
+    # The title page's word-count run, held so it can be written once the body
+    # has been counted. See frontmatter.declare_word_count.
+    wordcount_run: Any = None
 
     # ------------------------------------------------------------- setup
     def __post_init__(self) -> None:

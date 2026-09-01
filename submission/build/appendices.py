@@ -17,9 +17,9 @@ def references(report: Report) -> None:
         (REFERENCES[k]["entry"], REFERENCES[k]["locator"]) for k in CITATIONS.keys()
     )
     for entry, locator in entries:
-        paragraph = report.doc.add_paragraph(f"{entry} Available at: {locator}"
-                                            if locator.startswith("http")
-                                            else f"{entry} {locator}")
+        line = (f"{entry} Available at: {locator}" if locator.startswith("http")
+                else f"{entry} {locator}")
+        paragraph = report.doc.add_paragraph(line)
         paragraph.paragraph_format.line_spacing = 1.5
         paragraph.paragraph_format.space_after = 0
         paragraph.paragraph_format.first_line_indent = None
@@ -27,6 +27,9 @@ def references(report: Report) -> None:
         from docx.shared import Inches
         paragraph.paragraph_format.left_indent = Inches(0.5)
         paragraph.paragraph_format.first_line_indent = Inches(-0.5)
+        # Excluded from the limit, but still counted, so the build's own totals
+        # account for every word it writes.
+        report._count(line)
 
 
 def _appendix(report: Report, letter: str, title: str) -> None:
