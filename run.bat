@@ -366,9 +366,10 @@ goto menu
 
 :report
 echo  Rebuilding the dissertation. This regenerates the figures, runs the
-echo  test suite, rebuilds the document and reports the word count.
+echo  test suite, rebuilds the document and its appendices file, and reports
+echo  the word count. Close both in Word first, or the save will be refused.
 echo.
-"%PY%" -m submission.build.build_dissertation --figures
+"%PY%" -m submission.build.build_dissertation --figures --split-appendices
 echo.
 pause
 goto menu
