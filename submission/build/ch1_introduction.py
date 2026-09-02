@@ -15,65 +15,60 @@ def build(report: Report) -> None:
 
     report.p("""
         International tourism receipts returned to roughly 1.5 trillion US dollars
-        in 2023, and arrivals recovered to close to their pre-pandemic level
-        [@unwto2024]. The industry grew back. The planning experience did not change
-        with it. Assembling a week away still means reconciling a flight search, a
-        hotel search, an attractions list and a budget across several tabs, then
-        redoing most of it when one price moves. The task is tedious rather than
-        difficult, which is precisely the profile of work that automation should
-        suit.
+        in 2023, with arrivals close to pre-pandemic levels [@unwto2024]. The
+        industry grew back; the planning experience did not. Assembling a week away
+        still means reconciling a flight search, a hotel search, an attractions list
+        and a budget across several tabs, then redoing most of it when one price
+        moves — tedious rather than difficult, which is the profile of work
+        automation should suit.
     """)
 
     report.p("""
-        Large language models look like the obvious instrument, and for the
-        conversational part of the task they are: interpreting "a week in Bangkok
-        for two thousand dollars, we like markets and temples" is what they do well.
-        The difficulty appears at the next step. A travel plan is not writing to be
-        judged on fluency; it is a set of claims about the world. A named flight
-        either exists at that price on that date or it does not. That makes travel
-        planning a useful test case, because unlike summarisation the output can be
-        checked against an authority.
+        Language models look like the obvious instrument, and for the conversational
+        part they are: interpreting "a week in Bangkok for two thousand dollars, we
+        like markets and temples" is what they do well. The difficulty is the next
+        step. A travel plan is not writing judged on fluency but a set of claims
+        about the world — a named flight either exists at that price on that date or
+        it does not. That makes travel planning a useful test case, because unlike
+        summarisation the output can be checked against an authority.
     """)
 
     report.p("""
         Checked that way, current systems do poorly. On TravelPlanner, a benchmark
-        of 1,225 travel-planning tasks with hard commonsense and budget constraints,
-        the strongest single-agent configuration of GPT-4 completed 0.6% of tasks
-        end to end [@xie2024]. The failures were not stylistic. Plans referred to
-        venues that do not exist, quoted prices that were never offered, and
-        violated the budget they had been given. The same survey literature that
-        documents hallucination in text generation generally [@ji2023] describes a
-        sharper version of the problem here: a fluent itinerary that cannot be
-        booked is worse than no itinerary, because it looks finished.
+        of 1,225 tasks with hard commonsense and budget constraints, the strongest
+        single-agent GPT-4 configuration completed 0.6% end to end [@xie2024]. The
+        failures were not stylistic: plans named venues that do not exist, quoted
+        prices never offered, and broke the budget they were given. Hallucination is
+        documented across text generation [@ji2023] but takes a sharper form here —
+        a fluent itinerary that cannot be booked is worse than none, because it
+        looks finished.
     """)
 
     # ------------------------------------------------------------------ 1.2
     report.h2("1.2  The specific problem")
 
     report.p("""
-        Two structural responses to this are well established. Tool use lets a model
-        fetch facts instead of recalling them [@schick2023], and multi-agent
-        decomposition gives each part of a task to a component with a narrow remit
-        [@wu2023]. Both are widely adopted. What is much less settled is how they
-        interact, and at what price. Delegating a data lookup to an agent means the
-        lookup now happens inside a reasoning loop: the model decides which tool to
-        call, with what arguments, and whether to call it again. Every one of those
-        decisions is a model request, and every request re-sends the accumulated
-        context.
+        Two structural responses are well established. Tool use lets a model fetch
+        facts instead of recalling them [@schick2023], and multi-agent decomposition
+        gives each part of a task to a component with a narrow remit [@wu2023]. Both
+        are widely adopted; how they interact, and at what price, is much less
+        settled. Delegating a lookup to an agent puts it inside a reasoning loop:
+        the model decides which tool to call, with what arguments, and whether to
+        call it again. Each decision is a request, and each request re-sends the
+        accumulated context.
     """)
 
     report.p("""
         That cost is rarely reported. Framework documentation counts agents and
-        tasks; papers report task success. Neither answers whether the reasoning
-        loop earns its cost at the point where it is applied. Retrieving a flight
-        price is not a judgement call: once the request is parsed the parameters are
-        fixed, the endpoint is deterministic, and there is exactly one correct call
-        to make. A recent analysis of multi-agent failures argues from taxonomy
-        rather than cost that a large share arise from specification and
-        coordination rather than from model capability [@cemri2025]. This project
-        treats the matter as an empirical question about one system, which needs a
-        system worth measuring, an instrument that counts what is spent, and a
-        quality measure that stops cheapness being mistaken for merit.
+        tasks; papers report task success. Neither asks whether the reasoning loop
+        earns its cost where it is applied. Retrieving a flight price is not a
+        judgement call: once the request is parsed the parameters are fixed, the
+        endpoint is deterministic, and one call is correct. A recent analysis of
+        multi-agent failures attributes a large share to specification and
+        coordination rather than model capability, though from taxonomy rather than
+        cost [@cemri2025]. This project treats it as an empirical question about one
+        system, which needs an artefact worth measuring, an instrument that counts
+        what is spent, and a quality measure that stops cheapness passing for merit.
     """)
 
     # ------------------------------------------------------------------ 1.3
@@ -152,11 +147,10 @@ def build(report: Report) -> None:
     )
 
     report.p("""
-        One exclusion limits what can be claimed and is stated twice. The system is
-        a planning aid. It books nothing, and it is not evaluated on whether a
-        traveller would choose its plans — only on whether what it names was
-        actually retrieved. Groundedness is necessary for a usable plan, not
-        sufficient.
+        One exclusion limits what can be claimed. The system is a planning aid: it
+        books nothing, and it is judged on whether what it names was actually
+        retrieved, not on whether a traveller would choose its plans. Groundedness
+        is necessary for a usable plan, not sufficient.
     """)
 
     # ------------------------------------------------------------------ 1.6

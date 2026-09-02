@@ -72,11 +72,10 @@ def build(report: Report) -> None:
         The two protocols this project is named for are less load-bearing in the
         shipped configuration than the proposal implied. The message layer records
         the exchange and never dispatches it: the orchestrator sends messages and
-        reads the conversation history but never dequeues, so the delivery
-        machinery, the executor class and the message-processing loop are all
-        unreachable in production. The tool server is driven over JSON-RPC only by
-        the naive six-agent arm; the shipped path imports the same functions and
-        calls them in process.
+        reads the history but never dequeues, so the delivery machinery, the
+        executor class and the processing loop are unreachable in production. The
+        tool server is driven over JSON-RPC only by the naive six-agent arm; the
+        shipped path imports the same functions and calls them in process.
     """)
 
     report.p("""
@@ -92,28 +91,26 @@ def build(report: Report) -> None:
     report.h2("7.3  Deviations from the proposal")
 
     report.p(f"""
-        Eight commitments changed between the proposal and delivery, and Appendix I
-        tabulates each with its reason and its evidence. Three were forced from
-        outside. The proposed flight provider withdrew free access mid-project,
-        which also collapsed two planned flight tools into one. The model changed to
-        a free tier, which made repeated evaluation affordable and removed model
-        choice as a confound between arms. Two followed from measurement: six agents
-        became three because instrumentation showed most requests were spent on
-        deterministic retrieval, and scenario coverage fell to
-        {val(coverage['scenarios_measured'])} for the cost comparison because the
-        monthly quota permits no more. One was a framework constraint: the web
-        interface asks a fixed question sequence because its rerun model does not
-        suit a streaming dialogue.
+        Eight commitments changed between the proposal and delivery, each tabulated
+        with its reason and evidence in Appendix I. Three were forced from outside:
+        the flight provider withdrew free access mid-project, collapsing two planned
+        tools into one, and the model changed to a free tier, which made repeated
+        evaluation affordable and removed model choice as a confound. Two followed
+        from measurement: six agents became three because instrumentation showed
+        most requests went on deterministic retrieval, and coverage fell to
+        {val(coverage['scenarios_measured'])} scenario because the monthly quota
+        permits no more. One was a framework constraint: the web interface asks a
+        fixed question sequence because its rerun model does not suit a streaming
+        dialogue.
     """)
 
     report.p("""
-        The remaining two are failures of delivery rather than changes of plan, and
-        should be read as such. Priority queuing was promised and not built. The
-        proposal's bookability target — re-query success — was replaced by
-        groundedness, a weaker measure, because the stronger one needed quota the
-        project did not have. Presenting either as a considered design revision
-        would be dishonest; what can fairly be claimed is that both were found by
-        measurement rather than left for a marker to notice.
+        The remaining two are failures of delivery rather than changes of plan.
+        Priority queuing was promised and not built. The proposal's bookability
+        target — re-query success — became groundedness, a weaker measure, because
+        the stronger one needed quota the project did not have. Presenting either as
+        a considered revision would be dishonest; what can fairly be claimed is that
+        both were found by measurement rather than left for a marker to notice.
     """)
 
     # ------------------------------------------------------------------ 7.4
@@ -121,18 +118,16 @@ def build(report: Report) -> None:
 
     report.p(f"""
         The cost comparison covers {val(coverage['scenarios_measured'])} scenario,
-        measured {val(coverage['repeats_per_arm'])} times per architecture. Depth is
-        therefore adequate and breadth is not: differences on this trip are
-        supported by intervals, and nothing establishes that they hold for a longer
-        stay, a cheaper destination or a larger party. Latency excludes network time
-        because retrieval is replayed. All results are specific to one model whose
-        input and output prices differ by a large factor, which is what makes the
-        tool-less arm expensive; a flatter price ratio would compress the
-        differences in Section 6.2. Groundedness measures whether named entities
-        were retrieved, not whether they were well chosen, so nothing here shows the
-        plans are good — only that they are real. The gate's cost model is validated
-        against one route, the scenarios are author-written, and there is no user
-        study.
+        measured {val(coverage['repeats_per_arm'])} times per architecture: depth is
+        adequate, breadth is not. Differences on this trip are supported by
+        intervals, and nothing establishes they hold for a longer stay, a cheaper
+        destination or a larger party. Latency excludes network time because
+        retrieval is replayed. All results are specific to one model whose input and
+        output prices differ by a large factor, which is what makes the tool-less
+        arm expensive. Groundedness measures whether named entities were retrieved,
+        not whether they were well chosen, so nothing here shows the plans are good
+        — only that they are real. The gate's cost model is validated against one
+        route, the scenarios are author-written, and there is no user study.
     """)
 
     report.p(f"""
@@ -152,67 +147,65 @@ def build(report: Report) -> None:
     report.p(f"""
         The professional obligation comes first: the BCS code requires members not
         to misrepresent what their work can do [@bcs2022]. A system that prints
-        prices invites the reading that those prices are bookable, and Section 6.6
-        shows how badly that reading can fail — an arm with no tool access produced
+        prices invites the reading that they are bookable, and Section 6.6 shows how
+        badly that can fail — an arm with no tool access produced
         {val(measured.groundedness('A')['prices_quoted'])} confident prices, none
-        corresponding to anything. The design response is that groundedness is
-        measured rather than assumed. The delivery gap is that although the
-        repository's documentation states plainly that the system is a planning aid,
-        the web interface itself carries no such notice, and the proposal committed
-        to one. That is an unmet commitment, and it is listed in Section 8.3.
+        corresponding to anything. The design response is to measure groundedness
+        rather than assume it. The delivery gap is that the repository documentation
+        states the system is a planning aid but the web interface carries no such
+        notice, which the proposal committed to. That unmet commitment is listed in
+        Section 8.3.
     """)
 
     report.p("""
         A deployed version would sit in a materially different legal position.
         Giving consumers travel information through automated processing falls
-        within the transparency expectations of the AI Act, which requires that
-        users know they are interacting with an AI system and that its limitations
-        are disclosed [@euaiact2024]. Data protection guidance becomes relevant the
-        moment real requests are stored, because a travel itinerary reveals
-        location, dates, household composition and financial capacity — a rich
-        profile from a short conversation [@ico2023]. This project avoids all of it
-        by processing no personal data, which makes its ethical footprint small
-        rather than the problem easy.
+        within the AI Act's transparency expectations, which require that users know
+        they are dealing with an AI system and that its limitations are disclosed
+        [@euaiact2024]. Data protection guidance applies the moment real requests
+        are stored, because an itinerary reveals location, dates, household
+        composition and financial capacity — a rich profile from a short
+        conversation [@ico2023]. This project avoids all of it by processing no
+        personal data, which makes its ethical footprint small rather than the
+        problem easy.
     """)
 
     report.p("""
         A last point of professional honesty concerns the cached data. Holding
         third-party fares locally is defensible for academic reproduction but not as
-        the basis of a service: a cached fare pre sented as current is a mis
-        represen tation however it was o btained.
+        the basis of a service: a cached fare presented as current is a
+        misrepresentation however it was obtained.
     """)
 
     # ------------------------------------------------------------------ 7.6
     report.h2("7.6  Personal reflection")
 
     report.p("""
-        The clearest mistake was ordering. Measurement was built in the second
-        cycle, after the system worked, and until then every claim about cost was a
-        guess — one of which reached the project's own documentation as a result.
-        Had the request counter existed on day one, the pivot this dissertation is
-        built on would have been visible in week two rather than week six, and quota
-        would have been left for the scenario coverage the evaluation now lacks.
-        Instrumentation is not a reporting concern to add when writing up; it is
-        what tells you what to build next.
+        The clearest mistake was ordering. Measurement came in the second cycle,
+        after the system worked, and until then every cost claim was a guess — one
+        of which reached the project's own documentation. Had the request counter
+        existed on day one, the pivot this dissertation rests on would have been
+        visible in week two rather than week six, and quota would have been left for
+        the coverage the evaluation now lacks. Instrumentation is not a reporting
+        concern to add when writing up; it is what tells you what to build next.
     """)
 
     report.p(f"""
-        The second mistake was treating a passing test suite as evidence about the
-        system. {val(measured.test_count()['collected'])} tests pass, and they pass
-        on the parts that were easy to test: pure functions with no network and no
-        model. The parts carrying the research claim had no tests, and the defects
-        were exactly where the tests were not. Writing the conformance audit took an
-        afternoon and found six. Coverage should have been chosen by what a defect
-        would cost, not by what was convenient to write.
+        The second mistake was treating a passing suite as evidence about the
+        system. {val(measured.test_count()['collected'])} tests pass, on the parts
+        that were easy to test: pure functions with no network and no model. The
+        parts carrying the research claim had none, and the defects were exactly
+        where the tests were not. The conformance audit took an afternoon and found
+        six. Coverage should have been chosen by what a defect would cost, not by
+        what was convenient to write.
     """)
 
     report.p("""
-        The judgement I would defend is including arm C. Tuning the baseline before
-        comparing against it cost several days and substantially weakened the
-        result: the honest claim shrank from a large advantage over multi-agent
-        retrieval to a decisive advantage in request count and latency with a modest
-        one in cost. The temptation to compare against the naive arm and report the
-        larger number was real. The narrower claim is the one that survives the
-        first question a viva would ask, and a result that cannot survive that
-        question is not worth having.
+        The judgement I would defend is including arm C. Tuning the baseline first
+        cost several days and substantially weakened the result: the honest claim
+        shrank from a large advantage over multi-agent retrieval to a decisive one
+        in requests and latency with a modest one in cost. The temptation to compare
+        against the naive arm and report the larger number was real. The narrower
+        claim survives the first question a viva would ask, and a result that cannot
+        survive it is not worth having.
     """)

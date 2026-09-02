@@ -183,6 +183,33 @@ def contents(report: Report) -> None:
         run._r.append(element)
 
 
+def appendix_title_page(report: Report) -> None:
+    """
+    Cover page for the appendices when they are submitted as a separate file.
+
+    Carries the student number and nothing else identifying, for the same
+    anonymous-marking reason as the dissertation's own title page, and says
+    plainly which document it belongs to so the pair cannot be separated by
+    accident.
+    """
+    report.start_excluded("appendix title page")
+    _centred(report, UNIVERSITY, size=13, bold=True, space_after=2)
+    _centred(report, FACULTY, size=10.5, colour=MUTED, space_after=28)
+    _centred(report, "Appendices", size=17, bold=True, colour=ACCENT,
+             space_after=10)
+    _centred(report, TITLE, size=11.5, colour=MUTED, space_after=26)
+    _centred(report, f"{MODULE_CODE}  {MODULE_TITLE}", size=11.5, space_after=2)
+    _centred(report, "Assessment 2: Project Dissertation", size=11.5,
+             space_after=26)
+    _centred(report, f"Student Number: {STUDENT_NUMBER}", size=12.5, bold=True,
+             space_after=26)
+    _centred(report,
+             "This document accompanies CMP7200_Dissertation.docx. The appendices "
+             "are excluded from the word count and are referenced by letter from "
+             "the chapters of that document.",
+             size=9.5, colour=MUTED)
+
+
 def _short(caption: str) -> str:
     """
     The identifying part of a caption, for the lists of figures and tables.

@@ -442,6 +442,26 @@ def find_banned_words(blocks: Sequence[Tuple[str, str]]) -> List[Tuple[str, str]
     return hits
 
 
+def find_split_words(blocks: Sequence[Tuple[str, str]]) -> List[Tuple[str, str]]:
+    """
+    Stray lowercase letters, which is what a word broken mid-wrap looks like.
+
+    A reformatting pass once called textwrap.fill with an indent wider than the
+    wrap width. textwrap defaults to break_long_words=True, so instead of
+    overflowing the line it split words: "obtained" became "o btained" and
+    survived into the built document, where nothing was checking for it.
+
+    Lowercase only, and not "a". Single capitals are load-bearing here — the arms
+    are A to D and the appendices A to N — so flagging those would report
+    seventeen false positives and get the check switched off.
+    """
+    hits: List[Tuple[str, str]] = []
+    for chapter, text in blocks:
+        for stray in re.findall(r"(?<![\w'-])([b-hj-z])(?![\w'-])", text):
+            hits.append((chapter, stray))
+    return hits
+
+
 # Proper nouns whose official spelling is American. These are names, not prose,
 # so changing them would misquote the source.
 _SPELLING_EXCEPTIONS = ("World Tourism Organization",)

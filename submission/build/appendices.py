@@ -737,3 +737,54 @@ def appendices(report: Report) -> None:
         different groundedness scores; the recorded responses fix the ground truth so
         that the architectures are compared against identical data.
     """)
+
+    # ---------------------------------------------------------------- O
+    _appendix(report, "O", "Three defects a passing suite did not catch")
+
+    report.p("""
+        Sections 5.6 and 5.7 state the lessons these produced. The detail is here
+        because each is worth reading once and none carries the argument.
+    """)
+
+    report.h3("O.1  A tested evaluator that was not the one being called")
+
+    report.p("""
+        The calculator tool filtered its input against a permitted character set
+        and then called the interpreter's own expression evaluator, while the tests
+        exercised a syntax-tree evaluator defined in the test file. The character
+        filter blocks name lookups, so code injection was never reachable —
+        genuinely the hard part. What it cannot block is resource exhaustion:
+        9**9**9 is eight characters, passes any character allowlist, and occupies
+        the interpreter indefinitely while allocating memory until the process
+        dies. The two implementations had also drifted, the test copy having
+        omitted unary plus, so a test asserted a rejection production did not make.
+    """)
+
+    report.p("""
+        The evaluator now lives in one module and the tool delegates to it,
+        exponentiation is bounded before evaluation rather than after, and the tests
+        import the shipped code. One test asserts that the server's tool is that
+        code and not a copy, so the two cannot drift again. The fix alters which
+        expressions are refused, not the value returned for any well-formed one,
+        which is why the Chapter 6 measurements are unaffected.
+    """)
+
+    report.h3("O.2  Two smaller defects")
+
+    report.p("""
+        The first was a sign error with an impossible output. The direct-execution
+        arm reports per-phase timings, and the extraction phase subtracted the run's
+        start time from a value that was already an elapsed duration, writing a
+        large negative number into the results file. A negative duration cannot
+        occur, and nothing in the harness objected. Values that cannot occur should
+        be asserted rather than trusted.
+    """)
+
+    report.p("""
+        The second was in the figure generator and produced a wrong chart that
+        looked right. Three panels each built a tick formatter inside a loop, and
+        each closure captured the loop variable rather than its value, so every
+        panel rendered with whichever formatter the loop finished on — the currency
+        one. The request-count axis was labelled in dollars. Nothing failed; the
+        chart was simply false, and it would have been submitted that way.
+    """)

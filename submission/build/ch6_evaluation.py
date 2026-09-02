@@ -176,22 +176,22 @@ def build(report: Report) -> None:
     report.p(f"""
         Groundedness behaves the other way, and this is the result the chapter turns
         on. The tuned arm's interval is [{val(gnd_c['ci95_low'], '{:.1f}')},
-        {val(gnd_c['ci95_high'], '{:.1f}')}]% and the direct arm's is
+        {val(gnd_c['ci95_high'], '{:.1f}')}]% and the direct arm's
         [{val(gnd_d['ci95_low'], '{:.1f}')}, {val(gnd_d['ci95_high'], '{:.1f}')}]%.
-        They overlap substantially. The tuned arm's mean is higher —
+        They overlap substantially, and although the tuned arm's mean is higher —
         {val(gnd_c['mean'], '{:.1f}')}% against {val(gnd_d['mean'], '{:.1f}')}% —
-        and with five observations apiece that difference cannot be distinguished
-        from noise. The honest reading is not that the two are equal but that this
-        evidence cannot separate them, and the direction of the means is worth
-        recording in case more data resolves it against the direct arm.
+        five observations apiece cannot distinguish that from noise. The honest
+        reading is not that the two are equal but that this evidence cannot separate
+        them, and the direction of the means is worth recording in case more data
+        resolves it.
     """)
 
     report.p("""
-        So the supported claim is narrow and specific: removing the model from
+        The supported claim is therefore narrow: removing the model from
         deterministic retrieval buys a decisive saving in cost, latency and request
-        count, makes request cost exactly predictable, and costs no groundedness
-        this evidence can detect. It does not show better-grounded plans, and the
-        means lean slightly the other way.
+        count, makes cost exactly predictable, and costs no groundedness this
+        evidence can detect. It does not show better-grounded plans, and the means
+        lean slightly the other way.
     """)
 
     report.p(f"""
@@ -221,10 +221,9 @@ def build(report: Report) -> None:
         The decomposition explains the anomalies. The tool-less arm spent
         {val(a_llm['prompt_tokens'], '{:,.0f}')} prompt tokens against
         {val(a_llm['completion_tokens'], '{:,.0f}')} completion: with no data to
-        work from it invented detail to fill the requested structure. Output is
+        work from, it invented detail to fill the requested structure. Output is
         billed at several times the rate of input, so an arm that reads nothing and
-        writes a great deal is expensive, and its latency follows for the same
-        reason.
+        writes a great deal is expensive, and slow for the same reason.
     """)
 
     report.p(f"""
@@ -233,10 +232,10 @@ def build(report: Report) -> None:
         {val(b_llm['completion_tokens'], '{:,.0f}')} completion, so
         {val(b_llm['prompt_tokens'] / (b_llm['prompt_tokens'] +
         b_llm['completion_tokens']) * 100, '{:.0f}')}% of its spend is re-sent
-        context. Raw tool output for the whole scenario is a small fraction of that,
-        so the payload is not the problem — re-sending the accumulated transcript
-        plus every bound tool's schema on every reasoning iteration is. This is the
-        context-bloat mechanism from Section 2.1, measured [@schick2023; @liu2024].
+        context. Raw tool output is a small fraction of that, so the payload is not
+        the problem — re-sending the transcript plus every bound tool's schema on
+        each reasoning iteration is. This is the context-bloat mechanism of Section
+        2.1, measured [@schick2023; @liu2024].
     """)
 
     report.figure("results/tuning_effect.png",
@@ -286,10 +285,9 @@ def build(report: Report) -> None:
 
     report.p(f"""
         {val(summary['passed'])} of {val(summary['total_checks'])} checks pass. The
-        proposal committed to a schema pass rate of 100% and an inter-agent error
-        rate below 1%; the second is met on the path that ships and the first is not
-        met at all. The six failures are findings about this artefact, not
-        incidental defects.
+        proposal committed to a 100% schema pass rate and an inter-agent error rate
+        below 1%; the second is met on the shipped path and the first not at all.
+        The six failures are findings about this artefact, not incidental defects.
     """)
 
     report.p(f"""
@@ -299,33 +297,30 @@ def build(report: Report) -> None:
         {a2['observed']['delivered']}. Declared inbound permissions have no effect,
         since validation consults only the sender's outbound list, leaving
         {val(len(a1['observed']['unmirrored_inbound_declarations']))} of
-        {val(a1['observed']['declared_outbound_edges'])} declared edges asymmetric.
-        And a message polled by the wrong recipient is destroyed, because the
-        receive path removes it from the queue before checking the address.
+        {val(a1['observed']['declared_outbound_edges'])} edges asymmetric. And a
+        message polled by the wrong recipient is destroyed, because the receive path
+        dequeues before checking the address.
     """)
 
     report.p(f"""
-        Three are in the tool layer. {val(len(schema['defective_tools']))} of
+        Three are in the tool layer, and Appendix B gives every check with its
+        observation. {val(len(schema['defective_tools']))} of
         {val(schema['tools_total'])} tools accept parameters their schema omits —
         {val(schema['undeclared_parameter_count'])} in total — so an agent cannot
-        set them and they silently take defaults, which is precisely the class of
-        mismatch the schema layer was adopted to prevent. One tool treats a
-        parameter as mandatory that its schema does not list as required. And one
-        advertises the flight scraper in its description while its dispatcher calls
-        the hotel provider's flight endpoint, so an agent choosing it on that
-        description gets a different backend. Appendix B gives every check and its
-        observation.
+        set them and they silently take defaults, precisely the mismatch the schema
+        layer was adopted to prevent. One treats a parameter as mandatory that its
+        schema does not list as required. One advertises the flight scraper while
+        its dispatcher calls the hotel provider's flight endpoint, so an agent
+        choosing it on that description gets a different backend.
     """)
 
     report.p("""
-        Two general readings follow. Adopting a protocol is not conforming to it:
-        the specification governs how a schema is declared and transported and
-        leaves its correspondence with the code behind it to the implementer
-        [@anthropic2024; @hou2025], and nothing warned. And the message-layer
-        defects sit in code the shipped path never executes, which is how they
-        survived a passing suite. All six were found in an afternoon by an
-        experiment needing no network, no model and no credentials, after weeks in
-        which none was noticed.
+        Two readings follow. Adopting a protocol is not conforming to it: the
+        specification governs how a schema is declared and transported, leaving its
+        correspondence with the code to the implementer [@anthropic2024; @hou2025].
+        And the message-layer defects sit in code the shipped path never executes,
+        which is how they survived a passing suite. All six were found in an
+        afternoon by an experiment needing no network, model or credentials.
     """)
 
     # ------------------------------------------------------------------ 6.5
@@ -346,12 +341,12 @@ def build(report: Report) -> None:
         {val(agreement['true_negative'])} of the eighteen affordable ones, with
         {val(agreement['false_positive'])} false refusals and
         {val(agreement['false_negative'])} miss. Raw agreement of
-        {val(agreement['accuracy_pct'], '{:.1f}')}% is a misleading figure, because
-        with eighteen of twenty cases affordable a gate that refused nothing would
-        score {val(agreement['chance_agreement'] * 100, '{:.0f}')}%. Cohen's kappa
-        corrects for chance agreement [@cohen1960] and gives
-        {val(agreement['cohens_kappa'], '{:.3f}')} — substantial rather than good on
-        the conventional interpretation [@landis1977].
+        {val(agreement['accuracy_pct'], '{:.1f}')}% misleads, because with eighteen
+        of twenty affordable a gate refusing nothing would score
+        {val(agreement['chance_agreement'] * 100, '{:.0f}')}%. Cohen's kappa
+        corrects for chance [@cohen1960] and gives {val(agreement['cohens_kappa'],
+        '{:.3f}')} — substantial rather than good on the conventional interpretation
+        [@landis1977].
     """)
 
     if not misses:
@@ -362,44 +357,41 @@ def build(report: Report) -> None:
     miss = misses[0]
     report.p(f"""
         The missed case is {miss['scenario']}: {val(miss['budget'], '${:,.0f}')} for
-        {val(miss['nights'])} nights in {miss['destination']} for one traveller. The
+        {val(miss['nights'])} nights in {miss['destination']}, one traveller. The
         gate estimated a minimum of {val(miss['estimate_minimum'], '${:,.0f}')},
         judged the budget {val(miss['budget_vs_minimum'], '{:.2f}')} times that
-        floor, returned a verdict of "{miss['verdict'].replace('_', ' ')}" and
-        proceeded.
+        floor, returned "{miss['verdict'].replace('_', ' ')}" and proceeded.
     """)
 
     report.p(f"""
-        The cause is measurable rather than a matter of opinion, and it is the most
-        useful result in this chapter. The gate's cost model rests on anchor values
-        for the cheapest realistically bookable fare in each distance band. For the
-        one route where real fares are recorded — {anchor['route']}, with
-        {val(anchor['fares_recorded'])} fares in the response cache — the model's
-        anchor is {val(anchor['estimated_minimum'], '${:,.0f}')} while the cheapest
-        fare the API actually returned was {val(anchor['cheapest_real_fare'],
-        '${:,.0f}')} and the median was {val(anchor['median_real_fare'],
-        '${:,.0f}')}. The anchor is {val(abs(anchor['minimum_anchor_error_pct']),
-        '{:.0f}')}% below the cheapest real fare.
+        The cause is measurable, and it is the most useful result in this chapter.
+        The gate's cost model rests on anchor values for the cheapest realistically
+        bookable fare in each distance band. For the one route with recorded fares —
+        {anchor['route']}, {val(anchor['fares_recorded'])} of them in the response
+        cache — the anchor is {val(anchor['estimated_minimum'], '${:,.0f}')} while
+        the cheapest fare the API returned was {val(anchor['cheapest_real_fare'],
+        '${:,.0f}')} and the median {val(anchor['median_real_fare'], '${:,.0f}')}:
+        {val(abs(anchor['minimum_anchor_error_pct']), '{:.0f}')}% below the cheapest
+        real fare.
     """)
 
     report.p(f"""
-        That mis-calibration accounts for the missed decision arithmetically: with
-        the flight floor at less than half the real airfare, the estimated minimum
-        comes out at {val(miss['estimate_minimum'], '${:,.0f}')} when the airfare
-        alone would consume the entire {val(miss['budget'], '${:,.0f}')}. The gate
-        reasons correctly from a wrong number. It is also internally consistent — a
-        monotonicity check over {val(monotonic['checks_run'])} cases found
-        {val(len(monotonic['violations']))} violations — so the structure is right
-        and the constants are wrong, which is far more tractable than the reverse.
+        That accounts for the missed decision arithmetically: with the flight floor
+        at less than half the real airfare, the estimated minimum comes out at
+        {val(miss['estimate_minimum'], '${:,.0f}')} when the airfare alone would
+        consume the entire {val(miss['budget'], '${:,.0f}')}. The gate reasons
+        correctly from a wrong number, and is internally consistent — a monotonicity
+        check over {val(monotonic['checks_run'])} cases found
+        {val(len(monotonic['violations']))} violations. The structure is right and
+        the constants are wrong, which is far more tractable than the reverse.
     """)
 
     report.p("""
-        The obvious response is to raise the anchor, and it has deliberately not
-        been done. One route cannot calibrate three distance bands. Correcting the
-        medium-haul constant against the only route with recorded fares would be
-        tuning a model on its single validation point: the short-haul and long-haul
-        constants would stay as unvalidated as before, while the whole model
-        appeared checked.
+        The obvious response is to raise the anchor, and it deliberately has not
+        been done: one route cannot calibrate three distance bands. Correcting the
+        medium-haul constant against the only route with recorded fares would tune a
+        model on its single validation point, leaving the other two constants as
+        unvalidated as before while the whole model appeared checked.
     """)
 
     # ------------------------------------------------------------------ 6.6
@@ -411,17 +403,15 @@ def build(report: Report) -> None:
 
     gate_row = measured.budget_gate()["decision_table"][0]
     report.p(f"""
-        Following one scenario through shows how the measures interact. The request
-        is a four-night trip from Lahore to Istanbul for one traveller on eight
-        hundred dollars, with an interest in history, food and shopping. Extraction
-        produces structured fields. The gate estimates a minimum of
+        Following one scenario through shows how the measures interact: a four-night
+        trip from Lahore to Istanbul for one traveller on eight hundred dollars,
+        interested in history, food and shopping. The gate estimates a minimum of
         {val(gate_row['estimate_minimum'], '${:,.0f}')} and a comfortable figure of
-        {val(gate_row['estimate_comfortable'], '${:,.0f}')}, returns a verdict of
-        workable, warns and proceeds. Retrieval returns {val(len(truth['hotels']))}
-        hotels, {val(len(truth['airlines']))} airlines and
-        {val(len(truth['prices']))} distinct prices, and that set becomes the ground
-        truth for every arm. Six typed messages are exchanged and all six pass
-        permission validation.
+        {val(gate_row['estimate_comfortable'], '${:,.0f}')}, returns workable, warns
+        and proceeds. Retrieval returns {val(len(truth['hotels']))} hotels,
+        {val(len(truth['airlines']))} airlines and {val(len(truth['prices']))}
+        distinct prices, which become the ground truth for every arm. Six typed
+        messages are exchanged and all six pass permission validation.
     """)
 
     report.p(f"""
@@ -449,16 +439,16 @@ def build(report: Report) -> None:
 
     report.p(f"""
         One threat stopped being hypothetical, and handling it produced the repeats
-        this chapter relies on. The model the first round of measurements used was
-        withdrawn from new API keys, and its replacement refuses any request whose
-        message list ends with a model turn — precisely how the agent framework's
-        reasoning loop prompts. The three-agent arm was unaffected, having no such
-        loop; the six-agent arms could not run at all. A compatibility layer now
-        adjusts only requests that would otherwise be rejected, passes the rest
-        through untouched, and counts what it changed. These figures are therefore
-        not comparable with the earlier round, and an architecture evaluated against
-        someone else's hosted model inherits that model's lifetime — a stronger
-        argument for the recorded response cache than the one originally made.
+        this chapter relies on. The model the first round used was withdrawn from
+        new API keys, and its replacement refuses any request whose message list
+        ends with a model turn — precisely how the agent framework's reasoning loop
+        prompts. The three-agent arm was unaffected, having no such loop; the
+        six-agent arms could not run at all. A compatibility layer now adjusts only
+        requests that would otherwise be rejected and counts what it changed. These
+        figures are therefore not comparable with the earlier round, and an
+        architecture evaluated against someone else's hosted model inherits that
+        model's lifetime — a stronger argument for the recorded response cache than
+        the one originally made.
     """)
 
     report.p(f"""

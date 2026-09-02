@@ -21,15 +21,15 @@ def build(report: Report) -> None:
     report.h2("8.1  What was found")
 
     report.p(f"""
-        This project asked what it costs to delegate data retrieval to a language
-        model in a system that already has a schema-validated tool layer and a typed
-        inter-agent protocol. On the one scenario for which all four architectures
-        are recorded, removing the model from retrieval reduced requests by
+        This project asked what it costs to delegate retrieval to a language model
+        in a system that already has a schema-validated tool layer and a typed
+        inter-agent protocol. On the one scenario recorded for all four
+        architectures, removing the model from retrieval cut requests by
         {val(d_vs_c['llm_calls_pct'], '{:.1f}')}% and wall-clock time by
         {val(d_vs_c['latency_pct'], '{:.1f}')}% against a tuned six-agent baseline,
         while cost fell only {val(d_vs_c['cost_pct'], '{:.1f}')}% and groundedness
-        was unchanged. The answer is therefore yes, with a qualification that
-        matters: the saving is in requests and latency, not primarily in money.
+        held. The answer is yes, with a qualification that matters: the saving is in
+        requests and latency, not primarily in money.
     """)
 
     report.p(f"""
@@ -38,8 +38,8 @@ def build(report: Report) -> None:
         {val(c_vs_b['tokens_pct'], '{:.1f}')}% of its token spend. Most of what
         would have been reported as the cost of multi-agent architecture was the
         cost of binding eight tools to an agent and letting it iterate fifteen
-        times. Any comparison of this kind that does not tune its baseline first is
-        measuring implementation quality and calling it architecture.
+        times. A comparison that does not tune its baseline first measures
+        implementation quality and calls it architecture.
     """)
 
     report.p(f"""
@@ -47,20 +47,20 @@ def build(report: Report) -> None:
         {val(control['prices_quoted'])} prices and matched
         {val(control['prices_grounded'])} to anything retrieved, reproducing under
         measurement the failure the benchmark literature reports [@xie2024]. The gap
-        between a plausible itinerary and a usable one is entirely the retrieval
-        layer; what is negotiable is whether a language model should operate it.
+        between a plausible itinerary and a usable one is the retrieval layer; what
+        is negotiable is whether a model should operate it.
     """)
 
     report.p(f"""
-        Measuring the artefact against its own design then found
-        {val(summary['total_checks'] - summary['passed'])} defects in it: declared
-        message priorities never honoured, inbound permissions never enforced, a
-        receive path that destroys misaddressed messages,
+        Measuring the artefact against its own design found
+        {val(summary['total_checks'] - summary['passed'])} defects: declared message
+        priorities never honoured, inbound permissions never enforced, a receive
+        path that destroys misaddressed messages,
         {val(len(measured.mcp_schema_stats()['defective_tools']))} tool schemas that
         disagree with their implementations, and a cost model whose flight anchor
         sits {val(abs(anchor['minimum_anchor_error_pct']), '{:.0f}')}% below the
-        cheapest fare its own API returned — which is why the gate accepts one
-        budget it should refuse. None was found by a passing test suite.
+        cheapest fare its own API returned, which is why the gate accepts one budget
+        it should refuse. None was found by a passing test suite.
     """)
 
     # ------------------------------------------------------------------ 8.2
@@ -69,11 +69,11 @@ def build(report: Report) -> None:
     report.p("""
         The contribution is threefold and deliberately modest. First, a working
         protocol-mediated travel planner whose every reported number regenerates
-        from committed data, so the results can be checked rather than believed.
-        Second, a comparison that includes its own fair baseline and reports the
-        weaker conclusion that followed. Third, a demonstration that protocol
-        conformance is a property to be tested rather than an outcome of adoption,
-        with an executable method for testing it that costs nothing to run.
+        from committed data, so results can be checked rather than believed. Second,
+        a comparison that includes its own fair baseline and reports the weaker
+        conclusion that followed. Third, a demonstration that protocol conformance
+        must be tested rather than assumed from adoption, with an executable method
+        for testing it that costs nothing to run.
     """)
 
     # ------------------------------------------------------------------ 8.3

@@ -13,6 +13,7 @@ import os
 import re
 import subprocess
 import sys
+from typing import Optional, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))))
@@ -24,12 +25,14 @@ from submission.build import (appendices, ch1_introduction, ch2_literature,
                          frontmatter)
 from submission.build.common import (CITATIONS, ROOT, VALUES, BuildError, Report,
                                 find_banned_words, find_dangling_references,
+                                find_split_words,
                                 find_duplicate_prose,
                                 find_spelling_inconsistencies)
 
 WORD_LIMIT = 12000
 TOLERANCE = 0.10
 OUTPUT = os.path.join(ROOT, "submission", "CMP7200_Dissertation.docx")
+APPENDIX_OUTPUT = os.path.join(ROOT, "submission", "CMP7200_Appendices.docx")
 
 CHAPTERS = [
     ch1_introduction,
@@ -67,7 +70,19 @@ def regenerate_figures() -> None:
         print(f"  {script}: {proc.stdout.strip().splitlines()[-1]}")
 
 
-def assemble() -> Report:
+def assemble(separate_appendices: bool = False) -> Tuple[Report, Optional[Report]]:
+    """
+    Build the dissertation, and optionally the appendices as a second document.
+
+    Bound together the whole thing is around 18,600 words. Split, the
+    dissertation is about 14,300 and the appendices carry the rest — the same
+    text either way, and the appendices are excluded from the word count in both
+    cases. Which to submit depends on what the brief allows, so the build
+    produces both rather than choosing.
+
+    The returned appendix report shares the figure and table counters with the
+    main one, so numbering does not restart or collide across the two files.
+    """
     report = Report()
     frontmatter.title_page(report)
     frontmatter.abstract(report)
@@ -75,11 +90,28 @@ def assemble() -> Report:
     for chapter in CHAPTERS:
         chapter.build(report)
     appendices.references(report)
-    appendices.appendices(report)
+
+    extra = None
+    if separate_appendices:
+        extra = Report()
+        # Carry the state the appendices depend on: the letter check reads the
+        # index, and the tables continue this document's numbering.
+        extra.chapter = report.chapter
+        frontmatter.appendix_title_page(extra)
+        appendices.appendices(extra)
+        report.appendix_index = extra.appendix_index
+        report.table_index += extra.table_index
+        report.figure_index += extra.figure_index
+        # The main document cites "Appendix F"; the resolver has to see the
+        # headings even though they now live in the other file.
+        report.all_text += extra.all_text
+    else:
+        appendices.appendices(report)
+
     frontmatter.figure_and_table_lists(report)
     # Last, because it reports the body count and so must run after the body.
     frontmatter.declare_word_count(report)
-    return report
+    return report, extra
 
 
 def main() -> int:
@@ -89,6 +121,10 @@ def main() -> int:
     parser.add_argument("--no-tests", action="store_true",
                         help="skip the test suite")
     parser.add_argument("--output", default=OUTPUT)
+    parser.add_argument("--split-appendices", action="store_true",
+                        help="write the appendices to a separate document, which "
+                             "takes the dissertation itself from about 18,600 "
+                             "words to about 14,300")
     parser.add_argument("--values-out",
                         help="write every interpolated measured value to this JSON "
                              "file; used by verify_no_hardcoded_numbers.py")
@@ -118,8 +154,9 @@ def main() -> int:
                 f"failing suite.")
 
     print("\nAssembling")
-    report = assemble()
+    report, extra = assemble(separate_appendices=args.split_appendices)
     path = report.save(args.output)
+    appendix_path = extra.save(APPENDIX_OUTPUT) if extra else None
 
     if args.values_out:
         import json
@@ -146,6 +183,15 @@ def main() -> int:
                         + ", ".join(f"{w} ({c})" for c, w in banned))
     else:
         print("  prose: no banned filler words")
+
+    # --- words broken by a reformatting pass ---------------------------------
+    split = find_split_words(report.prose_blocks)
+    if split:
+        problems.append("stray single letters, which is what a word split "
+                        "mid-wrap looks like: "
+                        + ", ".join(f"'{w}' ({c})" for c, w in split))
+    else:
+        print("  prose: no words split by wrapping")
 
     # --- duplicate argument --------------------------------------------------
     duplicates = find_duplicate_prose(report.prose_blocks)
@@ -239,6 +285,9 @@ def main() -> int:
 
     print("\n" + "=" * 78)
     print(f"  BUILD OK  ->  {os.path.relpath(path, ROOT)}")
+    if appendix_path:
+        print(f"                {os.path.relpath(appendix_path, ROOT)}  "
+              f"({extra.excluded_words:,} words, excluded from the count)")
     if tests:
         print(f"  test suite: {tests['passed']} passed")
     print("  Open in Word and update the contents field once (right-click, "
