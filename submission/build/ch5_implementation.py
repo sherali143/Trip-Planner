@@ -11,11 +11,11 @@ def build(report: Report) -> None:
     report.h1("Implementation")
 
     report.p("""
-        This chapter is organised around what went wrong, because that is where
-        the engineering was. Six failures are described in detail. Four were
-        silent: the system reported success, produced plausible output, and was
-        wrong. Silent failures are the interesting category, because the work is
-        not in fixing them but in noticing that anything needs fixing.
+        This chapter is organised around what went wrong, because that is where the
+        engineering was. Six failures are described in detail. Four were silent: the
+        system reported success, produced plausible output, and was wrong. Silent
+        failures are the interesting category, because the work is not in fixing
+        them but in noticing that anything needs fixing.
     """)
 
     # ------------------------------------------------------------------ 5.1
@@ -46,23 +46,23 @@ def build(report: Report) -> None:
 
     report.p("""
         The symptom was a message from the client wrapper: every invocation returned
-        "Connection lost". The cause was mundane. The tool server runs as a subprocess
-        launched by path, so the project root is not on the module search path when the
-        interpreter starts it, and the first import from the project's own package
-        raises. The server died during startup, the client saw a closed pipe, and
-        reported a transport error. The fix is three lines inserting the project root
-        into the search path before any first-party import.
+        "Connection lost". The cause was mundane. The tool server runs as a
+        subprocess launched by path, so the project root is not on the module search
+        path when the interpreter starts it, and the first import from the project's
+        own package raises. The server died during startup, the client saw a closed
+        pipe, and reported a transport error. The fix is three lines inserting the
+        project root into the search path before any first-party import.
     """)
 
     report.p("""
         The fix is trivial and the lesson is not. The failure was invisible from
-        outside because of how the agents behaved when a tool returned an error: they
-        proceeded, and wrote the itinerary from model knowledge instead. This is
-        precisely what the literature reports [@xie2024], reproduced accidentally
-        inside a system built to prevent it, and undetectable by inspecting the output.
-        A plausible itinerary is not evidence that retrieval worked, which is why
-        groundedness scoring exists at all — it is the only check that would have
-        caught this, and it was written because this happened.
+        outside because of how the agents behaved when a tool returned an error:
+        they proceeded, and wrote the itinerary from model knowledge instead. This
+        is precisely what the literature reports [@xie2024], reproduced accidentally
+        inside a system built to prevent it, and undetectable by inspecting the
+        output. A plausible itinerary is not evidence that retrieval worked, which
+        is why groundedness scoring exists at all — it is the only check that would
+        have caught this, and it was written because this happened.
     """)
 
     # ------------------------------------------------------------------ 5.3
@@ -72,19 +72,19 @@ def build(report: Report) -> None:
 
     report.p(f"""
         Flight search failed in two independent ways, and both returned a success
-        status. The recorded response cache preserves all of it, so the sequence
-        can be verified rather than asserted.
+        status. The recorded response cache preserves all of it, so the sequence can
+        be verified rather than asserted.
     """)
 
     report.h3("5.3.1  Date parameters that are ignored rather than rejected")
 
     report.p(f"""
-        The endpoint documents its origin and destination as camelCase and its
-        dates likewise. The first implementation sent snake_case date parameters.
-        The API accepted the request, returned HTTP 200, ignored the dates it did
-        not recognise, and searched a default window instead. Nothing anywhere
-        reported an error; the itineraries simply carried dates the traveller had
-        not asked for.
+        The endpoint documents its origin and destination as camelCase and its dates
+        likewise. The first implementation sent snake_case date parameters. The API
+        accepted the request, returned HTTP 200, ignored the dates it did not
+        recognise, and searched a default window instead. Nothing anywhere reported
+        an error; the itineraries simply carried dates the traveller had not asked
+        for.
     """)
 
     report.p(f"""
@@ -100,33 +100,33 @@ def build(report: Report) -> None:
     report.h3("5.3.2  A search endpoint that does not return results")
 
     report.p(f"""
-        Correcting the parameters was not sufficient. The endpoint is
-        asynchronous: the search request starts a search and returns a session
-        identifier with a status of "{evidence['fixed_status']}", and results must
-        be collected from a second endpoint using that identifier. The first
-        implementation treated the initial response as final, so flight search
-        returned nothing on every single call.
+        Correcting the parameters was not sufficient. The endpoint is asynchronous:
+        the search request starts a search and returns a session identifier with a
+        status of "{evidence['fixed_status']}", and results must be collected from a
+        second endpoint using that identifier. The first implementation treated the
+        initial response as final, so flight search returned nothing on every single
+        call.
     """)
 
     report.p(f"""
         Appendix F compares the two responses: the search returns
         {val(evidence['fixed_itineraries'])} itineraries, the poll that follows it
         {val(evidence['poll_itineraries'])}. Reading only the first therefore
-        discarded most of the available fares even once the parameters were right.
-        A third defect compounded the diagnosis. The provider's console lists these
-        paths in the singular while only the plural form resolves, so an
-        exploratory call made from the documentation returns 404 and suggests the
-        endpoint does not exist.
+        discarded most of the available fares even once the parameters were right. A
+        third defect compounded the diagnosis. The provider's console lists these
+        paths in the singular while only the plural form resolves, so an exploratory
+        call made from the documentation returns 404 and suggests the endpoint does
+        not exist.
     """)
 
     report.p("""
         What made this expensive was a coincidence. For a long period the credential
-        had exhausted its monthly allowance, so the call was rejected before reaching
-        the parsing code and the empty result looked like a quota problem rather than a
-        parsing one. Two independent faults with the same observable symptom is the
-        worst case for diagnosis. The cache now stores only successful responses for
-        exactly this reason: a quota rejection must never be replayed as though it were
-        data.
+        had exhausted its monthly allowance, so the call was rejected before
+        reaching the parsing code and the empty result looked like a quota problem
+        rather than a parsing one. Two independent faults with the same observable
+        symptom is the worst case for diagnosis. The cache now stores only
+        successful responses for exactly this reason: a quota rejection must never
+        be replayed as though it were data.
     """)
 
     # ------------------------------------------------------------------ 5.4
@@ -134,12 +134,12 @@ def build(report: Report) -> None:
 
     report.p("""
         The comparison's central claim is about model requests, and for a period
-        that number was fabricated by the harness. The code incremented a counter
-        by a constant after each phase; one line carried the comment that the
-        figure was simulated. It counted tasks, not requests. Since the whole point
-        of the criticism levelled at the multi-agent arm is that its reasoning
-        loops issue many requests per task, the measurement was blind to the effect
-        it existed to detect.
+        that number was fabricated by the harness. The code incremented a counter by
+        a constant after each phase; one line carried the comment that the figure
+        was simulated. It counted tasks, not requests. Since the whole point of the
+        criticism levelled at the multi-agent arm is that its reasoning loops issue
+        many requests per task, the measurement was blind to the effect it existed
+        to detect.
     """)
 
     report.p(f"""
@@ -156,22 +156,22 @@ def build(report: Report) -> None:
     report.p("""
         Instrumenting correctly then exposed a second-order problem. The client
         dispatches its callbacks off the calling thread, so reading the counters
-        immediately after a run undercounts: an early check observed three completions
-        and only two callbacks. The session now drains before reporting, blocking until
-        no new event has arrived for a quiet period. This matters most for the tuned arm,
-        whose three specialists run concurrently, and draining before releasing a session
-        also stops a late callback being attributed to the next scenario.
+        immediately after a run undercounts: an early check observed three
+        completions and only two callbacks. The session now drains before reporting,
+        blocking until no new event has arrived for a quiet period. This matters
+        most for the tuned arm, whose three specialists run concurrently, and
+        draining before releasing a session also stops a late callback being
+        attributed to the next scenario.
     """)
 
     report.p(f"""
         A detail from the recorded data confirms the concurrency works as designed.
         The tuned arm's summed model time is
-        {val(measured.token_split('C')['llm_time_s'], '{:.1f}')} seconds while
-        its wall-clock time is
-        {val(measured.arm_metric('C', 'avg_latency'), '{:.1f}')} seconds. Summed
-        request time exceeding elapsed time is only possible if requests overlapped,
-        which is direct evidence of the thread pool doing its job — a claim the
-        proposal made and could not previously support.
+        {val(measured.token_split('C')['llm_time_s'], '{:.1f}')} seconds while its
+        wall-clock time is {val(measured.arm_metric('C', 'avg_latency'), '{:.1f}')}
+        seconds. Summed request time exceeding elapsed time is only possible if
+        requests overlapped, which is direct evidence of the thread pool doing its
+        job — a claim the proposal made and could not previously support.
     """)
 
     # ------------------------------------------------------------------ 5.5
@@ -188,11 +188,11 @@ def build(report: Report) -> None:
 
     report.p(f"""
         Three mechanisms were built. Every outbound request passes through one cache
-        with three modes — replay never touches the network, record calls live only on
-        a miss, live refreshes deliberately. A ceiling on live calls raises rather than
-        proceeding. And the runner checkpoints after every run. The cache holds
-        {val(cache['entries'])} recorded responses, and the published comparison
-        replays from them with no credentials at all.
+        with three modes — replay never touches the network, record calls live only
+        on a miss, live refreshes deliberately. A ceiling on live calls raises
+        rather than proceeding. And the runner checkpoints after every run. The
+        cache holds {val(cache['entries'])} recorded responses, and the published
+        comparison replays from them with no credentials at all.
     """)
 
     report.p("""
@@ -200,41 +200,41 @@ def build(report: Report) -> None:
         arithmetic. Hotel search originally enriched each result with a review
         breakdown and a nearby-venues lookup, at two additional requests per hotel.
         For a ten-hotel result that is twenty requests against a fifty-request
-        monthly allowance, and none of the enrichment reached the itinerary,
-        because the assembly step never used those fields. Enrichment is now off by
-        default behind an environment variable. This is the clearest case in the
-        project of a feature whose cost was invisible until the cost was counted.
+        monthly allowance, and none of the enrichment reached the itinerary, because
+        the assembly step never used those fields. Enrichment is now off by default
+        behind an environment variable. This is the clearest case in the project of
+        a feature whose cost was invisible until the cost was counted.
     """)
 
     report.p("""
-        A related decision protects the credential rather than the quota. The model is
-        called over a URL carrying the key as a query parameter, and the HTTP client
-        logs every request line at information level, which the agent framework
-        enables. A normal run therefore printed a live API key into any terminal,
-        screenshot or log it touched. Raising the level of the third-party loggers
-        responsible fixes it without altering the project's own logging.
+        A related decision protects the credential rather than the quota. The model
+        is called over a URL carrying the key as a query parameter, and the HTTP
+        client logs every request line at information level, which the agent
+        framework enables. A normal run therefore printed a live API key into any
+        terminal, screenshot or log it touched. Raising the level of the third-party
+        loggers responsible fixes it without altering the project's own logging.
     """)
 
     # ------------------------------------------------------------------ 5.6
     report.h2("5.6  Two smaller defects that changed how things are checked")
 
     report.p("""
-        The first was a sign error with an impossible output. The direct-execution arm
-        reports per-phase timings, and the extraction phase subtracted the run's start
-        time from a value that was already an elapsed duration, writing a large
-        negative number into the results file. A negative duration cannot occur, and
-        nothing in the harness objected. Values that cannot occur should be asserted
-        rather than trusted.
+        The first was a sign error with an impossible output. The direct-execution
+        arm reports per-phase timings, and the extraction phase subtracted the run's
+        start time from a value that was already an elapsed duration, writing a
+        large negative number into the results file. A negative duration cannot
+        occur, and nothing in the harness objected. Values that cannot occur should
+        be asserted rather than trusted.
     """)
 
     report.p("""
-        The second was in the figure generator and produced a wrong chart that looked
-        right. Three panels each built a tick formatter inside a loop, and each
-        closure captured the loop variable rather than its value at definition, so
-        every panel rendered with whichever formatter the loop finished on — the
-        currency one. The request-count axis was labelled in dollars. Nothing failed;
-        the chart was simply false. Figures are code, and code that produces a
-        document can be wrong like any other.
+        The second was in the figure generator and produced a wrong chart that
+        looked right. Three panels each built a tick formatter inside a loop, and
+        each closure captured the loop variable rather than its value, so every
+        panel rendered with whichever formatter the loop finished on — the currency
+        one. The request-count axis was labelled in dollars. Nothing failed; the
+        chart was simply false. Figures are code, and code that produces a document
+        can be wrong like any other.
     """)
 
     report.p("""
@@ -270,8 +270,8 @@ def build(report: Report) -> None:
     report.p("""
         One case is worth setting out in full, because it shows how a passing suite
         can conceal exactly the defect it appears to cover. The calculator tool is
-        the only place in this system where text produced by a model is evaluated
-        as code. A block of tests verified that a syntax-tree evaluator rejects
+        the only place in this system where text produced by a model is evaluated as
+        code. A block of tests verified that a syntax-tree evaluator rejects
         malicious input — and that evaluator was defined inside the test file. The
         tool the agents could actually call filtered the input against a permitted
         character set and then called the interpreter's own expression evaluator.

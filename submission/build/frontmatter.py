@@ -83,83 +83,74 @@ def abstract(report: Report) -> None:
     anchor = measured.gate_external_validity()
 
     report.p(f"""
-        Travel planning is a natural test of whether a language model can be
-        trusted with a task that has verifiable answers. A plan names flights,
-        hotels, prices and dates, and each of those either corresponds to
-        something bookable or does not. Current single-model assistants perform
-        badly on exactly this: the strongest single-agent baseline on the
-        TravelPlanner benchmark completes 0.6% of tasks, failing largely through
-        invented venues and fabricated prices [@xie2024]. This dissertation asks
-        a narrower question than "can agents plan travel", namely: given a
+        Travel planning tests whether a language model can be trusted with a task
+        that has verifiable answers: a plan names flights, hotels, prices and
+        dates, and each either corresponds to something bookable or does not.
+        Single-model assistants perform badly on exactly this — the strongest
+        single-agent baseline on the TravelPlanner benchmark completes 0.6% of
+        tasks, failing largely through invented venues and fabricated prices
+        [@xie2024]. This dissertation asks a narrower question: given a
         schema-validated tool layer and a typed inter-agent protocol, what does
-        delegating data retrieval to a language model actually cost, and what
-        does it buy?
+        delegating retrieval to a model cost, and what does it buy?
     """)
 
     report.p(f"""
-        A working system was built and then evaluated against itself in four
-        configurations: a single model with no tools, a six-agent design in the
-        naive configuration first implemented, the same six-agent design after
-        its prompt economics were tuned, and a three-agent design that keeps both
-        protocols but performs retrieval in ordinary Python. All four share one
-        Model Context Protocol server exposing twelve tools over three live
-        travel APIs, and one typed agent-to-agent message layer. Every language
+        A working system was built and evaluated against itself in four
+        configurations: one model with no tools; a six-agent design as first
+        implemented; the same six agents after their prompt economics were tuned;
+        and a three-agent design keeping both protocols but retrieving in ordinary
+        Python. All four share one Model Context Protocol server exposing twelve
+        tools over three live travel APIs, and one typed message layer. Every
         model request is counted by provider callback rather than estimated, and
-        every HTTP response is recorded so results replay without an API key.
+        every HTTP response recorded, so results replay without an API key.
     """)
 
     report.p(f"""
-        Three findings matter, and the second is not the expected one. First,
-        retrieval delegated to a model costs measurably more without being
-        measurably better. Against the tuned six-agent arm the three-agent design
-        used {val(d_vs_c['llm_calls_pct'], '{:.1f}')}% fewer model requests,
-        {val(d_vs_c['latency_pct'], '{:.1f}')}% less wall-clock time and
+        Three findings matter, and the second is not the expected one. Retrieval
+        delegated to a model costs more without being better: against the tuned
+        six-agent arm, the three-agent design used
+        {val(d_vs_c['llm_calls_pct'], '{:.1f}')}% fewer requests,
+        {val(d_vs_c['latency_pct'], '{:.1f}')}% less time and
         {val(d_vs_c['cost_pct'], '{:.1f}')}% less money, with cost and latency
-        intervals that do not overlap across
-        {val(coverage['repeats_per_arm'])} runs of each. Its groundedness interval
-        does overlap the tuned arm's, so the saving comes at no quality penalty
-        this evidence can detect — though the tuned arm's mean is the higher of
-        the two, and that is recorded rather than rounded away. Second, most of the
+        intervals that do not overlap over {val(coverage['repeats_per_arm'])} runs
+        of each. Its groundedness interval does overlap, so the saving carries no
+        quality penalty this evidence can detect — though the tuned arm's mean is
+        the higher, recorded rather than rounded away. Second, most of the
         multi-agent penalty was implementation rather than architecture: tuning
-        alone cut the six-agent arm's token use by
-        {val(c_vs_b['tokens_pct'], '{:.1f}')}%, which narrows the defensible claim
-        considerably. Third, tool access is what separates a plausible itinerary
-        from a usable one — the tool-less arm quoted
+        alone cut token use by {val(c_vs_b['tokens_pct'], '{:.1f}')}%, which
+        narrows the defensible claim considerably. Third, tool access separates a
+        plausible itinerary from a usable one — the tool-less arm quoted
         {val(control['prices_quoted'])} prices and matched
-        {val(control['prices_grounded'])} of them to anything real.
+        {val(control['prices_grounded'])} to anything real.
     """)
 
     report.p(f"""
-        The evaluation also turned on the system that produced it. A conformance
-        audit of the project's own protocol layer passed
-        {val(protocol['passed'])} of {val(protocol['total_checks'])} checks:
-        message priority is declared on every message and never honoured, and
+        The evaluation also turned on the artefact. A conformance audit of its own
+        protocol layer passed {val(protocol['passed'])} of
+        {val(protocol['total_checks'])} checks: message priority is declared on
+        every message and never honoured, and
         {val(len(measured.mcp_schema_stats()['defective_tools']))} of
-        {val(measured.mcp_schema_stats()['tools_total'])} tool schemas disagree with
-        their implementations. The
-        budget feasibility gate, evaluated across all twenty designed scenarios,
-        reached a Cohen's kappa of {val(gate['cohens_kappa'], '{:.3f}')} against
-        the intent the scenarios were written with, and the reason is traceable:
-        its cheapest-fare anchor sits
+        {val(measured.mcp_schema_stats()['tools_total'])} tool schemas disagree
+        with their implementations. The budget feasibility gate reached a Cohen's
+        kappa of {val(gate['cohens_kappa'], '{:.3f}')} across all twenty designed
+        scenarios, and the reason is traceable: its cheapest-fare anchor sits
         {val(abs(anchor['minimum_anchor_error_pct']), '{:.0f}')}% below the
-        cheapest fare the flight API actually returned for the one route where
-        real fares are recorded. These are defects in the artefact, found by
-        measuring it, and they are the most useful evidence the project produced.
+        cheapest fare the API returned for the one route with recorded fares.
+        These defects were found by measuring the artefact, and they are the most
+        useful evidence it produced.
     """)
 
     report.p(f"""
-        The principal limitation is stated plainly and early, and it is breadth
-        rather than depth. Monthly free-tier quotas on the flight and hotel APIs
-        mean the four-arm comparison rests on
+        The principal limitation is breadth rather than depth. Free-tier quotas on
+        the flight and hotel APIs mean the four-arm comparison rests on
         {val(coverage['scenarios_measured'])} recorded scenario of
         {val(coverage['scenarios_designed'])} designed. Repeats replay recorded
-        responses and so cost no quota, which is why every figure has an interval;
-        additional scenarios cannot be bought the same way. Differences on this
-        scenario are therefore measurable, and generalisation to other trips is
-        not established.
-        The protocol and budget-gate experiments are quota-free and therefore
-        cover the full scenario set. The contribution is a reproducible harness
-        and a measured, appropriately narrow finding, not a benchmark result.
+        responses and cost no quota, which is why every figure carries an interval,
+        but additional scenarios cannot be bought the same way: differences on this
+        scenario are measurable, and generalisation to other trips is not
+        established. The protocol and budget-gate experiments are quota-free and
+        cover all twenty. The contribution is a reproducible harness and a narrow
+        measured finding, not a benchmark result.
     """)
 
 
@@ -192,6 +183,26 @@ def contents(report: Report) -> None:
         run._r.append(element)
 
 
+def _short(caption: str) -> str:
+    """
+    The identifying part of a caption, for the lists of figures and tables.
+
+    These lists exist so a reader can find a figure, not read about it — the
+    full caption is under the figure itself, and repeating all of it here said
+    everything twice. Keeps the first sentence, and trims that at a clause
+    boundary if it is still long.
+    """
+    head = caption.split(". ")[0].rstrip(".")
+    if len(head.split()) <= 11:
+        return head
+    for mark in ("; ", ", "):
+        if mark in head:
+            candidate = head.split(mark)[0]
+            if 3 <= len(candidate.split()) <= 11:
+                return candidate
+    return " ".join(head.split()[:11])
+
+
 def figure_and_table_lists(report: Report) -> None:
     """
     Lists of figures and tables, generated from what was actually inserted.
@@ -206,7 +217,7 @@ def figure_and_table_lists(report: Report) -> None:
                            ("Tables", report.table_index)):
         report.unnumbered_h1(heading, page_break=(heading == "Figures"))
         for tag, caption in index:
-            line = f"{tag}   {caption}"
+            line = f"{tag}   {_short(caption)}"
             paragraph = report.doc.add_paragraph(line)
             paragraph.paragraph_format.line_spacing = 1.15
             paragraph.paragraph_format.space_after = Pt(3)

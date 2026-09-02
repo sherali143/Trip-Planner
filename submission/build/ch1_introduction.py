@@ -14,67 +14,66 @@ def build(report: Report) -> None:
     report.h2("1.1  Background")
 
     report.p("""
-        International tourism receipts returned to roughly 1.5 trillion US
-        dollars in 2023, and arrivals recovered to close to their pre-pandemic
-        level [@unwto2024]. The industry grew back. The planning experience did
-        not change with it. Assembling a week away still means reconciling a
-        flight search, a hotel search, an attractions list and a budget across
-        several tabs, then redoing most of it when one price moves. The task is
-        tedious rather than difficult, which is precisely the profile of work
-        that automation should suit.
+        International tourism receipts returned to roughly 1.5 trillion US dollars
+        in 2023, and arrivals recovered to close to their pre-pandemic level
+        [@unwto2024]. The industry grew back. The planning experience did not change
+        with it. Assembling a week away still means reconciling a flight search, a
+        hotel search, an attractions list and a budget across several tabs, then
+        redoing most of it when one price moves. The task is tedious rather than
+        difficult, which is precisely the profile of work that automation should
+        suit.
     """)
 
     report.p("""
         Large language models look like the obvious instrument, and for the
-        conversational part of the task they are: interpreting "a week in Bangkok for
-        two thousand dollars, we like markets and temples" is what they do well. The
-        difficulty appears at the next step. A travel plan is not writing to be judged
-        on fluency; it is a set of claims about the world. A named flight either exists
-        at that price on that date or it does not. That makes travel planning a useful
-        test case, because unlike summarisation the output can be checked against an
-        authority.
+        conversational part of the task they are: interpreting "a week in Bangkok
+        for two thousand dollars, we like markets and temples" is what they do well.
+        The difficulty appears at the next step. A travel plan is not writing to be
+        judged on fluency; it is a set of claims about the world. A named flight
+        either exists at that price on that date or it does not. That makes travel
+        planning a useful test case, because unlike summarisation the output can be
+        checked against an authority.
     """)
 
     report.p("""
-        Checked that way, current systems do poorly. On TravelPlanner, a
-        benchmark of 1,225 travel-planning tasks with hard commonsense and budget
-        constraints, the strongest single-agent configuration of GPT-4 completed
-        0.6% of tasks end to end [@xie2024]. The failures were not stylistic.
-        Plans referred to venues that do not exist, quoted prices that were never
-        offered, and violated the budget they had been given. The same survey
-        literature that documents hallucination in text generation generally
-        [@ji2023] describes a sharper version of the problem here: a fluent
-        itinerary that cannot be booked is worse than no itinerary, because it
-        looks finished.
+        Checked that way, current systems do poorly. On TravelPlanner, a benchmark
+        of 1,225 travel-planning tasks with hard commonsense and budget constraints,
+        the strongest single-agent configuration of GPT-4 completed 0.6% of tasks
+        end to end [@xie2024]. The failures were not stylistic. Plans referred to
+        venues that do not exist, quoted prices that were never offered, and
+        violated the budget they had been given. The same survey literature that
+        documents hallucination in text generation generally [@ji2023] describes a
+        sharper version of the problem here: a fluent itinerary that cannot be
+        booked is worse than no itinerary, because it looks finished.
     """)
 
     # ------------------------------------------------------------------ 1.2
     report.h2("1.2  The specific problem")
 
     report.p("""
-        Two structural responses to this are well established. Tool use lets a
-        model fetch facts instead of recalling them [@schick2023], and
-        multi-agent decomposition gives each part of a task to a component with a
-        narrow remit [@wu2023]. Both are widely adopted. What is much less
-        settled is how they interact, and at what price. Delegating a data
-        lookup to an agent means the lookup now happens inside a reasoning loop:
-        the model decides which tool to call, with what arguments, and whether to
-        call it again. Every one of those decisions is a model request, and every
-        request re-sends the accumulated context.
+        Two structural responses to this are well established. Tool use lets a model
+        fetch facts instead of recalling them [@schick2023], and multi-agent
+        decomposition gives each part of a task to a component with a narrow remit
+        [@wu2023]. Both are widely adopted. What is much less settled is how they
+        interact, and at what price. Delegating a data lookup to an agent means the
+        lookup now happens inside a reasoning loop: the model decides which tool to
+        call, with what arguments, and whether to call it again. Every one of those
+        decisions is a model request, and every request re-sends the accumulated
+        context.
     """)
 
     report.p("""
         That cost is rarely reported. Framework documentation counts agents and
-        tasks; papers report task success. Neither answers whether the reasoning loop
-        earns its cost at the point where it is applied. Retrieving a flight price is
-        not a judgement call: once the request is parsed the parameters are fixed,
-        the endpoint is deterministic, and there is exactly one correct call to make.
-        A recent analysis of multi-agent failures argues from taxonomy rather than
-        cost that a large share arise from specification and coordination rather than
-        from model capability [@cemri2025]. This project treats the matter as an
-        empirical question about one system, which needs a system worth measuring, an
-        instrument that counts what is spent, and a quality measure that stops
-        cheapness being mistaken for merit.
+        tasks; papers report task success. Neither answers whether the reasoning
+        loop earns its cost at the point where it is applied. Retrieving a flight
+        price is not a judgement call: once the request is parsed the parameters are
+        fixed, the endpoint is deterministic, and there is exactly one correct call
+        to make. A recent analysis of multi-agent failures argues from taxonomy
+        rather than cost that a large share arise from specification and
+        coordination rather than from model capability [@cemri2025]. This project
+        treats the matter as an empirical question about one system, which needs a
+        system worth measuring, an instrument that counts what is spent, and a
+        quality measure that stops cheapness being mistaken for merit.
     """)
 
     # ------------------------------------------------------------------ 1.3
@@ -83,10 +82,9 @@ def build(report: Report) -> None:
     report.p("""
         The aim is to design, build and evaluate a multi-agent travel planning
         system that produces day-by-day itineraries grounded in live flight, hotel
-        and venue data, through a schema-validated Model Context Protocol tool
-        layer and a typed agent-to-agent message protocol. It is then to measure
-        what delegating retrieval to a language model costs and what it
-        contributes.
+        and venue data, through a schema-validated Model Context Protocol tool layer
+        and a typed agent-to-agent message protocol. It is then to measure what
+        delegating retrieval to a language model costs and what it contributes.
     """)
 
     # ------------------------------------------------------------------ 1.4
@@ -154,11 +152,11 @@ def build(report: Report) -> None:
     )
 
     report.p("""
-        One exclusion limits what can be claimed and is stated
-        twice. The system is a planning aid. It books nothing, and it is not
-        evaluated on whether a traveller would choose its plans — only on whether
-        what it names was actually retrieved. Groundedness is necessary for a usable
-        plan, not sufficient.
+        One exclusion limits what can be claimed and is stated twice. The system is
+        a planning aid. It books nothing, and it is not evaluated on whether a
+        traveller would choose its plans — only on whether what it names was
+        actually retrieved. Groundedness is necessary for a usable plan, not
+        sufficient.
     """)
 
     # ------------------------------------------------------------------ 1.6
@@ -167,14 +165,14 @@ def build(report: Report) -> None:
     report.p(f"""
         Three things are offered. The first is a reproducible measurement harness.
         Every model request is counted through provider callbacks and every HTTP
-        response is recorded and committed, so the whole comparison replays from
-        disk with no credentials and the numbers here can be checked rather than
-        trusted. The second is a comparison that includes its own fair baseline:
-        the multi-agent arm was tuned before being used as a comparator, which
-        weakened the headline result and is reported anyway. The third is a conformance audit of the project's own
-        protocol layer, which found
-        {val(measured.protocol_summary()['failed'])} defects in work this
-        dissertation would otherwise have described as complete.
+        response recorded, so the comparison replays from disk without credentials
+        and its numbers can be checked rather than trusted. The second is a
+        comparison that includes its own fair baseline: the multi-agent arm was
+        tuned before being used as a comparator, which weakened the headline result
+        and is reported anyway. The third is a conformance audit of the project's
+        own protocol layer, which found {val(measured.protocol_summary()['failed'])}
+        defects in work this dissertation would otherwise have described as
+        complete.
     """)
 
     # ------------------------------------------------------------------ 1.7
@@ -183,10 +181,11 @@ def build(report: Report) -> None:
     report.p("""
         Chapter 2 reviews five streams of literature and closes with a conceptual
         framework linking each documented failure mode to a design decision taken
-        against it. Chapters 3 and 4 give the research approach, the evaluation design
-        and the architecture, in each case with the alternatives that were rejected.
-        Chapter 5 covers implementation, concentrating on the failures that shaped the
-        system. Chapter 6 reports the experiments and their threats to validity,
-        Chapter 7 assesses each objective against evidence, and Chapter 8 orders future
-        work by how much each item would strengthen the claims made here.
+        against it. Chapters 3 and 4 give the research approach, the evaluation
+        design and the architecture, in each case with the alternatives that were
+        rejected. Chapter 5 covers implementation, concentrating on the failures
+        that shaped the system. Chapter 6 reports the experiments and their threats
+        to validity, Chapter 7 assesses each objective against evidence, and Chapter
+        8 orders future work by how much each item would strengthen the claims made
+        here.
     """)
