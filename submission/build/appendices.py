@@ -33,6 +33,7 @@ def references(report: Report) -> None:
 
 
 def _appendix(report: Report, letter: str, title: str) -> None:
+    report.appendix_index.append(letter)
     report.unnumbered_h1(f"Appendix {letter} — {title}")
 
 
@@ -403,7 +404,7 @@ def appendices(report: Report) -> None:
             ["GPT-4o and GPT-4o-mini split",
              f"{measured.model_name()} throughout",
              "A free tier made repeated evaluation affordable, and one model removes "
-             "model choice as a confound between arms (Appendix K)"],
+             "model choice as a confound between arms (Appendix N)"],
             ["Thirteen tools", "Twelve",
              "Two proposed flight tools collapsed into one when the provider changed "
              "(Section 6.4)"],
@@ -448,7 +449,7 @@ def appendices(report: Report) -> None:
     )
 
     # ---------------------------------------------------------------- L
-    _appendix(report, "L", "The four arms and why each is in the design")
+    _appendix(report, "J", "The four arms and why each is in the design")
 
     report.p("""
         Referenced from Section 3.2, which argues why four arms are needed rather
@@ -475,7 +476,7 @@ def appendices(report: Report) -> None:
     )
 
     # ---------------------------------------------------------------- M
-    _appendix(report, "M", "Experimental design")
+    _appendix(report, "K", "Experimental design")
 
     report.p("""
         Referenced from Section 6.1, which argues what each experiment can and
@@ -510,7 +511,7 @@ def appendices(report: Report) -> None:
     )
 
     # ---------------------------------------------------------------- K
-    _appendix(report, "J", "Threats to validity, with remedies")
+    _appendix(report, "L", "Threats to validity, with remedies")
 
     report.p("""
         Referenced from Section 6.7, which gives each threat and its effect. This
@@ -567,7 +568,7 @@ def appendices(report: Report) -> None:
 
     # ---------------------------------------------------------------- I
     # ---------------------------------------------------------------- N
-    _appendix(report, "N", "Risk analysis and the risk register")
+    _appendix(report, "M", "Risk analysis and the risk register")
 
     quota = measured.api_quota()["apis"]
     cache = measured.api_cache_stats()
@@ -667,7 +668,7 @@ def appendices(report: Report) -> None:
              "perturbation test that corrupts the data and fails if any printed "
              "number does not move",
              "Controlled. The proof runs on every build and is reported in "
-             "Appendix K"],
+             "Appendix N"],
 
             ["Credentials committed to version control or printed in logs",
              "Medium", "High",
@@ -698,7 +699,7 @@ def appendices(report: Report) -> None:
         font_pt=7.5,
     )
 
-    _appendix(report, "K", "Provenance of the reported results")
+    _appendix(report, "N", "Provenance of the reported results")
 
     provenance = measured.provenance()
     coverage = measured.coverage()

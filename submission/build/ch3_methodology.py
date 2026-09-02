@@ -68,7 +68,7 @@ def build(report: Report) -> None:
         motivated the pivot, so removing it would hide the reasoning. C is the same
         six roles tuned: one narrow tool each, distilled results, concurrent
         execution, shorter prompts. D is the three-agent design with retrieval in
-        ordinary Python, which is the claim under test. Appendix L tabulates the role
+        ordinary Python, which is the claim under test. Appendix J tabulates the role
         each plays.
     """)
 
@@ -191,7 +191,7 @@ def build(report: Report) -> None:
         feasibility gate needs neither network nor model. Both are evaluated across
         the full scenario set, and both produced negative findings that the
         quota-limited comparison could not have produced. Quota was also this
-        project's largest risk: Appendix N holds the register, the controls built
+        project's largest risk: Appendix M holds the register, the controls built
         before the arms were, and which risks occurred regardless.
     """)
 

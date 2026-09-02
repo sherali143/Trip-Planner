@@ -176,6 +176,15 @@ def main() -> int:
     else:
         print("  cross-references: every Section and Appendix reference resolves")
 
+    # --- appendix order ------------------------------------------------------
+    letters = report.appendix_index
+    expected = [chr(ord("A") + i) for i in range(len(letters))]
+    if letters != expected:
+        problems.append(f"appendices are lettered {' '.join(letters)}; they must "
+                        f"run {' '.join(expected)} in the order they appear")
+    else:
+        print(f"  appendices: {len(letters)}, lettered A to {letters[-1]} in order")
+
     # --- figures -------------------------------------------------------------
     print(f"  figures: {len(report.figure_index)} inserted, "
           f"{len(report.table_index)} tables")

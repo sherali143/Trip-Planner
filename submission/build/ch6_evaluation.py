@@ -63,7 +63,7 @@ def build(report: Report) -> None:
         implementation rather than architecture. E4 audits whether the protocol layer
         behaves as the design claims. E5 asks whether the budget gate refuses budgets
         that cannot buy the trip, and whether its cost model is externally valid.
-        Appendix M tabulates each with its coverage and what it costs to run. Only E1
+        Appendix K tabulates each with its coverage and what it costs to run. Only E1
         spends model quota; E4 and E5 touch no network at all, which is why they cover
         the full scenario set and E1 does not.
     """)
@@ -466,7 +466,7 @@ def build(report: Report) -> None:
     """)
 
     report.p(f"""
-        Appendix J tabulates every threat with its remedy, classified after Wohlin
+        Appendix L tabulates every threat with its remedy, classified after Wohlin
         et al. (2012). The three that most limit this chapter are breadth, the
         overlap, and the author. Breadth: the repeats give depth on one scenario and
         nothing about other trips. The overlap: the tuned and direct arms cannot be

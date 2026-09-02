@@ -181,6 +181,11 @@ class Report:
     _current: str = "front matter"
     figure_index: List[Tuple[str, str]] = field(default_factory=list)
     table_index: List[Tuple[str, str]] = field(default_factory=list)
+    # Appendix letters in the order they were emitted, so the build can check
+    # they run A, B, C... Five of them were out of order for a while, which the
+    # cross-reference check could not see: every reference resolved, they just
+    # resolved to appendices that appeared in the wrong sequence.
+    appendix_index: List[str] = field(default_factory=list)
     prose_blocks: List[Tuple[str, str]] = field(default_factory=list)
     all_text: List[str] = field(default_factory=list)
     # The title page's word-count run, held so it can be written once the body
