@@ -34,6 +34,11 @@ def references(report: Report) -> None:
 
 def _appendix(report: Report, letter: str, title: str) -> None:
     report.appendix_index.append(letter)
+    # Number this appendix's tables and figures by its letter, and start both
+    # counters again, so Appendix C's first table is Table C.1.
+    report.section_label = letter
+    report._table_n = 0
+    report._figure_n = 0
     report.unnumbered_h1(f"Appendix {letter} — {title}")
 
 

@@ -227,12 +227,20 @@ def declare_word_count(report: Report) -> None:
     """
     if report.wordcount_run is None:      # title page not built
         return
-    was = len(report.wordcount_run.text.split())
-    report.wordcount_run.text = (
-        f"Word count (main body, Chapters 1–8): {report.body_words:,} words. "
-        f"Front matter, references, tables, captions and appendices are "
-        f"excluded.")
-    # The placeholder was already counted when the title page was written, so
-    # correct the excluded tally rather than leaving it describing text that is
-    # no longer in the document.
-    report.excluded_words += len(report.wordcount_run.text.split()) - was
+
+    def sentence(excluded: int) -> str:
+        # Says what the figure includes as well as what it leaves out. An
+        # earlier wording claimed tables and captions were excluded when the
+        # counter counts both — understating what the number covered.
+        return (f"Word count: {report.body_words:,} words (Chapters 1–8, "
+                f"including headings, lists, tables and captions). Excluded: "
+                f"title page, abstract, contents, references, appendices and "
+                f"the lists of figures and tables — {excluded:,} words.")
+
+    # This line replaces a placeholder that was itself counted, and it reports
+    # the excluded total, so the total depends on the line's own length. One
+    # pass settles it: the sentence has the same number of words whatever the
+    # digits are, so the length is known before the final figure is.
+    placeholder = len(report.wordcount_run.text.split())
+    report.excluded_words += len(sentence(0).split()) - placeholder
+    report.wordcount_run.text = sentence(report.excluded_words)

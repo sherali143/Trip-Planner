@@ -186,6 +186,12 @@ class Report:
     # cross-reference check could not see: every reference resolved, they just
     # resolved to appendices that appeared in the wrong sequence.
     appendix_index: List[str] = field(default_factory=list)
+    # What figure and table numbers are prefixed with. Empty inside the numbered
+    # chapters, where the chapter number is used; set to the appendix letter
+    # inside an appendix. Without it the chapter counter simply stopped moving
+    # after Chapter 8, so every appendix table was numbered 8.something and
+    # claimed to belong to a conclusion that contains no tables.
+    section_label: str = ""
     prose_blocks: List[Tuple[str, str]] = field(default_factory=list)
     all_text: List[str] = field(default_factory=list)
     # The title page's word-count run, held so it can be written once the body
@@ -272,6 +278,7 @@ class Report:
             self.chapter += 1
             self._figure_n = 0
             self._table_n = 0
+            self.section_label = ""     # back to chapter-numbered figures
             text = f"{self.chapter}. {text}"
         self.doc.add_page_break()
         heading = self.doc.add_heading(text, level=1)
@@ -373,7 +380,7 @@ class Report:
                 f"figure {relative_path} does not exist. Run "
                 f"submission/build/make_diagrams.py and submission/build/make_charts.py first.")
         self._figure_n += 1
-        tag = f"Figure {self.chapter}.{self._figure_n}"
+        tag = f"Figure {self.section_label or self.chapter}.{self._figure_n}"
         self.doc.add_picture(path, width=Inches(width))
         self.doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
         self.caption(f"{tag}: {caption}")
@@ -384,7 +391,7 @@ class Report:
               caption: str, *, widths: Optional[Sequence[float]] = None,
               font_pt: float = 9.5) -> str:
         self._table_n += 1
-        tag = f"Table {self.chapter}.{self._table_n}"
+        tag = f"Table {self.section_label or self.chapter}.{self._table_n}"
         self.caption(f"{tag}: {caption}")
         table = self.doc.add_table(rows=1 + len(rows), cols=len(headers))
         table.style = "Light Grid Accent 1"
