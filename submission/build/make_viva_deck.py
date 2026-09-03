@@ -250,8 +250,8 @@ def build() -> str:
             ["Itinerary Coordinator", "Writes the final day-by-day plan"]],
            col_widths=[4.0, 6.8], font=15, top=Inches(2.3))
     _text(slide, Inches(0.9), Inches(6.1), Inches(11.5), Inches(0.8),
-          [("Six agents. The next four slides show which of them each approach "
-            "uses, and what tools each one is given.", 17, False, SOFT)])
+          [("Six agents. The next four slides show which ones each approach uses, "
+            "and what tools they get.", 17, False, SOFT)])
     _notes(slide, """
         Six agents. Two of them read what the traveller wrote, three look things
         up, and one writes the plan. Keep this slide up while naming them - the
@@ -277,8 +277,7 @@ def build() -> str:
         (f"{secs('A'):.0f}s", "to finish"),
     ], top=Inches(4.6), colour=WARN)
     _text(slide, Inches(0.9), Inches(6.45), Inches(11.5), Inches(0.5),
-          [("So it makes the prices up. This is the baseline everything else has "
-            "to beat.", 20, True, WARN)])
+          [("So it makes the prices up. Every other approach has to beat this.", 20, True, WARN)])
     _notes(slide, f"""
         Say it plainly: Approach A shows what happens when AI plans a trip with no
         access to real travel data. It produced a confident, well-written
@@ -310,12 +309,12 @@ def build() -> str:
             ["Total", "20", ""]],
            col_widths=[3.2, 0.9, 6.9], font=11, top=Inches(2.05))
     _text(slide, Inches(0.9), Inches(5.05), Inches(11.5), Inches(1.9),
-          [("How they run:  one after another. Flights finish, then hotels, then "
-            "attractions, then the plan. Nothing overlaps.", 17, True, TEAL),
+          [("How they run:  one at a time. Flights, then hotels, then attractions, "
+            "then the plan.", 17, True, TEAL),
            (f"It used {calls('B'):.0f} AI calls and took {secs('B'):.0f} seconds "
             f"to plan one trip.", 19, True, INK),
-           ("Too much freedom: the agents keep thinking and searching — and they "
-            "still never called two of their own tools.", 16, True, WARN)],
+           ("Too much freedom. They keep thinking and searching, and they still "
+            "never used two of their own tools.", 16, True, WARN)],
           spacing=1.2)
     _notes(slide, f"""
         This was my original proposal. The four search and coordination agents run
@@ -343,17 +342,17 @@ def build() -> str:
             ["Total", "4", ""]],
            col_widths=[3.2, 0.9, 6.9], font=13, top=Inches(2.1))
     _text(slide, Inches(0.9), Inches(4.95), Inches(11.5), Inches(2.0),
-          [("How they run:  flights, hotels and activities run at the same time, "
-            "not one after another. Then the coordinator writes the plan.", 17,
+          [("How they run:  flights, hotels and activities all at the same time. "
+            "Then one agent writes the plan.", 17,
             True, TEAL),
-           ("Also: fewer tools each, 3 thinking steps instead of 15, and the AI "
-            "is shown the best 3 results instead of 12,000 characters.", 15,
+           ("We also gave each agent fewer tools, 3 thinking steps instead of 15, "
+            "and the best 3 results instead of 12,000 characters of data.", 15,
             False, SOFT),
            (f"Result: {gains.get('C_vs_B', {}).get('tokens_pct', 0):.0f}% less "
             f"text than B, {calls('C'):.0f} AI calls instead of "
             f"{calls('B'):.0f}, and {secs('C'):.0f}s instead of "
             f"{secs('B'):.0f}s.", 19, True, ACCENT),
-           ("So most of B's cost was bad setup, not the design.", 16, True,
+           ("So most of B's cost was bad setup, not a bad design.", 16, True,
             WARN)], spacing=1.15)
     _notes(slide, f"""
         Approach C is Approach B done properly, and it exists so nobody can say D
@@ -379,12 +378,10 @@ def build() -> str:
             ["Total", "0", ""]],
            col_widths=[3.2, 0.9, 6.9], font=13.5, top=Inches(2.15))
     _text(slide, Inches(0.9), Inches(4.45), Inches(11.5), Inches(1.1),
-          [("How it runs:  three steps. AI reads the request  →  Python fetches "
-            "the flights, hotels, attractions and restaurants  →  AI writes the "
-            "plan.", 17, True, TEAL),
-           ("(In the web app the coordinator keeps 4 helper tools — calculate, "
-            "search_internet, search_attractions, search_restaurants. The "
-            "measured run removes them.)", 12, False, SOFT)], spacing=1.15)
+          [("How it runs:  three steps. AI reads the request. Python fetches the "
+            "flights, hotels, attractions and restaurants. AI writes the plan.", 17, True, TEAL),
+           ("(The web app leaves 4 helper tools on the last agent. The measured "
+            "run takes them away, so the comparison is clean.)", 12, False, SOFT)], spacing=1.15)
     _stat_row(slide, [
         (f"{calls('D'):.0f}", "AI calls"),
         (f"{secs('D'):.0f}s", "to finish"),
@@ -428,11 +425,10 @@ def build() -> str:
              f"{grounded('D'):.0f}%"]],
            col_widths=[3.0, 2.0, 2.0, 2.0, 2.2], font=13, top=Inches(2.05))
     _text(slide, Inches(0.9), Inches(5.7), Inches(11.5), Inches(1.2),
-          [("Being honest: D is not more accurate than C — their ranges overlap.",
+          [("Being honest: D is not more accurate than C. The two overlap.",
             17, False, SOFT),
-           (f"What D is: {tokens('C') / tokens('D'):.1f}x cheaper than C and "
-            f"{tokens('B') / tokens('D'):.0f}x cheaper than B, with no drop in "
-            f"accuracy.", 19, True, ACCENT)], spacing=1.3)
+           (f"What D is: {tokens('C') / tokens('D'):.1f}x cheaper than C, "
+            f"{tokens('B') / tokens('D'):.0f}x cheaper than B, and just as accurate.", 19, True, ACCENT)], spacing=1.3)
     _notes(slide, f"""
         Two rows to point at. The run row explains the time row: B queues its
         agents so it takes {secs('B'):.0f} seconds, C runs three of them at once
@@ -449,7 +445,7 @@ def build() -> str:
     # ======================================================== 8  what user sees
     slide = _blank(prs)
     _heading(slide, "7  ·  What the user sees",
-             "And the check that stops an impossible trip")
+             "And the check that stops a trip nobody could afford")
     _figure(slide, "frontend.png", top=Inches(1.9), height=Inches(3.4))
     _stat_row(slide, [
         (f"${demo['budget']:,.0f}", "traveller asked for"),
@@ -481,17 +477,17 @@ def build() -> str:
     _text(slide, Inches(1.1), Inches(4.45), Inches(11.2), Inches(2.4),
           [("WHAT I FOUND", 12, True, RGBColor(0x9C, 0xA3, 0xF5)),
            ("", 5, False, PAPER),
-           ("1.  Without tools, AI makes travel prices up. Tools are essential.",
+           ("1.  With no tools, AI makes prices up. Tools are essential.",
             17, False, RGBColor(0xC7, 0xD2, 0xFE)),
-           (f"2.  Setup matters hugely — settings alone saved "
+           (f"2.  Setup matters. Settings alone saved "
             f"{gains.get('C_vs_B', {}).get('tokens_pct', 0):.0f}% of the cost.",
             17, False, RGBColor(0xC7, 0xD2, 0xFE)),
-           ("3.  Taking AI out of the searching is cheaper and faster, and just "
-            "as accurate.", 17, False, RGBColor(0x6E, 0xE7, 0xDF)),
+           ("3.  Taking AI out of the searching is cheaper, faster and just as "
+            "accurate.", 17, False, RGBColor(0x6E, 0xE7, 0xDF)),
            ("", 5, False, PAPER),
-           (f"Honest gap: only {coverage['scenarios_measured']} of "
-            f"{coverage['scenarios_designed']} trips measured for cost, because "
-            f"of the free API limits.", 14, False,
+           (f"Honest gap: cost was measured on only {coverage['scenarios_measured']} "
+            f"of {coverage['scenarios_designed']} trips, because the free APIs "
+            f"ran out.", 14, False,
             RGBColor(0x9C, 0xA3, 0xF5))], spacing=1.25)
     _notes(slide, f"""
         Three findings from three comparisons: A against the rest shows tools are
